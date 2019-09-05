@@ -1,0 +1,2 @@
+# wns
+Wireline Naming Service
