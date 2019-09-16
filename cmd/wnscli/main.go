@@ -12,11 +12,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	app "github.com/wirelineio/wns"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
+	app "github.com/wirelineio/wns"
 )
 
 func main() {
@@ -32,8 +32,8 @@ func main() {
 	config.Seal()
 
 	rootCmd := &cobra.Command{
-		Use:   "nscli",
-		Short: "nameservice Client",
+		Use:   "wnscli",
+		Short: "WNS Client",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
