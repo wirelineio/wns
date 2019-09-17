@@ -24,6 +24,7 @@ var (
 
 type (
 	Keeper          = keeper.Keeper
+	MsgSetRecord    = types.MsgSetRecord
 	MsgSetName      = types.MsgSetName
 	MsgBuyName      = types.MsgBuyName
 	MsgDeleteName   = types.MsgDeleteName
