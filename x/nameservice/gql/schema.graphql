@@ -1,0 +1,126 @@
+#
+# Copyright 2019 Wireline, Inc.
+#
+
+# BigUInt is a 64-bit unsigned int.
+scalar BigUInt
+
+# Value of a given type.
+type Value {
+  null:       Boolean
+
+  int:        Int
+  float:      Float
+  string:     String
+  boolean:    Boolean
+
+  values:     [Value]
+}
+
+# Key/value pair.
+type KeyValue {
+  key:        String!
+  value:      Value!
+}
+
+# Value of a given type used as input to queries.
+input ValueInput {
+  null:       Boolean
+
+  int:        Int
+  float:      Float
+  string:     String
+  boolean:    Boolean
+
+  values:     [ValueInput]
+}
+
+# Key/value pair for inputs.
+input KeyValueInput {
+  key:        String!
+  value:      ValueInput!
+}
+
+# Record is a base object which is used as a mixin for other types within the Registry.
+type Record {
+  id: String!                 # wrn:record:xxxxxxx.
+  type: String!               # wrn:registry-type:xxxxxxx.
+  owner: String!              # Address of record owner.
+  attributes: [KeyValue]      # User defined attributes.
+}
+
+# Mutations require payment in coins (e.g. 100wire).
+# Used by the wallet to get the account balance for display and mutations.
+type Coin {
+  type: String!               # e.g. 'WIRE'
+  amount: BigUInt!            # e.g. 1000000
+}
+
+# Represents an account on the blockchain.
+# Mutations have to be signed by a particular account.
+type Account {
+  address: String!            # Blockchain address.
+  pubKey: String              # Public key.
+  number: BigUInt!            # Account number.
+  sequence: BigUInt!          # Sequence number used to prevent replays.
+  balance: [Coin!]            # Current balance for each coin type.
+}
+
+# Bots are autonomous agents that interact with users (and other bots).
+type Bot {
+  record: Record
+  name: String!
+  accessKey: String
+}
+
+# Registry status.
+type Status {
+  version: String!
+}
+
+type Query {
+
+  #
+  # Status API.
+  #
+  getStatus: Status!
+
+  #
+  # Wallet API.
+  #
+
+  # Get blockchain accounts.
+  getAccounts(
+    addresses: [String!]
+  ): [Account]
+
+  #
+  # Low layer API, works with bare records.
+  #
+
+  # Get records by IDs.
+  getRecordsByIds(
+    ids: [String!]
+  ): [Record]
+
+  # Get records by attributes.
+  getRecordsByAttributes(
+    attributes: [KeyValueInput]
+  ): [Record]
+
+  #
+  # High layer API, works with types.
+  #
+
+  # Get bots.
+  getBotsByAttributes(
+    attributes: [KeyValueInput]
+  ): [Bot]
+}
+
+type Mutation {
+
+  # Submit a transaction to the blockchain.
+  # `tx` is a blob created by https://github.com/wirelineio/registry-client.
+  submit(tx: String!): String
+}

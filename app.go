@@ -26,6 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/supply"
 
 	"github.com/wirelineio/wns/x/nameservice"
+	"github.com/wirelineio/wns/x/nameservice/gql"
 )
 
 const appName = "nameservice"
@@ -250,6 +251,8 @@ func NewNameServiceApp(
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
+
+	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.accountKeeper)
 
 	return app
 }

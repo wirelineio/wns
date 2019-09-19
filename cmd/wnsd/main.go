@@ -54,6 +54,11 @@ func main() {
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
+	// Add flags for GQL server.
+	rootCmd.PersistentFlags().Bool("gql-server", false, "Start GQL server.")
+	rootCmd.PersistentFlags().Bool("gql-playground", false, "Enable GQL playground.")
+	rootCmd.PersistentFlags().String("gql-port", "9473", "Port to use for the GQL server.")
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "NS", app.DefaultNodeHome)
 	err := executor.Execute()
