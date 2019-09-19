@@ -29,6 +29,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 	nameserviceTxCmd.AddCommand(client.PostCommands(
 		GetCmdSetResource(cdc),
+		GetCmdClearResources(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -66,6 +67,31 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("sign-only", false, "Only sign the transaction payload.")
+
+	return cmd
+}
+
+// GetCmdClearResources is the CLI command for clearing all records.
+// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
+func GetCmdClearResources(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clear",
+		Short: "Clear records.",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgClearRecords(cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 
 	return cmd
 }

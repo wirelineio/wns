@@ -13,8 +13,10 @@ import (
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgSetRecord:
+		case types.MsgSetRecord:
 			return handleMsgSetResource(ctx, keeper, msg)
+		case types.MsgClearRecords:
+			return handleMsgClearResources(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -23,7 +25,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 // Handle MsgSetRecord.
-func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg MsgSetRecord) sdk.Result {
+func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
 	payload := types.PayloadObjToPayload(msg.Payload)
 	record := payload.Record
 
@@ -38,6 +40,13 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg MsgSetRecord) sdk.
 	}
 
 	keeper.PutResource(ctx, payload.Record)
+
+	return sdk.Result{}
+}
+
+// Handle MsgClearRecords.
+func handleMsgClearResources(ctx sdk.Context, keeper Keeper, msg types.MsgClearRecords) sdk.Result {
+	keeper.ClearResources(ctx)
 
 	return sdk.Result{}
 }

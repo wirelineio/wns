@@ -51,3 +51,41 @@ func (msg MsgSetRecord) GetSignBytes() []byte {
 func (msg MsgSetRecord) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
+
+// MsgClearRecords defines a MsgClearRecords message.
+type MsgClearRecords struct {
+	Signer sdk.AccAddress
+}
+
+// NewMsgClearRecords is the constructor function for MsgClearRecords.
+func NewMsgClearRecords(signer sdk.AccAddress) MsgClearRecords {
+	return MsgClearRecords{
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgClearRecords) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgClearRecords) Type() string { return "clear" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgClearRecords) ValidateBasic() sdk.Error {
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgClearRecords) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgClearRecords) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
