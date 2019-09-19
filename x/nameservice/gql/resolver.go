@@ -16,6 +16,7 @@ import (
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
 	"github.com/tendermint/tendermint/rpc/core"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
 	"github.com/wirelineio/wns/x/nameservice"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -392,18 +393,6 @@ func decodeStdTx(tx string) (*auth.StdTx, error) {
 		return nil, err
 	}
 
-	var accountNum uint64
-	err = json.Unmarshal(*sig["account_number"], &accountNum)
-	if err != nil {
-		return nil, err
-	}
-
-	var sequenceNum uint64
-	err = json.Unmarshal(*sig["sequence"], &sequenceNum)
-	if err != nil {
-		return nil, err
-	}
-
 	var memo string
 	err = json.Unmarshal(*objmap["memo"], &memo)
 	if err != nil {
@@ -416,9 +405,6 @@ func decodeStdTx(tx string) (*auth.StdTx, error) {
 		Signatures: []auth.StdSignature{auth.StdSignature{
 			PubKey:    pubKey,
 			Signature: signature,
-			// TODO(ashwin): Fix!
-			// AccountNumber: accountNum,
-			// Sequence:      sequenceNum,
 		}},
 		Memo: memo,
 	}
@@ -433,7 +419,8 @@ func broadcastTx(r *mutationResolver, stdTx *auth.StdTx) (*ctypes.ResultBroadcas
 	}
 
 	// TODO(ashwin): Fix!
-	res, err := core.BroadcastTxCommit(nil, txBytes)
+	ctx := &rpctypes.Context{}
+	res, err := core.BroadcastTxCommit(ctx, txBytes)
 	if err != nil {
 		return nil, err
 	}
