@@ -331,25 +331,35 @@ func decodeStdTx(tx string) (*auth.StdTx, error) {
 		return nil, err
 	}
 
-	var operationStr = "set"
-	if objmap["operation"] != nil {
-		err = json.Unmarshal(*objmap["operation"], &operationStr)
-		if err != nil {
-			return nil, err
-		}
+	var msgsArr []*json.RawMessage
+	err = json.Unmarshal(*objmap["msg"], &msgsArr)
+	if err != nil {
+		return nil, err
+	}
+
+	var firstMsg map[string]*json.RawMessage
+	err = json.Unmarshal(*msgsArr[0], &firstMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	var messageType string
+	err = json.Unmarshal(*firstMsg["type"], &messageType)
+	if err != nil {
+		return nil, err
 	}
 
 	var msgs []sdk.Msg
 
-	switch operationStr {
-	case "set":
+	switch messageType {
+	case "nameservice/SetRecord":
 		{
-			var setMsg []nameservice.MsgSetRecord
-			err = json.Unmarshal(*objmap["msg"], &setMsg)
+			var setMsg nameservice.MsgSetRecord
+			err = json.Unmarshal(*firstMsg["value"], &setMsg)
 			if err != nil {
 				return nil, err
 			}
-			msgs = []sdk.Msg{setMsg[0]}
+			msgs = []sdk.Msg{setMsg}
 		}
 	}
 
