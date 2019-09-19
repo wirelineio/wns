@@ -5,9 +5,9 @@ package gql
 type Account struct {
 	Address  string  `json:"address"`
 	PubKey   *string `json:"pubKey"`
-	Number   string  `json:"number"`
-	Sequence string  `json:"sequence"`
-	Balance  []*Coin `json:"balance"`
+	Number   BigUInt `json:"number"`
+	Sequence BigUInt `json:"sequence"`
+	Balance  []Coin  `json:"balance"`
 }
 
 type Bot struct {
@@ -17,18 +17,18 @@ type Bot struct {
 }
 
 type Coin struct {
-	Type   string `json:"type"`
-	Amount string `json:"amount"`
+	Type   string  `json:"type"`
+	Amount BigUInt `json:"amount"`
 }
 
 type KeyValue struct {
 	Key   string `json:"key"`
-	Value *Value `json:"value"`
+	Value Value  `json:"value"`
 }
 
 type KeyValueInput struct {
-	Key   string      `json:"key"`
-	Value *ValueInput `json:"value"`
+	Key   string     `json:"key"`
+	Value ValueInput `json:"value"`
 }
 
 type Record struct {

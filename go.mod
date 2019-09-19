@@ -3,7 +3,7 @@ module github.com/wirelineio/wns
 go 1.13
 
 require (
-	github.com/99designs/gqlgen v0.9.3
+	github.com/99designs/gqlgen v0.8.1
 	github.com/cosmos/cosmos-sdk v0.37.0
 	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
@@ -14,7 +14,6 @@ require (
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
-	github.com/stretchr/testify v1.3.0
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.32.2
 	github.com/tendermint/tm-db v0.1.1
