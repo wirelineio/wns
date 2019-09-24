@@ -97,3 +97,20 @@ func GetResourceSignature(record types.Record, name string) ([]byte, crypto.PubK
 
 	return sigBytes, pubKey, nil
 }
+
+// Intersection computes the intersection of two string slices.
+func Intersection(a, b []string) (c []string) {
+	m := make(map[string]bool)
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			c = append(c, item)
+		}
+	}
+
+	return
+}

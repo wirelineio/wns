@@ -256,8 +256,6 @@ func getGQLRecord(record types.Record) (*Record, error) {
 
 	return &Record{
 		ID:         string(record.ID),
-		Type:       record.Type,
-		Owner:      record.Owner,
 		Attributes: attrs,
 	}, nil
 }
@@ -453,7 +451,7 @@ func (r *queryResolver) GetBotsByAttributes(ctx context.Context, attributes []*K
 
 	records := r.keeper.ListResources(sdkContext)
 	for _, record := range records {
-		if record.Type == WireRegistryTypeBot && record.Attributes != nil {
+		if record.Type() == WireRegistryTypeBot && record.Attributes != nil {
 			// Name is mandatory.
 			if name, ok := record.Attributes["name"].(string); ok {
 

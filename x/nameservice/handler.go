@@ -31,9 +31,9 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 
 	if exists := keeper.HasResource(ctx, record.ID); exists {
 		// Check ownership.
-		owner := keeper.GetResource(ctx, record.ID).Owner
+		owners := keeper.GetResource(ctx, record.ID).Owners
 
-		allow := checkAccess(owner, record, payload.Signatures)
+		allow := checkAccess(owners, record, payload.Signatures)
 		if !allow {
 			return sdk.ErrUnauthorized("Unauthorized record write.").Result()
 		}
@@ -51,8 +51,8 @@ func handleMsgClearResources(ctx sdk.Context, keeper Keeper, msg types.MsgClearR
 	return sdk.Result{}
 }
 
-func checkAccess(owner string, record types.Record, signatures []types.Signature) bool {
-	addresses := make(map[string]bool)
+func checkAccess(owners []string, record types.Record, signatures []types.Signature) bool {
+	addresses := []string{}
 
 	// Check signatures.
 	resourceSignBytes := helpers.GenRecordHash(record)
@@ -63,19 +63,19 @@ func checkAccess(owner string, record types.Record, signatures []types.Signature
 			return false
 		}
 
-		addresses[helpers.GetAddressFromPubKey(pubKey)] = true
-
 		allow := pubKey.VerifyBytes(resourceSignBytes, helpers.BytesFromBase64(sig.Signature))
 		if !allow {
 			fmt.Println("Signature mismatch: ", sig.PubKey)
 
 			return false
 		}
+
+		addresses = append(addresses, helpers.GetAddressFromPubKey(pubKey))
 	}
 
 	// Check one of the addresses matches the owner.
-	_, ok := addresses[owner]
-	if !ok {
+	matches := helpers.Intersection(addresses, owners)
+	if len(matches) == 0 {
 		return false
 	}
 

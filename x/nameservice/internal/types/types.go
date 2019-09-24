@@ -7,12 +7,27 @@ import (
 // ID for records.
 type ID string
 
-// Record represents a registry record that can be serialized from/to YAML.
+// Record represents a WNS record.
 type Record struct {
 	ID         ID                     `json:"id"`
-	Type       string                 `json:"type"`
-	Owner      string                 `json:"owner"`
+	Owners     []string               `json:"owners"`
 	Attributes map[string]interface{} `json:"attributes"`
+	Extension  map[string]interface{} `json:"extension"`
+}
+
+// Type of Record.
+func (r Record) Type() string {
+	return r.Attributes["type"].(string)
+}
+
+// Name of Record.
+func (r Record) Name() string {
+	return r.Attributes["name"].(string)
+}
+
+// Version of Record.
+func (r Record) Version() string {
+	return r.Attributes["version"].(string)
 }
 
 // Signature represents a record signature.
@@ -27,12 +42,12 @@ type PayloadObj struct {
 	Signatures []Signature `json:"signatures"`
 }
 
-// RecordObj represents a registry record.
+// RecordObj represents a WNS record.
 type RecordObj struct {
-	ID         ID     `json:"id"`
-	Type       string `json:"type"`
-	Owner      string `json:"owner"`
-	Attributes []byte `json:"attributes"`
+	ID         ID       `json:"id"`
+	Owners     []string `json:"owners"`
+	Attributes []byte   `json:"attributes"`
+	Extension  []byte   `json:"extension"`
 }
 
 // Payload represents a signed record payload that can be serialized from/to YAML.
@@ -47,33 +62,11 @@ func RecordToRecordObj(record Record) RecordObj {
 	var resourceObj RecordObj
 
 	resourceObj.ID = record.ID
-	resourceObj.Type = record.Type
-	resourceObj.Owner = record.Owner
+	resourceObj.Owners = record.Owners
 	resourceObj.Attributes = MarshalMapToJSONBytes(record.Attributes)
+	resourceObj.Extension = MarshalMapToJSONBytes(record.Extension)
 
 	return resourceObj
-}
-
-// MarshalLinksToJSONBytes converts []map[string]interface{} to bytes.
-func MarshalLinksToJSONBytes(val []map[string]interface{}) (bytes []byte) {
-	bytes, err := json.Marshal(val)
-	if err != nil {
-		panic("Marshal error.")
-	}
-
-	return
-}
-
-// UnMarshalLinksFromJSONBytes converts bytes to []map[string]interface{}.
-func UnMarshalLinksFromJSONBytes(bytes []byte) []map[string]interface{} {
-	var val []map[string]interface{}
-	err := json.Unmarshal(bytes, &val)
-
-	if err != nil {
-		panic("Marshal error.")
-	}
-
-	return val
 }
 
 // PayloadToPayloadObj converts Payload to PayloadObj object.
@@ -97,31 +90,9 @@ func MarshalMapToJSONBytes(val map[string]interface{}) (bytes []byte) {
 	return
 }
 
-// MarshalSliceToJSONBytes converts map[string]interface{} to bytes.
-func MarshalSliceToJSONBytes(val []interface{}) (bytes []byte) {
-	bytes, err := json.Marshal(val)
-	if err != nil {
-		panic("Marshal error.")
-	}
-
-	return
-}
-
 // UnMarshalMapFromJSONBytes converts bytes to map[string]interface{}.
 func UnMarshalMapFromJSONBytes(bytes []byte) map[string]interface{} {
 	var val map[string]interface{}
-	err := json.Unmarshal(bytes, &val)
-
-	if err != nil {
-		panic("Marshal error.")
-	}
-
-	return val
-}
-
-// UnMarshalSliceFromJSONBytes converts bytes to map[string]interface{}.
-func UnMarshalSliceFromJSONBytes(bytes []byte) []interface{} {
-	var val []interface{}
 	err := json.Unmarshal(bytes, &val)
 
 	if err != nil {
@@ -137,9 +108,9 @@ func RecordObjToRecord(resourceObj RecordObj) Record {
 	var record Record
 
 	record.ID = resourceObj.ID
-	record.Type = resourceObj.Type
-	record.Owner = resourceObj.Owner
+	record.Owners = resourceObj.Owners
 	record.Attributes = UnMarshalMapFromJSONBytes(resourceObj.Attributes)
+	record.Extension = UnMarshalMapFromJSONBytes(resourceObj.Extension)
 
 	return record
 }
