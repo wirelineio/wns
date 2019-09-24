@@ -2,6 +2,10 @@
 
 package gql
 
+type Extension interface {
+	IsExtension()
+}
+
 type Account struct {
 	Address  string  `json:"address"`
 	PubKey   *string `json:"pubKey"`
@@ -11,14 +15,15 @@ type Account struct {
 }
 
 type Bot struct {
-	Record    *Record `json:"record"`
-	Name      string  `json:"name"`
-	AccessKey *string `json:"accessKey"`
+	Name      string `json:"name"`
+	AccessKey string `json:"accessKey"`
 }
 
+func (Bot) IsExtension() {}
+
 type Coin struct {
-	Type   string  `json:"type"`
-	Amount BigUInt `json:"amount"`
+	Type     string  `json:"type"`
+	Quantity BigUInt `json:"quantity"`
 }
 
 type KeyValue struct {
@@ -31,31 +36,63 @@ type KeyValueInput struct {
 	Value ValueInput `json:"value"`
 }
 
+type Pad struct {
+	Name string `json:"name"`
+}
+
+func (Pad) IsExtension() {}
+
+type Protocol struct {
+	Name string `json:"name"`
+}
+
+func (Protocol) IsExtension() {}
+
 type Record struct {
 	ID         string      `json:"id"`
 	Type       string      `json:"type"`
-	Owner      string      `json:"owner"`
+	Name       string      `json:"name"`
+	Version    string      `json:"version"`
+	Owners     []*string   `json:"owners"`
 	Attributes []*KeyValue `json:"attributes"`
+	References []*Record   `json:"references"`
+	Extension  Extension   `json:"extension"`
+}
+
+type Reference struct {
+	ID string `json:"id"`
+}
+
+type ReferenceInput struct {
+	ID string `json:"id"`
 }
 
 type Status struct {
 	Version string `json:"version"`
 }
 
+type UnknownExtension struct {
+	Name string `json:"name"`
+}
+
+func (UnknownExtension) IsExtension() {}
+
 type Value struct {
-	Null    *bool    `json:"null"`
-	Int     *int     `json:"int"`
-	Float   *float64 `json:"float"`
-	String  *string  `json:"string"`
-	Boolean *bool    `json:"boolean"`
-	Values  []*Value `json:"values"`
+	Null      *bool      `json:"null"`
+	Int       *int       `json:"int"`
+	Float     *float64   `json:"float"`
+	String    *string    `json:"string"`
+	Boolean   *bool      `json:"boolean"`
+	Reference *Reference `json:"reference"`
+	Values    []*Value   `json:"values"`
 }
 
 type ValueInput struct {
-	Null    *bool         `json:"null"`
-	Int     *int          `json:"int"`
-	Float   *float64      `json:"float"`
-	String  *string       `json:"string"`
-	Boolean *bool         `json:"boolean"`
-	Values  []*ValueInput `json:"values"`
+	Null      *bool           `json:"null"`
+	Int       *int            `json:"int"`
+	Float     *float64        `json:"float"`
+	String    *string         `json:"string"`
+	Boolean   *bool           `json:"boolean"`
+	Reference *ReferenceInput `json:"reference"`
+	Values    []*ValueInput   `json:"values"`
 }
