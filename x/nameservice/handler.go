@@ -27,17 +27,33 @@ func NewHandler(keeper Keeper) sdk.Handler {
 // Handle MsgSetRecord.
 func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
 	payload := types.PayloadObjToPayload(msg.Payload)
-	record := payload.Record
+	record := &payload.Record
 
-	if exists := keeper.HasResource(ctx, record.ID); exists {
-		// Check ownership.
-		owners := keeper.GetResource(ctx, record.ID).Owners
-
-		allow := checkAccess(owners, record, payload.Signatures)
-		if !allow {
-			return sdk.ErrUnauthorized("Unauthorized record write.").Result()
+	// TODO(ashwin): Use CID (https://github.com/ipfs/go-cid).
+	// TODO(ashwin): Clear ID and owners list before hashing, as they don't contribute to hash.
+	record.ID = types.ID(helpers.BytesToHex(helpers.GenRecordHash(*record)))
+	record.Owners = []string{}
+	for _, sig := range payload.Signatures {
+		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
+		if err != nil {
+			fmt.Println("Error decoding pubKey from bytes: ", err)
+			return sdk.ErrUnauthorized("Invalid public key.").Result()
 		}
+
+		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
 	}
+
+	// TODO(ashwin): Put back access checks.
+
+	// if exists := keeper.HasResource(ctx, record.ID); exists {
+	// 	// Check ownership.
+	// 	owners := keeper.GetResource(ctx, record.ID).Owners
+
+	// 	allow := checkAccess(owners, record, payload.Signatures)
+	// 	if !allow {
+	// 		return sdk.ErrUnauthorized("Unauthorized record write.").Result()
+	// 	}
+	// }
 
 	keeper.PutResource(ctx, payload.Record)
 
@@ -59,7 +75,7 @@ func checkAccess(owners []string, record types.Record, signatures []types.Signat
 	for _, sig := range signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
 		if err != nil {
-			fmt.Println("Error decoding pubKey from bytes.")
+			fmt.Println("Error decoding pubKey from bytes: ", err)
 			return false
 		}
 

@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/99designs/gqlgen v0.8.1
 	github.com/cosmos/cosmos-sdk v0.37.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/gorilla/mux v1.7.0

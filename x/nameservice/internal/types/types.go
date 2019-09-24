@@ -9,8 +9,8 @@ type ID string
 
 // Record represents a WNS record.
 type Record struct {
-	ID         ID                     `json:"id"`
-	Owners     []string               `json:"owners"`
+	ID         ID                     `json:"id,omitempty"`
+	Owners     []string               `json:"owners,omitempty"`
 	Attributes map[string]interface{} `json:"attributes"`
 	Extension  map[string]interface{} `json:"extension"`
 }
@@ -44,8 +44,8 @@ type PayloadObj struct {
 
 // RecordObj represents a WNS record.
 type RecordObj struct {
-	ID         ID       `json:"id"`
-	Owners     []string `json:"owners"`
+	ID         ID       `json:"id,omitempty"`
+	Owners     []string `json:"owners,omitempty"`
 	Attributes []byte   `json:"attributes"`
 	Extension  []byte   `json:"extension"`
 }
