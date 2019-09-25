@@ -15,7 +15,12 @@ import (
 )
 
 // GenRecordHash generates a transaction hash.
-func GenRecordHash(r types.Record) []byte {
+func GenRecordHash(record *types.Record) []byte {
+	r := types.Record{
+		Attributes: record.Attributes,
+		Extension:  record.Extension,
+	}
+
 	first := sha256.New()
 
 	bytes, err := json.MarshalIndent(r, "", "  ")
@@ -88,7 +93,7 @@ func GetResourceSignature(record types.Record, name string) ([]byte, crypto.PubK
 		return nil, nil, err
 	}
 
-	signBytes := GenRecordHash(record)
+	signBytes := GenRecordHash(&record)
 
 	sigBytes, pubKey, err := keybase.Sign(name, passphrase, signBytes)
 	if err != nil {

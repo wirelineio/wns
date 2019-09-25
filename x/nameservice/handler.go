@@ -31,7 +31,7 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 
 	// TODO(ashwin): Use CID (https://github.com/ipfs/go-cid).
 	// TODO(ashwin): Clear ID and owners list before hashing, as they don't contribute to hash.
-	record.ID = types.ID(helpers.BytesToHex(helpers.GenRecordHash(*record)))
+	record.ID = types.ID(helpers.BytesToHex(helpers.GenRecordHash(record)))
 	record.Owners = []string{}
 	for _, sig := range payload.Signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
@@ -71,7 +71,7 @@ func checkAccess(owners []string, record types.Record, signatures []types.Signat
 	addresses := []string{}
 
 	// Check signatures.
-	resourceSignBytes := helpers.GenRecordHash(record)
+	resourceSignBytes := helpers.GenRecordHash(&record)
 	for _, sig := range signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
 		if err != nil {
