@@ -30,6 +30,16 @@ func (r Record) Version() string {
 	return r.Attributes["version"].(string)
 }
 
+// GetOwners returns the list of owners (for GQL).
+func (r Record) GetOwners() []*string {
+	owners := []*string{}
+	for _, owner := range r.Owners {
+		owners = append(owners, &owner)
+	}
+
+	return owners
+}
+
 // Signature represents a record signature.
 type Signature struct {
 	PubKey    string `json:"pubKey"`

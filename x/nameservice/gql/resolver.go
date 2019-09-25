@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"reflect"
 	"strconv"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -12,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/wirelineio/wns/x/nameservice"
+	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
 // BigUInt represents a 64-bit unsigned integer.
@@ -25,15 +27,22 @@ type Resolver struct {
 	accountKeeper auth.AccountKeeper
 }
 
+// Account resolver.
 func (r *Resolver) Account() AccountResolver {
 	return &accountResolver{r}
 }
+
+// Coin resolver.
 func (r *Resolver) Coin() CoinResolver {
 	return &coinResolver{r}
 }
+
+// Mutation is the entry point to tx execution.
 func (r *Resolver) Mutation() MutationResolver {
 	return &mutationResolver{r}
 }
+
+// Query is the entry point to query execution.
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
 }
@@ -69,7 +78,17 @@ func (r *mutationResolver) Submit(ctx context.Context, tx string) (*string, erro
 type queryResolver struct{ *Resolver }
 
 func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*Record, error) {
-	panic("not implemented")
+	records := make([]*Record, len(ids))
+	for index, id := range ids {
+		record, err := r.GetResource(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		records[index] = record
+	}
+
+	return records, nil
 }
 
 func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
@@ -138,4 +157,88 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 		PubKey:   pubKey,
 		Balance:  gqlCoins,
 	}, nil
+}
+
+func (r *queryResolver) GetResource(ctx context.Context, id string) (*Record, error) {
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+
+	dbID := types.ID(id)
+	if r.keeper.HasResource(sdkContext, dbID) {
+		record := r.keeper.GetResource(sdkContext, dbID)
+		return getGQLRecord(record)
+	}
+
+	return nil, nil
+}
+
+func getGQLRecord(record types.Record) (*Record, error) {
+
+	attributes, err := getAttributes(&record)
+	if err != nil {
+		return nil, err
+	}
+
+	extension, err := getExtension(&record)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Record{
+		ID:         string(record.ID),
+		Type:       record.Type(),
+		Name:       record.Name(),
+		Version:    record.Version(),
+		Owners:     record.GetOwners(),
+		Attributes: attributes,
+		Extension:  extension,
+	}, nil
+}
+
+func getAttributes(r *types.Record) (attributes []*KeyValue, err error) {
+	attributes, err = mapToKeyValuePairs(r.Attributes)
+	return
+}
+
+func getExtension(r *types.Record) (ext Extension, err error) {
+	return nil, nil
+}
+
+func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
+	kvPairs := []*KeyValue{}
+
+	trueVal := true
+	falseVal := false
+
+	for key, value := range attrs {
+
+		kvPair := &KeyValue{
+			Key: key,
+		}
+
+		switch val := value.(type) {
+		case nil:
+			kvPair.Value.Null = &trueVal
+		case int:
+			kvPair.Value.Int = &val
+		case float64:
+			kvPair.Value.Float = &val
+		case string:
+			kvPair.Value.String = &val
+		case bool:
+			kvPair.Value.Boolean = &val
+		}
+
+		if kvPair.Value.Null == nil {
+			kvPair.Value.Null = &falseVal
+		}
+
+		valueType := reflect.ValueOf(value)
+		if valueType.Kind() == reflect.Slice {
+			// TODO(ashwin): Handle arrays.
+		}
+
+		kvPairs = append(kvPairs, kvPair)
+	}
+
+	return kvPairs, nil
 }
