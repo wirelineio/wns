@@ -26,6 +26,9 @@ const WnsTypeBot = "wrn:bot"
 // WnsTypePad => Pad.
 const WnsTypePad = "wrn:pad"
 
+// WrnTypeReference => Reference.
+const WrnTypeReference = "wrn:reference"
+
 // BigUInt represents a 64-bit unsigned integer.
 type BigUInt uint64
 
@@ -253,6 +256,14 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 			kvPair.Value.String = &val
 		case bool:
 			kvPair.Value.Boolean = &val
+		case interface{}:
+			if obj, ok := value.(map[string]interface{}); ok {
+				if obj["type"].(string) == WrnTypeReference {
+					kvPair.Value.Reference = &Reference{
+						ID: obj["id"].(string),
+					}
+				}
+			}
 		}
 
 		if kvPair.Value.Null == nil {
