@@ -30,6 +30,10 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 	record := &payload.Record
 
 	record.ID = types.ID(helpers.GenRecordHash(record))
+	if exists := keeper.HasResource(ctx, record.ID); exists {
+		return sdk.ErrUnauthorized("Record already exists.").Result()
+	}
+
 	record.Owners = []string{}
 	for _, sig := range payload.Signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
@@ -40,18 +44,6 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 
 		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
 	}
-
-	// TODO(ashwin): Put back access checks.
-
-	// if exists := keeper.HasResource(ctx, record.ID); exists {
-	// 	// Check ownership.
-	// 	owners := keeper.GetResource(ctx, record.ID).Owners
-
-	// 	allow := checkAccess(owners, record, payload.Signatures)
-	// 	if !allow {
-	// 		return sdk.ErrUnauthorized("Unauthorized record write.").Result()
-	// 	}
-	// }
 
 	keeper.PutResource(ctx, payload.Record)
 
