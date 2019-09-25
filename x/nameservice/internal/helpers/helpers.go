@@ -4,15 +4,33 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 
 	"github.com/cosmos/cosmos-sdk/client/keys"
 
-	"github.com/wirelineio/wns/x/nameservice/internal/types"
-
+	canonicalJson "github.com/gibson042/canonicaljson-go"
+	cid "github.com/ipfs/go-cid"
+	mh "github.com/multiformats/go-multihash"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/wirelineio/wns/x/nameservice/internal/types"
 	"golang.org/x/crypto/ripemd160"
 )
+
+// GetCid gets the content ID.
+func GetCid(content []byte) string {
+	pref := cid.Prefix{
+		Version:  0,
+		Codec:    cid.DagCBOR,
+		MhType:   mh.SHA2_256,
+		MhLength: -1,
+	}
+
+	cid, err := pref.Sum(content)
+	if err != nil {
+		panic("CID generation error.")
+	}
+
+	return cid.String()
+}
 
 // GenRecordHash generates a transaction hash.
 func GenRecordHash(record *types.Record) []byte {
@@ -21,21 +39,12 @@ func GenRecordHash(record *types.Record) []byte {
 		Extension:  record.Extension,
 	}
 
-	first := sha256.New()
-
-	bytes, err := json.MarshalIndent(r, "", "  ")
+	bytes, err := canonicalJson.Marshal(r)
 	if err != nil {
 		panic("Record marshal error.")
 	}
 
-	first.Write(bytes)
-	firstHash := first.Sum(nil)
-
-	second := sha256.New()
-	second.Write(firstHash)
-	secondHash := second.Sum(nil)
-
-	return secondHash
+	return []byte(GetCid(bytes))
 }
 
 // GetAddressFromPubKey gets an address from the public key.
