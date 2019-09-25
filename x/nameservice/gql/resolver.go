@@ -130,7 +130,7 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 	gqlResponse := []*Record{}
 
 	for _, record := range records {
-		gqlRecord, err := getGQLRecord(record)
+		gqlRecord, err := getGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
 		}
@@ -267,20 +267,24 @@ func (r *queryResolver) GetResource(ctx context.Context, id string) (*Record, er
 	dbID := types.ID(id)
 	if r.keeper.HasResource(sdkContext, dbID) {
 		record := r.keeper.GetResource(sdkContext, dbID)
-		return getGQLRecord(record)
+		return getGQLRecord(ctx, r, record)
 	}
 
 	return nil, nil
 }
 
-func getGQLRecord(record types.Record) (*Record, error) {
-
+func getGQLRecord(ctx context.Context, resolver *queryResolver, record types.Record) (*Record, error) {
 	attributes, err := getAttributes(&record)
 	if err != nil {
 		return nil, err
 	}
 
 	extension, err := getExtension(&record)
+	if err != nil {
+		return nil, err
+	}
+
+	references, err := getReferences(ctx, resolver, &record)
 	if err != nil {
 		return nil, err
 	}
@@ -292,8 +296,26 @@ func getGQLRecord(record types.Record) (*Record, error) {
 		Version:    record.Version(),
 		Owners:     record.GetOwners(),
 		Attributes: attributes,
+		References: references,
 		Extension:  extension,
 	}, nil
+}
+
+func getReferences(ctx context.Context, resolver *queryResolver, r *types.Record) ([]*Record, error) {
+	var ids []string
+
+	for _, value := range r.Attributes {
+		switch value.(type) {
+		case interface{}:
+			if obj, ok := value.(map[string]interface{}); ok {
+				if obj["type"].(string) == WrnTypeReference {
+					ids = append(ids, obj["id"].(string))
+				}
+			}
+		}
+	}
+
+	return resolver.GetRecordsByIds(ctx, ids)
 }
 
 func getAttributes(r *types.Record) (attributes []*KeyValue, err error) {
