@@ -82,10 +82,13 @@ func (r *coinResolver) Quantity(ctx context.Context, obj *Coin) (string, error) 
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) InsertRecord(ctx context.Context, attributes []*KeyValueInput) (*Record, error) {
-	panic("not implemented")
+	// Only supported by mock server.
+	return nil, errors.New("not implemented")
 }
+
 func (r *mutationResolver) Submit(ctx context.Context, tx string) (*string, error) {
-	panic("not implemented")
+	// TODO(ashwin): Implement.
+	return nil, errors.New("not implemented")
 }
 
 type queryResolver struct{ *Resolver }
@@ -105,7 +108,77 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 }
 
 func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
-	panic("not implemented")
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+
+	records := r.keeper.ListResources(sdkContext)
+	gqlResponse := []*Record{}
+
+	for _, record := range records {
+		gqlRecord, err := getGQLRecord(record)
+		if err != nil {
+			return nil, err
+		}
+
+		if matchesOnAttributes(&record, attributes) {
+			gqlResponse = append(gqlResponse, gqlRecord)
+		}
+	}
+
+	return gqlResponse, nil
+}
+
+func matchesOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
+	recAttrs := record.Attributes
+
+	for _, attr := range attributes {
+		recAttrVal, recAttrFound := recAttrs[attr.Key]
+		if !recAttrFound {
+			return false
+		}
+
+		if attr.Value.Int != nil {
+			recAttrValInt, ok := recAttrVal.(int)
+			if !ok || *attr.Value.Int != recAttrValInt {
+				return false
+			}
+		}
+
+		if attr.Value.Float != nil {
+			recAttrValFloat, ok := recAttrVal.(float64)
+			if !ok || *attr.Value.Float != recAttrValFloat {
+				return false
+			}
+		}
+
+		if attr.Value.String != nil {
+			recAttrValString, ok := recAttrVal.(string)
+			if !ok || *attr.Value.String != recAttrValString {
+				return false
+			}
+		}
+
+		if attr.Value.Boolean != nil {
+			recAttrValBool, ok := recAttrVal.(bool)
+			if !ok || *attr.Value.Boolean != recAttrValBool {
+				return false
+			}
+		}
+
+		if attr.Value.Reference != nil {
+			obj, ok := recAttrVal.(map[string]interface{})
+			if !ok || obj["type"].(string) != WrnTypeReference {
+				return false
+			}
+			recAttrValRefID := obj["id"].(string)
+			if recAttrValRefID != attr.Value.Reference.ID {
+				return false
+			}
+		}
+
+		// TODO(ashwin): Handle arrays.
+	}
+
+	return true
 }
 
 func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
