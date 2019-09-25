@@ -11,10 +11,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/mitchellh/mapstructure"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/wirelineio/wns/x/nameservice"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
+
+// WnsTypeProtocol => Protocol.
+const WnsTypeProtocol = "wrn:protocol"
+
+// WnsTypeBot => Bot.
+const WnsTypeBot = "wrn:bot"
+
+// WnsTypePad => Pad.
+const WnsTypePad = "wrn:pad"
 
 // BigUInt represents a 64-bit unsigned integer.
 type BigUInt uint64
@@ -200,7 +210,24 @@ func getAttributes(r *types.Record) (attributes []*KeyValue, err error) {
 }
 
 func getExtension(r *types.Record) (ext Extension, err error) {
-	return nil, nil
+	switch r.Type() {
+	case WnsTypeProtocol:
+		var protocol Protocol
+		err := mapstructure.Decode(r.Extension, &protocol)
+		return protocol, err
+	case WnsTypeBot:
+		var bot Bot
+		err := mapstructure.Decode(r.Extension, &bot)
+		return bot, err
+	case WnsTypePad:
+		var pad Pad
+		err := mapstructure.Decode(r.Extension, &pad)
+		return pad, err
+	default:
+		var unknown UnknownExtension
+		err := mapstructure.Decode(r.Extension, &unknown)
+		return unknown, err
+	}
 }
 
 func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {

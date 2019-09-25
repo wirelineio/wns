@@ -10,6 +10,7 @@ require (
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/gorilla/mux v1.7.0
 	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/prometheus/procfs v0.0.0-20190328153300-af7bedc223fb // indirect
 	github.com/rs/cors v1.6.0
 	github.com/spf13/afero v1.2.2 // indirect
@@ -22,5 +23,4 @@ require (
 	golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a
 	golang.org/x/sys v0.0.0-20190329044733-9eb1bfa1ce65 // indirect
 	google.golang.org/genproto v0.0.0-20190327125643-d831d65fe17d // indirect
-	gopkg.in/yaml.v2 v2.2.2
 )
