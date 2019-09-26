@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package nameservice
 
 import (
@@ -26,10 +30,10 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle MsgSetRecord.
 func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
-	payload := types.PayloadObjToPayload(msg.Payload)
+	payload := msg.Payload.ToPayload()
 	record := &payload.Record
 
-	record.ID = types.ID(helpers.GenRecordHash(record))
+	record.ID = types.ID(record.GenRecordHash())
 	if exists := keeper.HasResource(ctx, record.ID); exists {
 		return sdk.ErrUnauthorized("Record already exists.").Result()
 	}
@@ -61,7 +65,7 @@ func checkAccess(owners []string, record types.Record, signatures []types.Signat
 	addresses := []string{}
 
 	// Check signatures.
-	resourceSignBytes := helpers.GenRecordHash(&record)
+	resourceSignBytes := record.GenRecordHash()
 	for _, sig := range signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
 		if err != nil {

@@ -1,23 +1,20 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package gql
 
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"reflect"
 	"strconv"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/mitchellh/mapstructure"
 	abci "github.com/tendermint/tendermint/abci/types"
-	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
-	"github.com/tendermint/tendermint/rpc/core"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
 	"github.com/wirelineio/wns/x/nameservice"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -125,76 +122,21 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 
 func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
-
-	records := r.keeper.ListResources(sdkContext)
 	gqlResponse := []*Record{}
 
-	for _, record := range records {
-		gqlRecord, err := getGQLRecord(ctx, r, record)
-		if err != nil {
-			return nil, err
-		}
-
+	// TODO(ashwin): Optimize search.
+	for _, record := range r.keeper.ListResources(sdkContext) {
 		if matchesOnAttributes(&record, attributes) {
+			gqlRecord, err := getGQLRecord(ctx, r, record)
+			if err != nil {
+				return nil, err
+			}
+
 			gqlResponse = append(gqlResponse, gqlRecord)
 		}
 	}
 
 	return gqlResponse, nil
-}
-
-func matchesOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
-	recAttrs := record.Attributes
-
-	for _, attr := range attributes {
-		recAttrVal, recAttrFound := recAttrs[attr.Key]
-		if !recAttrFound {
-			return false
-		}
-
-		if attr.Value.Int != nil {
-			recAttrValInt, ok := recAttrVal.(int)
-			if !ok || *attr.Value.Int != recAttrValInt {
-				return false
-			}
-		}
-
-		if attr.Value.Float != nil {
-			recAttrValFloat, ok := recAttrVal.(float64)
-			if !ok || *attr.Value.Float != recAttrValFloat {
-				return false
-			}
-		}
-
-		if attr.Value.String != nil {
-			recAttrValString, ok := recAttrVal.(string)
-			if !ok || *attr.Value.String != recAttrValString {
-				return false
-			}
-		}
-
-		if attr.Value.Boolean != nil {
-			recAttrValBool, ok := recAttrVal.(bool)
-			if !ok || *attr.Value.Boolean != recAttrValBool {
-				return false
-			}
-		}
-
-		if attr.Value.Reference != nil {
-			obj, ok := recAttrVal.(map[string]interface{})
-			if !ok || obj["type"].(string) != WrnTypeReference {
-				return false
-			}
-			recAttrValRefID := obj["id"].(string)
-			if recAttrValRefID != attr.Value.Reference.ID {
-				return false
-			}
-		}
-
-		// TODO(ashwin): Handle arrays.
-	}
-
-	return true
 }
 
 func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
@@ -271,251 +213,4 @@ func (r *queryResolver) GetResource(ctx context.Context, id string) (*Record, er
 	}
 
 	return nil, nil
-}
-
-func getGQLRecord(ctx context.Context, resolver *queryResolver, record types.Record) (*Record, error) {
-	attributes, err := getAttributes(&record)
-	if err != nil {
-		return nil, err
-	}
-
-	extension, err := getExtension(&record)
-	if err != nil {
-		return nil, err
-	}
-
-	references, err := getReferences(ctx, resolver, &record)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Record{
-		ID:         string(record.ID),
-		Type:       record.Type(),
-		Name:       record.Name(),
-		Version:    record.Version(),
-		Owners:     record.GetOwners(),
-		Attributes: attributes,
-		References: references,
-		Extension:  extension,
-	}, nil
-}
-
-func getReferences(ctx context.Context, resolver *queryResolver, r *types.Record) ([]*Record, error) {
-	var ids []string
-
-	for _, value := range r.Attributes {
-		switch value.(type) {
-		case interface{}:
-			if obj, ok := value.(map[string]interface{}); ok {
-				if obj["type"].(string) == WrnTypeReference {
-					ids = append(ids, obj["id"].(string))
-				}
-			}
-		}
-	}
-
-	return resolver.GetRecordsByIds(ctx, ids)
-}
-
-func getAttributes(r *types.Record) (attributes []*KeyValue, err error) {
-	attributes, err = mapToKeyValuePairs(r.Attributes)
-	return
-}
-
-func getExtension(r *types.Record) (ext Extension, err error) {
-	switch r.Type() {
-	case WnsTypeProtocol:
-		var protocol Protocol
-		err := mapstructure.Decode(r.Extension, &protocol)
-		return protocol, err
-	case WnsTypeBot:
-		var bot Bot
-		err := mapstructure.Decode(r.Extension, &bot)
-		return bot, err
-	case WnsTypePad:
-		var pad Pad
-		err := mapstructure.Decode(r.Extension, &pad)
-		return pad, err
-	default:
-		var unknown UnknownExtension
-		err := mapstructure.Decode(r.Extension, &unknown)
-		return unknown, err
-	}
-}
-
-func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
-	kvPairs := []*KeyValue{}
-
-	trueVal := true
-	falseVal := false
-
-	for key, value := range attrs {
-
-		kvPair := &KeyValue{
-			Key: key,
-		}
-
-		switch val := value.(type) {
-		case nil:
-			kvPair.Value.Null = &trueVal
-		case int:
-			kvPair.Value.Int = &val
-		case float64:
-			kvPair.Value.Float = &val
-		case string:
-			kvPair.Value.String = &val
-		case bool:
-			kvPair.Value.Boolean = &val
-		case interface{}:
-			if obj, ok := value.(map[string]interface{}); ok {
-				if obj["type"].(string) == WrnTypeReference {
-					kvPair.Value.Reference = &Reference{
-						ID: obj["id"].(string),
-					}
-				}
-			}
-		}
-
-		if kvPair.Value.Null == nil {
-			kvPair.Value.Null = &falseVal
-		}
-
-		valueType := reflect.ValueOf(value)
-		if valueType.Kind() == reflect.Slice {
-			// TODO(ashwin): Handle arrays.
-		}
-
-		kvPairs = append(kvPairs, kvPair)
-	}
-
-	return kvPairs, nil
-}
-
-func decodeStdTx(tx string) (*auth.StdTx, error) {
-	bytes, err := base64.StdEncoding.DecodeString(tx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Note: json.Unmarshal doesn't known which Msg struct to use, so we do it "manually".
-	// See https://stackoverflow.com/questions/11066946/partly-json-unmarshal-into-a-map-in-go
-	var objmap map[string]*json.RawMessage
-	err = json.Unmarshal(bytes, &objmap)
-	if err != nil {
-		return nil, err
-	}
-
-	var msgsArr []*json.RawMessage
-	err = json.Unmarshal(*objmap["msg"], &msgsArr)
-	if err != nil {
-		return nil, err
-	}
-
-	var firstMsg map[string]*json.RawMessage
-	err = json.Unmarshal(*msgsArr[0], &firstMsg)
-	if err != nil {
-		return nil, err
-	}
-
-	var messageType string
-	err = json.Unmarshal(*firstMsg["type"], &messageType)
-	if err != nil {
-		return nil, err
-	}
-
-	var msgs []sdk.Msg
-
-	switch messageType {
-	case "nameservice/SetRecord":
-		{
-			var setMsg nameservice.MsgSetRecord
-			err = json.Unmarshal(*firstMsg["value"], &setMsg)
-			if err != nil {
-				return nil, err
-			}
-			msgs = []sdk.Msg{setMsg}
-		}
-	}
-
-	var fee auth.StdFee
-	err = json.Unmarshal(*objmap["fee"], &fee)
-	if err != nil {
-		return nil, err
-	}
-
-	var sigs []*json.RawMessage
-	err = json.Unmarshal(*objmap["signatures"], &sigs)
-	if err != nil {
-		return nil, err
-	}
-
-	var sig map[string]*json.RawMessage
-	err = json.Unmarshal(*sigs[0], &sig)
-	if err != nil {
-		return nil, err
-	}
-
-	var pubKeyStr string
-	err = json.Unmarshal(*sig["pub_key"], &pubKeyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	pubKeyBytes, err := base64.StdEncoding.DecodeString(pubKeyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	pubKey, err := cryptoAmino.PubKeyFromBytes(pubKeyBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	var signature []byte
-	err = json.Unmarshal(*sig["signature"], &signature)
-	if err != nil {
-		return nil, err
-	}
-
-	var memo string
-	err = json.Unmarshal(*objmap["memo"], &memo)
-	if err != nil {
-		return nil, err
-	}
-
-	stdTx := auth.StdTx{
-		Msgs: msgs,
-		Fee:  fee,
-		Signatures: []auth.StdSignature{auth.StdSignature{
-			PubKey:    pubKey,
-			Signature: signature,
-		}},
-		Memo: memo,
-	}
-
-	return &stdTx, nil
-}
-
-func broadcastTx(r *mutationResolver, stdTx *auth.StdTx) (*ctypes.ResultBroadcastTxCommit, error) {
-	txBytes, err := r.Resolver.codec.MarshalBinaryLengthPrefixed(stdTx)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := &rpctypes.Context{}
-	res, err := core.BroadcastTxCommit(ctx, txBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.CheckTx.IsErr() {
-		return nil, errors.New(res.CheckTx.String())
-	}
-
-	if res.DeliverTx.IsErr() {
-		return nil, errors.New(res.DeliverTx.String())
-	}
-
-	return res, nil
 }

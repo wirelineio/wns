@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package types
 
 import (
@@ -41,7 +45,7 @@ func (msg MsgSetRecord) ValidateBasic() sdk.Error {
 		}
 	}
 
-	record := RecordObjToRecord(msg.Payload.Record)
+	record := msg.Payload.Record.ToRecord()
 	if record.Type() == "" {
 		return sdk.ErrInternal("Record 'type' not set.")
 	}

@@ -1,19 +1,42 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package helpers
 
 import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/client/keys"
-
-	canonicalJson "github.com/gibson042/canonicaljson-go"
 	cid "github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/wirelineio/wns/x/nameservice/internal/types"
 	"golang.org/x/crypto/ripemd160"
 )
+
+// MarshalMapToJSONBytes converts map[string]interface{} to bytes.
+func MarshalMapToJSONBytes(val map[string]interface{}) (bytes []byte) {
+	bytes, err := json.Marshal(val)
+	if err != nil {
+		panic("Marshal error.")
+	}
+
+	return
+}
+
+// UnMarshalMapFromJSONBytes converts bytes to map[string]interface{}.
+func UnMarshalMapFromJSONBytes(bytes []byte) map[string]interface{} {
+	var val map[string]interface{}
+	err := json.Unmarshal(bytes, &val)
+
+	if err != nil {
+		panic("Marshal error.")
+	}
+
+	return val
+}
 
 // GetCid gets the content ID.
 func GetCid(content []byte) string {
@@ -30,21 +53,6 @@ func GetCid(content []byte) string {
 	}
 
 	return cid.String()
-}
-
-// GenRecordHash generates a transaction hash.
-func GenRecordHash(record *types.Record) []byte {
-	r := types.Record{
-		Attributes: record.Attributes,
-		Extension:  record.Extension,
-	}
-
-	bytes, err := canonicalJson.Marshal(r)
-	if err != nil {
-		panic("Record marshal error.")
-	}
-
-	return []byte(GetCid(bytes))
 }
 
 // GetAddressFromPubKey gets an address from the public key.
@@ -88,28 +96,6 @@ func BytesFromHex(str string) []byte {
 	}
 
 	return bytes
-}
-
-// GetResourceSignature returns a cryptographic signature for a transaction.
-func GetResourceSignature(record types.Record, name string) ([]byte, crypto.PubKey, error) {
-	keybase, err := keys.NewKeyBaseFromHomeFlag()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	passphrase, err := keys.GetPassphrase(name)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	signBytes := GenRecordHash(&record)
-
-	sigBytes, pubKey, err := keybase.Sign(name, passphrase, signBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return sigBytes, pubKey, nil
 }
 
 // Intersection computes the intersection of two string slices.

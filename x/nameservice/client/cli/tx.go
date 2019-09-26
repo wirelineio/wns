@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package cli
 
 import (
@@ -7,9 +11,11 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -56,7 +62,7 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 				return signResource(payload)
 			}
 
-			msg := types.NewMsgSetRecord(types.PayloadToPayloadObj(payload), cliCtx.GetFromAddress())
+			msg := types.NewMsgSetRecord(payload.ToPayloadObj(), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -117,7 +123,7 @@ func getPayloadFromFile(filePath string) (types.Payload, error) {
 func signResource(payload types.Payload) error {
 	name := viper.GetString("from")
 
-	sigBytes, pubKey, err := helpers.GetResourceSignature(payload.Record, name)
+	sigBytes, pubKey, err := requestSignature(payload.Record, name)
 	if err != nil {
 		return err
 	}
@@ -127,4 +133,25 @@ func signResource(payload types.Payload) error {
 	fmt.Println("Signature :", helpers.BytesToBase64(sigBytes))
 
 	return nil
+}
+
+// requestSignature returns a cryptographic signature for a transaction.
+func requestSignature(record types.Record, name string) ([]byte, crypto.PubKey, error) {
+	keybase, err := keys.NewKeyBaseFromHomeFlag()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	passphrase, err := keys.GetPassphrase(name)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signBytes := record.GenRecordHash()
+	sigBytes, pubKey, err := keybase.Sign(name, passphrase, signBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return sigBytes, pubKey, nil
 }
