@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Changed
+## [0.3.0] - 2019-09-26
+- Implemented new data model (and GQL schema).
+
 ## [0.2.0] - 2019-09-19
 - Upgraded to latest version of Cosmos SDK (from v0.27.0 to v0.37.0).
 

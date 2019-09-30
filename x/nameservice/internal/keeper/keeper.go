@@ -52,7 +52,7 @@ func (k Keeper) GetResource(ctx sdk.Context, id types.ID) types.Record {
 	return obj.ToRecord()
 }
 
-// ListResources - get all record records.
+// ListResources - get all records.
 func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
 	var records []types.Record
 
@@ -65,6 +65,28 @@ func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 			records = append(records, obj.ToRecord())
+		}
+	}
+
+	return records
+}
+
+// MatchResources - get all matching records.
+func (k Keeper) MatchResources(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
+	var records []types.Record
+
+	store := ctx.KVStore(k.storeKey)
+	itr := store.Iterator(nil, nil)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.RecordObj
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			record := obj.ToRecord()
+			if matchFn(&record) {
+				records = append(records, record)
+			}
 		}
 	}
 

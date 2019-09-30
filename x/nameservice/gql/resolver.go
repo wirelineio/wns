@@ -120,20 +120,22 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 	return records, nil
 }
 
+// QueryRecords filters records by K=V conditions.
 func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	// TODO(ashwin): Optimize search.
-	for _, record := range r.keeper.ListResources(sdkContext) {
-		if matchesOnAttributes(&record, attributes) {
-			gqlRecord, err := getGQLRecord(ctx, r, record)
-			if err != nil {
-				return nil, err
-			}
+	records := r.keeper.MatchResources(sdkContext, func(record *types.Record) bool {
+		return matchesOnAttributes(record, attributes)
+	})
 
-			gqlResponse = append(gqlResponse, gqlRecord)
+	for _, record := range records {
+		gqlRecord, err := getGQLRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
 		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
 	}
 
 	return gqlResponse, nil
