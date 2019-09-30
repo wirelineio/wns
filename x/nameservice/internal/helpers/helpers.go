@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package helpers
 
 import (
@@ -6,31 +10,49 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/client/keys"
-
-	"github.com/wirelineio/wns/x/nameservice/internal/types"
-
+	cid "github.com/ipfs/go-cid"
+	mh "github.com/multiformats/go-multihash"
 	"github.com/tendermint/tendermint/crypto"
 	"golang.org/x/crypto/ripemd160"
 )
 
-// GenRecordHash generates a transaction hash.
-func GenRecordHash(r types.Record) []byte {
-	first := sha256.New()
-
-	bytes, err := json.MarshalIndent(r, "", "  ")
+// MarshalMapToJSONBytes converts map[string]interface{} to bytes.
+func MarshalMapToJSONBytes(val map[string]interface{}) (bytes []byte) {
+	bytes, err := json.Marshal(val)
 	if err != nil {
-		panic("Record marshal error.")
+		panic("Marshal error.")
 	}
 
-	first.Write(bytes)
-	firstHash := first.Sum(nil)
+	return
+}
 
-	second := sha256.New()
-	second.Write(firstHash)
-	secondHash := second.Sum(nil)
+// UnMarshalMapFromJSONBytes converts bytes to map[string]interface{}.
+func UnMarshalMapFromJSONBytes(bytes []byte) map[string]interface{} {
+	var val map[string]interface{}
+	err := json.Unmarshal(bytes, &val)
 
-	return secondHash
+	if err != nil {
+		panic("Marshal error.")
+	}
+
+	return val
+}
+
+// GetCid gets the content ID.
+func GetCid(content []byte) string {
+	pref := cid.Prefix{
+		Version:  0,
+		Codec:    cid.DagCBOR,
+		MhType:   mh.SHA2_256,
+		MhLength: -1,
+	}
+
+	cid, err := pref.Sum(content)
+	if err != nil {
+		panic("CID generation error.")
+	}
+
+	return cid.String()
 }
 
 // GetAddressFromPubKey gets an address from the public key.
@@ -76,24 +98,19 @@ func BytesFromHex(str string) []byte {
 	return bytes
 }
 
-// GetResourceSignature returns a cryptographic signature for a transaction.
-func GetResourceSignature(record types.Record, name string) ([]byte, crypto.PubKey, error) {
-	keybase, err := keys.NewKeyBaseFromHomeFlag()
-	if err != nil {
-		return nil, nil, err
+// Intersection computes the intersection of two string slices.
+func Intersection(a, b []string) (c []string) {
+	m := make(map[string]bool)
+
+	for _, item := range a {
+		m[item] = true
 	}
 
-	passphrase, err := keys.GetPassphrase(name)
-	if err != nil {
-		return nil, nil, err
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			c = append(c, item)
+		}
 	}
 
-	signBytes := GenRecordHash(record)
-
-	sigBytes, pubKey, err := keybase.Sign(name, passphrase, signBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return sigBytes, pubKey, nil
+	return
 }

@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package types
 
 import (
@@ -34,9 +38,24 @@ func (msg MsgSetRecord) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress(msg.Signer.String())
 	}
 
-	owner := msg.Payload.Record.Owner
-	if owner == "" {
-		return sdk.ErrInternal("Record owner not set.")
+	owners := msg.Payload.Record.Owners
+	for _, owner := range owners {
+		if owner == "" {
+			return sdk.ErrInternal("Record owner not set.")
+		}
+	}
+
+	record := msg.Payload.Record.ToRecord()
+	if record.Type() == "" {
+		return sdk.ErrInternal("Record 'type' not set.")
+	}
+
+	if record.Name() == "" {
+		return sdk.ErrInternal("Record 'name' not set.")
+	}
+
+	if record.Version() == "" {
+		return sdk.ErrInternal("Record 'version' not set.")
 	}
 
 	return nil

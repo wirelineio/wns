@@ -5,6 +5,7 @@
 
 schema:
 - schema.graphql
+- extensions.graphql
 exec:
   filename: generated.go
 model:

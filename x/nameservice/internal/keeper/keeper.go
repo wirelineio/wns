@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package keeper
 
 import (
@@ -28,7 +32,7 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 // PutResource - saves a record to the store.
 func (k Keeper) PutResource(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(record.ID), k.cdc.MustMarshalBinaryBare(types.RecordToRecordObj(record)))
+	store.Set([]byte(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
 }
 
 // HasResource - checks if a record by the given ID exists.
@@ -45,10 +49,10 @@ func (k Keeper) GetResource(ctx sdk.Context, id types.ID) types.Record {
 	var obj types.RecordObj
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
-	return types.RecordObjToRecord(obj)
+	return obj.ToRecord()
 }
 
-// ListResources - get all record records.
+// ListResources - get all records.
 func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
 	var records []types.Record
 
@@ -60,7 +64,29 @@ func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
 		if bz != nil {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
-			records = append(records, types.RecordObjToRecord(obj))
+			records = append(records, obj.ToRecord())
+		}
+	}
+
+	return records
+}
+
+// MatchResources - get all matching records.
+func (k Keeper) MatchResources(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
+	var records []types.Record
+
+	store := ctx.KVStore(k.storeKey)
+	itr := store.Iterator(nil, nil)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.RecordObj
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			record := obj.ToRecord()
+			if matchFn(&record) {
+				records = append(records, record)
+			}
 		}
 	}
 

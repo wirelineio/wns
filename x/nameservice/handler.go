@@ -1,3 +1,7 @@
+//
+// Copyright 2019 Wireline, Inc.
+//
+
 package nameservice
 
 import (
@@ -26,17 +30,23 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle MsgSetRecord.
 func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
-	payload := types.PayloadObjToPayload(msg.Payload)
-	record := payload.Record
+	payload := msg.Payload.ToPayload()
+	record := &payload.Record
 
+	record.ID = types.ID(record.GenRecordHash())
 	if exists := keeper.HasResource(ctx, record.ID); exists {
-		// Check ownership.
-		owner := keeper.GetResource(ctx, record.ID).Owner
+		return sdk.ErrUnauthorized("Record already exists.").Result()
+	}
 
-		allow := checkAccess(owner, record, payload.Signatures)
-		if !allow {
-			return sdk.ErrUnauthorized("Unauthorized record write.").Result()
+	record.Owners = []string{}
+	for _, sig := range payload.Signatures {
+		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
+		if err != nil {
+			fmt.Println("Error decoding pubKey from bytes: ", err)
+			return sdk.ErrUnauthorized("Invalid public key.").Result()
 		}
+
+		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
 	}
 
 	keeper.PutResource(ctx, payload.Record)
@@ -51,19 +61,17 @@ func handleMsgClearResources(ctx sdk.Context, keeper Keeper, msg types.MsgClearR
 	return sdk.Result{}
 }
 
-func checkAccess(owner string, record types.Record, signatures []types.Signature) bool {
-	addresses := make(map[string]bool)
+func checkAccess(owners []string, record types.Record, signatures []types.Signature) bool {
+	addresses := []string{}
 
 	// Check signatures.
-	resourceSignBytes := helpers.GenRecordHash(record)
+	resourceSignBytes := record.GenRecordHash()
 	for _, sig := range signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
 		if err != nil {
-			fmt.Println("Error decoding pubKey from bytes.")
+			fmt.Println("Error decoding pubKey from bytes: ", err)
 			return false
 		}
-
-		addresses[helpers.GetAddressFromPubKey(pubKey)] = true
 
 		allow := pubKey.VerifyBytes(resourceSignBytes, helpers.BytesFromBase64(sig.Signature))
 		if !allow {
@@ -71,11 +79,13 @@ func checkAccess(owner string, record types.Record, signatures []types.Signature
 
 			return false
 		}
+
+		addresses = append(addresses, helpers.GetAddressFromPubKey(pubKey))
 	}
 
 	// Check one of the addresses matches the owner.
-	_, ok := addresses[owner]
-	if !ok {
+	matches := helpers.Intersection(addresses, owners)
+	if len(matches) == 0 {
 		return false
 	}
 

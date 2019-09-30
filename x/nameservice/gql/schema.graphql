@@ -5,6 +5,16 @@
 # BigUInt is a 64-bit unsigned int.
 scalar BigUInt
 
+# Reference to another record.
+type Reference {
+  id:         String!         # ID of linked record.
+}
+
+# Reference to another record.
+input ReferenceInput {
+  id:         String!
+}
+
 # Value of a given type.
 type Value {
   null:       Boolean
@@ -14,13 +24,9 @@ type Value {
   string:     String
   boolean:    Boolean
 
-  values:     [Value]
-}
+  reference:  Reference
 
-# Key/value pair.
-type KeyValue {
-  key:        String!
-  value:      Value!
+  values:     [Value]
 }
 
 # Value of a given type used as input to queries.
@@ -32,7 +38,15 @@ input ValueInput {
   string:     String
   boolean:    Boolean
 
+  reference:  ReferenceInput
+
   values:     [ValueInput]
+}
+
+# Key/value pair.
+type KeyValue {
+  key:        String!
+  value:      Value!
 }
 
 # Key/value pair for inputs.
@@ -41,41 +55,44 @@ input KeyValueInput {
   value:      ValueInput!
 }
 
-# Record is a base object which is used as a mixin for other types within the Registry.
+# Extensions define additional properties for an entity in the graph database.
+interface Extension {
+  name:       String!
+}
+
+# Record defines the basic properties of an entity in the graph database.
 type Record {
-  id: String!                 # wrn:record:xxxxxxx.
-  type: String!               # wrn:registry-type:xxxxxxx.
-  owner: String!              # Address of record owner.
-  attributes: [KeyValue]      # User defined attributes.
+  id:        String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
+  type:       String!         # wrn:<type>, e.g. wrn:bot, wrn:pad.
+  name:       String!         # e.g. wireline.io/chess
+  version:    String!         # Version (e.g. 0.1.0).
+
+  owners:     [String]!       # Addresses of record owners.
+  attributes: [KeyValue]      # Record attributes.
+  references: [Record]        # Record references.
+  extension:  Extension       # Extension.
 }
 
 # Mutations require payment in coins (e.g. 100wire).
 # Used by the wallet to get the account balance for display and mutations.
 type Coin {
-  type: String!               # e.g. 'WIRE'
-  amount: BigUInt!            # e.g. 1000000
+  type:       String!         # e.g. 'WIRE'
+  quantity:   BigUInt!        # e.g. 1000000
 }
 
 # Represents an account on the blockchain.
 # Mutations have to be signed by a particular account.
 type Account {
-  address: String!            # Blockchain address.
-  pubKey: String              # Public key.
-  number: BigUInt!            # Account number.
+  address:  String!           # Blockchain address.
+  pubKey:   String            # Public key.
+  number:   BigUInt!          # Account number.
   sequence: BigUInt!          # Sequence number used to prevent replays.
-  balance: [Coin!]            # Current balance for each coin type.
+  balance:  [Coin!]           # Current balance for each coin type.
 }
 
-# Bots are autonomous agents that interact with users (and other bots).
-type Bot {
-  record: Record
-  name: String!
-  accessKey: String
-}
-
-# Registry status.
+# WNS status.
 type Status {
-  version: String!
+  version:  String!
 }
 
 type Query {
@@ -95,7 +112,7 @@ type Query {
   ): [Account]
 
   #
-  # Low layer API, works with bare records.
+  # GraphDB API.
   #
 
   # Get records by IDs.
@@ -103,22 +120,18 @@ type Query {
     ids: [String!]
   ): [Record]
 
-  # Get records by attributes.
-  getRecordsByAttributes(
+  queryRecords(
+    # Multiple attribute conditions are in a logical AND.
     attributes: [KeyValueInput]
   ): [Record]
-
-  #
-  # High layer API, works with types.
-  #
-
-  # Get bots.
-  getBotsByAttributes(
-    attributes: [KeyValueInput]
-  ): [Bot]
 }
 
 type Mutation {
+
+  # Add new record.
+  insertRecord(
+    attributes: [KeyValueInput]!
+  ): Record
 
   # Submit a transaction to the blockchain.
   # `tx` is a blob created by https://github.com/wirelineio/registry-client.
