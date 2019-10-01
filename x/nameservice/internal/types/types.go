@@ -5,6 +5,8 @@
 package types
 
 import (
+	"crypto/sha256"
+
 	canonicalJson "github.com/gibson042/canonicaljson-go"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 )
@@ -58,8 +60,8 @@ func (r *Record) ToRecordObj() RecordObj {
 	return resourceObj
 }
 
-// GenRecordHash generates a transaction hash.
-func (r *Record) GenRecordHash() []byte {
+// CanonicalJSON returns the canonical JSON respresentation of the record.
+func (r *Record) CanonicalJSON() []byte {
 	record := Record{
 		Attributes: r.Attributes,
 		Extension:  r.Extension,
@@ -70,7 +72,31 @@ func (r *Record) GenRecordHash() []byte {
 		panic("Record marshal error.")
 	}
 
-	return []byte(helpers.GetCid(bytes))
+	return bytes
+}
+
+// GetSignBytes generates a transaction hash.
+func (r *Record) GetSignBytes() []byte {
+	// Double SHA256 hash.
+
+	// First round.
+	first := sha256.New()
+	bytes := r.CanonicalJSON()
+
+	first.Write(bytes)
+	firstHash := first.Sum(nil)
+
+	// Second round.
+	second := sha256.New()
+	second.Write(firstHash)
+	secondHash := second.Sum(nil)
+
+	return secondHash
+}
+
+// GetCID gets the record CID.
+func (r *Record) GetCID() ID {
+	return ID(helpers.GetCid(r.CanonicalJSON()))
 }
 
 // Signature represents a record signature.
