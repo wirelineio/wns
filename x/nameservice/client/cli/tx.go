@@ -147,7 +147,7 @@ func requestSignature(record types.Record, name string) ([]byte, crypto.PubKey, 
 		return nil, nil, err
 	}
 
-	signBytes := record.GenRecordHash()
+	signBytes := record.GetSignBytes()
 	sigBytes, pubKey, err := keybase.Sign(name, passphrase, signBytes)
 	if err != nil {
 		return nil, nil, err

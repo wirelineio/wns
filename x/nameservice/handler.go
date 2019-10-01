@@ -33,7 +33,10 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 	payload := msg.Payload.ToPayload()
 	record := &payload.Record
 
-	record.ID = types.ID(record.GenRecordHash())
+	// Check signatures.
+	resourceSignBytes := record.GetSignBytes()
+	record.ID = record.GetCID()
+
 	if exists := keeper.HasResource(ctx, record.ID); exists {
 		return sdk.ErrUnauthorized("Record already exists.").Result()
 	}
@@ -44,6 +47,12 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 		if err != nil {
 			fmt.Println("Error decoding pubKey from bytes: ", err)
 			return sdk.ErrUnauthorized("Invalid public key.").Result()
+		}
+
+		sigOK := pubKey.VerifyBytes(resourceSignBytes, helpers.BytesFromBase64(sig.Signature))
+		if !sigOK {
+			fmt.Println("Signature mismatch: ", sig.PubKey)
+			return sdk.ErrUnauthorized("Invalid signature.").Result()
 		}
 
 		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
@@ -65,7 +74,7 @@ func checkAccess(owners []string, record types.Record, signatures []types.Signat
 	addresses := []string{}
 
 	// Check signatures.
-	resourceSignBytes := record.GenRecordHash()
+	resourceSignBytes := record.GetSignBytes()
 	for _, sig := range signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
 		if err != nil {
