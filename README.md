@@ -85,15 +85,15 @@ Check that the WNS is up and running by querying the GQL endpoint in another ter
 
 ```
 $ curl -s -X POST -H "Content-Type: application/json" \
-  -d '{ "query": "{ getStatus { version } }" }' http://localhost:9473/query | jq
+  -d '{ "query": "{ getStatus { version } }" }' http://localhost:9473/graphql | jq
 ```
 
 ## GQL Server API
 
 The GQL server is controlled using the following `wnsd` flags:
 
-* `--gql-server` - Enable GQL server.
-* `--gql-playground` - Enable GQL playground app (Available at http://localhost:9473/).
+* `--gql-server` - Enable GQL server (Available at http://localhost:9473/graphql).
+* `--gql-playground` - Enable GQL playground app (Available at http://localhost:9473/console).
 * `--gql-port` - Port to run the GQL server on (default 9473).
 
 See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.

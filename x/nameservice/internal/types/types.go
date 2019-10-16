@@ -19,7 +19,6 @@ type Record struct {
 	ID         ID                     `json:"id,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
 	Attributes map[string]interface{} `json:"attributes"`
-	Extension  map[string]interface{} `json:"extension"`
 }
 
 // Type of Record.
@@ -55,19 +54,13 @@ func (r *Record) ToRecordObj() RecordObj {
 	resourceObj.ID = r.ID
 	resourceObj.Owners = r.Owners
 	resourceObj.Attributes = helpers.MarshalMapToJSONBytes(r.Attributes)
-	resourceObj.Extension = helpers.MarshalMapToJSONBytes(r.Extension)
 
 	return resourceObj
 }
 
 // CanonicalJSON returns the canonical JSON respresentation of the record.
 func (r *Record) CanonicalJSON() []byte {
-	record := Record{
-		Attributes: r.Attributes,
-		Extension:  r.Extension,
-	}
-
-	bytes, err := canonicalJson.Marshal(record)
+	bytes, err := canonicalJson.Marshal(r.Attributes)
 	if err != nil {
 		panic("Record marshal error.")
 	}
@@ -75,23 +68,24 @@ func (r *Record) CanonicalJSON() []byte {
 	return bytes
 }
 
-// GetSignBytes generates a transaction hash.
-func (r *Record) GetSignBytes() []byte {
+// GetSignBytes generates a record hash to be signed.
+func (r *Record) GetSignBytes() ([]byte, []byte) {
 	// Double SHA256 hash.
+
+	// Input to the first round of hashing.
+	bytes := r.CanonicalJSON()
 
 	// First round.
 	first := sha256.New()
-	bytes := r.CanonicalJSON()
-
 	first.Write(bytes)
 	firstHash := first.Sum(nil)
 
-	// Second round.
+	// Second round of hashing takes as input the output of the first round.
 	second := sha256.New()
 	second.Write(firstHash)
 	secondHash := second.Sum(nil)
 
-	return secondHash
+	return secondHash, bytes
 }
 
 // GetCID gets the record CID.
@@ -116,7 +110,7 @@ type PayloadObj struct {
 func (payloadObj PayloadObj) ToPayload() Payload {
 	var payload Payload
 
-	payload.Record = payloadObj.Record.ToRecord()
+	payload.Record = helpers.UnMarshalMapFromJSONBytes(payloadObj.Record.Attributes)
 	payload.Signatures = payloadObj.Signatures
 
 	return payload
@@ -127,7 +121,6 @@ type RecordObj struct {
 	ID         ID       `json:"id,omitempty"`
 	Owners     []string `json:"owners,omitempty"`
 	Attributes []byte   `json:"attributes"`
-	Extension  []byte   `json:"extension"`
 }
 
 // ToRecord convers RecordObj to Record.
@@ -138,15 +131,14 @@ func (resourceObj *RecordObj) ToRecord() Record {
 	record.ID = resourceObj.ID
 	record.Owners = resourceObj.Owners
 	record.Attributes = helpers.UnMarshalMapFromJSONBytes(resourceObj.Attributes)
-	record.Extension = helpers.UnMarshalMapFromJSONBytes(resourceObj.Extension)
 
 	return record
 }
 
 // Payload represents a signed record payload that can be serialized from/to YAML.
 type Payload struct {
-	Record     Record      `json:"record"`
-	Signatures []Signature `json:"signatures"`
+	Record     map[string]interface{} `json:"record"`
+	Signatures []Signature            `json:"signatures"`
 }
 
 // ToPayloadObj converts Payload to PayloadObj object.
@@ -154,7 +146,7 @@ type Payload struct {
 func (payload *Payload) ToPayloadObj() PayloadObj {
 	var payloadObj PayloadObj
 
-	payloadObj.Record = payload.Record.ToRecordObj()
+	payloadObj.Record.Attributes = helpers.MarshalMapToJSONBytes(payload.Record)
 	payloadObj.Signatures = payload.Signatures
 
 	return payloadObj

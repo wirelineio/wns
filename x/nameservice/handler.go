@@ -31,10 +31,10 @@ func NewHandler(keeper Keeper) sdk.Handler {
 // Handle MsgSetRecord.
 func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
 	payload := msg.Payload.ToPayload()
-	record := &payload.Record
+	record := types.Record{Attributes: payload.Record}
 
 	// Check signatures.
-	resourceSignBytes := record.GetSignBytes()
+	resourceSignBytes, _ := record.GetSignBytes()
 	record.ID = record.GetCID()
 
 	if exists := keeper.HasResource(ctx, record.ID); exists {
@@ -58,7 +58,7 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
 	}
 
-	keeper.PutResource(ctx, payload.Record)
+	keeper.PutResource(ctx, record)
 
 	return sdk.Result{}
 }
@@ -74,7 +74,7 @@ func checkAccess(owners []string, record types.Record, signatures []types.Signat
 	addresses := []string{}
 
 	// Check signatures.
-	resourceSignBytes := record.GetSignBytes()
+	resourceSignBytes, _ := record.GetSignBytes()
 	for _, sig := range signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
 		if err != nil {
