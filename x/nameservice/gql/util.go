@@ -65,19 +65,19 @@ func getExtension(r *types.Record) (ext Extension, err error) {
 	switch r.Type() {
 	case WnsTypeProtocol:
 		var protocol Protocol
-		err := mapstructure.Decode(r.Extension, &protocol)
+		err := mapstructure.Decode(r.Attributes, &protocol)
 		return protocol, err
 	case WnsTypeBot:
 		var bot Bot
-		err := mapstructure.Decode(r.Extension, &bot)
+		err := mapstructure.Decode(r.Attributes, &bot)
 		return bot, err
 	case WnsTypePad:
 		var pad Pad
-		err := mapstructure.Decode(r.Extension, &pad)
+		err := mapstructure.Decode(r.Attributes, &pad)
 		return pad, err
 	default:
 		var unknown UnknownExtension
-		err := mapstructure.Decode(r.Extension, &unknown)
+		err := mapstructure.Decode(r.Attributes, &unknown)
 		return unknown, err
 	}
 }

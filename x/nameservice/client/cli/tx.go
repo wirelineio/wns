@@ -123,35 +123,38 @@ func getPayloadFromFile(filePath string) (types.Payload, error) {
 func signResource(payload types.Payload) error {
 	name := viper.GetString("from")
 
-	sigBytes, pubKey, err := requestSignature(payload.Record, name)
+	cid, sigBytes, signedJSON, pubKey, err := requestSignature(payload.Record, name)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("CID       :", cid)
 	fmt.Println("Address   :", helpers.GetAddressFromPubKey(pubKey))
 	fmt.Println("PubKey    :", helpers.BytesToBase64(pubKey.Bytes()))
 	fmt.Println("Signature :", helpers.BytesToBase64(sigBytes))
+	fmt.Println("SigData   :", string(signedJSON))
 
 	return nil
 }
 
-// requestSignature returns a cryptographic signature for a transaction.
-func requestSignature(record types.Record, name string) ([]byte, crypto.PubKey, error) {
+// requestSignature returns a cryptographic signature for an object.
+func requestSignature(attributes map[string]interface{}, name string) (types.ID, []byte, []byte, crypto.PubKey, error) {
 	keybase, err := keys.NewKeyBaseFromHomeFlag()
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
 	passphrase, err := keys.GetPassphrase(name)
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
-	signBytes := record.GetSignBytes()
+	record := types.Record{Attributes: attributes}
+	signBytes, signedJSON := record.GetSignBytes()
 	sigBytes, pubKey, err := keybase.Sign(name, passphrase, signBytes)
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
-	return sigBytes, pubKey, nil
+	return record.GetCID(), sigBytes, signedJSON, pubKey, nil
 }

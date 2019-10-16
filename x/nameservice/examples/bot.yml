@@ -1,15 +1,13 @@
 record:
-  attributes:
-    type: wrn:bot
-    name: wireline.io/chess-bot
-    version: 2.0.0
-    protocol:
-      type: wrn:reference
-      id: QmdeazkS38aCrqG6qKwaio2fQnShE6RGpmNdqStLkkZcQN
-  extension:
-    name: ChessBot
-    accessKey: 7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c
+  type: wrn:bot
+  name: wireline.io/chess-bot
+  version: 2.0.0
+  protocol:
+    type: wrn:reference
+    id: Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe
+  displayName: ChessBot
+  accessKey: 7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c
 signatures:
   -
     pubKey: 61rphyEC6tEq0pxTI2Sy97VlWCSZhA/PRaUfFlQjhQcpYfTfYtg=
-    sig: CQWVqvzwQmSSgIdHJONa0GkXt9YfGTr30LbFBef+7uVjHfVBtTKSd/KI1h1KpxsscmU1x0/mMoe4EIwwJgi/nA==
+    sig: MwCkCHFFVttat6Njzbll2fK44joCkZlzZRGFZTggDSFAlqF9vvkZjzXck0ggqk5z3UHd7bNqOxJpNq4uRQwPZA==

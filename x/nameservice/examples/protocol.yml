@@ -1,11 +1,9 @@
 record:
-  attributes:
-    type: wrn:protocol
-    name: wireline.io/chess
-    version: 1.0.0
-  extension:
-    name: Chess
+  type: wrn:protocol
+  name: wireline.io/chess
+  version: 1.0.0
+  displayName: Chess
 signatures:
   -
     pubKey: 61rphyEC6tEq0pxTI2Sy97VlWCSZhA/PRaUfFlQjhQcpYfTfYtg=
-    sig: d5pYQk7M9bmhi40x9hX9/xh/U1RXN5Cr3x9ecgMFB/o62dbwVisIb/U5e0ZHExPU6C6PWID9TFOw3ED3JDA96g==
+    sig: YksHNOsyX8zcKJxx2Pjh51q3QvHvhbmOcMq9t5RRAMQXlcYKEhwXAbWBJr0AiatipJUkXtlwmiV9E1y+DW5U0Q==
