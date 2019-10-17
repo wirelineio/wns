@@ -38,7 +38,8 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 	record.ID = record.GetCID()
 
 	if exists := keeper.HasResource(ctx, record.ID); exists {
-		return sdk.ErrUnauthorized("Record already exists.").Result()
+		// Immutable record already exists. No-op.
+		return sdk.Result{}
 	}
 
 	record.Owners = []string{}
