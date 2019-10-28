@@ -16,17 +16,17 @@ import (
 
 // query endpoints supported by the nameservice Querier
 const (
-	ListResources = "list"
-	GetResource   = "get"
+	ListRecords = "list"
+	GetRecord   = "get"
 )
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case ListResources:
+		case ListRecords:
 			return listResources(ctx, path[1:], req, keeper)
-		case GetResource:
+		case GetRecord:
 			return getResource(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
@@ -36,7 +36,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 // nolint: unparam
 func listResources(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
-	records := keeper.ListResources(ctx)
+	records := keeper.ListRecords(ctx)
 
 	bz, err2 := json.MarshalIndent(records, "", "  ")
 	if err2 != nil {
@@ -50,11 +50,11 @@ func listResources(ctx sdk.Context, path []string, req abci.RequestQuery, keeper
 func getResource(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
 
 	id := types.ID(strings.Join(path, "/"))
-	if !keeper.HasResource(ctx, id) {
+	if !keeper.HasRecord(ctx, id) {
 		return nil, sdk.ErrUnknownRequest("Record not found.")
 	}
 
-	record := keeper.GetResource(ctx, id)
+	record := keeper.GetRecord(ctx, id)
 
 	bz, err2 := json.MarshalIndent(record, "", "  ")
 	if err2 != nil {

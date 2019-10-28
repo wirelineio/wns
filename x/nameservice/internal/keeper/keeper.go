@@ -29,20 +29,20 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 	}
 }
 
-// PutResource - saves a record to the store.
-func (k Keeper) PutResource(ctx sdk.Context, record types.Record) {
+// PutRecord - saves a record to the store.
+func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set([]byte(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
 }
 
-// HasResource - checks if a record by the given ID exists.
-func (k Keeper) HasResource(ctx sdk.Context, id types.ID) bool {
+// HasRecord - checks if a record by the given ID exists.
+func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has([]byte(id))
 }
 
-// GetResource - gets a record from the store.
-func (k Keeper) GetResource(ctx sdk.Context, id types.ID) types.Record {
+// GetRecord - gets a record from the store.
+func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get([]byte(id))
@@ -52,8 +52,8 @@ func (k Keeper) GetResource(ctx sdk.Context, id types.ID) types.Record {
 	return obj.ToRecord()
 }
 
-// ListResources - get all records.
-func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
+// ListRecords - get all records.
+func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 	var records []types.Record
 
 	store := ctx.KVStore(k.storeKey)
@@ -71,8 +71,8 @@ func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
 	return records
 }
 
-// MatchResources - get all matching records.
-func (k Keeper) MatchResources(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
+// MatchRecords - get all matching records.
+func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
 	var records []types.Record
 
 	store := ctx.KVStore(k.storeKey)
@@ -93,15 +93,15 @@ func (k Keeper) MatchResources(ctx sdk.Context, matchFn func(*types.Record) bool
 	return records
 }
 
-// DeleteResource - deletes a record from the store.
-func (k Keeper) DeleteResource(ctx sdk.Context, id types.ID) {
+// DeleteRecord - deletes a record from the store.
+func (k Keeper) DeleteRecord(ctx sdk.Context, id types.ID) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete([]byte(id))
 }
 
-// ClearResources - Deletes all records.
+// ClearRecords - Deletes all records.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) ClearResources(ctx sdk.Context) {
+func (k Keeper) ClearRecords(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	itr := store.Iterator(nil, nil)
 	defer itr.Close()

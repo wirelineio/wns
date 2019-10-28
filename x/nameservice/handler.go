@@ -18,9 +18,9 @@ func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case types.MsgSetRecord:
-			return handleMsgSetResource(ctx, keeper, msg)
+			return handleMsgSetRecord(ctx, keeper, msg)
 		case types.MsgClearRecords:
-			return handleMsgClearResources(ctx, keeper, msg)
+			return handleMsgClearRecords(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -29,7 +29,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 // Handle MsgSetRecord.
-func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
+func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
 	payload := msg.Payload.ToPayload()
 	record := types.Record{Attributes: payload.Record}
 
@@ -37,7 +37,7 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 	resourceSignBytes, _ := record.GetSignBytes()
 	record.ID = record.GetCID()
 
-	if exists := keeper.HasResource(ctx, record.ID); exists {
+	if exists := keeper.HasRecord(ctx, record.ID); exists {
 		// Immutable record already exists. No-op.
 		return sdk.Result{}
 	}
@@ -59,14 +59,14 @@ func handleMsgSetResource(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord
 		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
 	}
 
-	keeper.PutResource(ctx, record)
+	keeper.PutRecord(ctx, record)
 
 	return sdk.Result{}
 }
 
 // Handle MsgClearRecords.
-func handleMsgClearResources(ctx sdk.Context, keeper Keeper, msg types.MsgClearRecords) sdk.Result {
-	keeper.ClearResources(ctx)
+func handleMsgClearRecords(ctx sdk.Context, keeper Keeper, msg types.MsgClearRecords) sdk.Result {
+	keeper.ClearRecords(ctx)
 
 	return sdk.Result{}
 }
