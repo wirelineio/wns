@@ -102,8 +102,8 @@ func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 }
 
 // ListNameRecords - get all name records.
-func (k Keeper) ListNameRecords(ctx sdk.Context) []types.NameRecord {
-	var records []types.NameRecord
+func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
+	nameRecords := make(map[string]types.NameRecord)
 
 	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, prefixNamingIndex)
@@ -113,11 +113,11 @@ func (k Keeper) ListNameRecords(ctx sdk.Context) []types.NameRecord {
 		if bz != nil {
 			var record types.NameRecord
 			k.cdc.MustUnmarshalBinaryBare(bz, &record)
-			records = append(records, record)
+			nameRecords[string(itr.Key()[len(prefixNamingIndex):])] = record
 		}
 	}
 
-	return records
+	return nameRecords
 }
 
 // MatchRecords - get all matching records.

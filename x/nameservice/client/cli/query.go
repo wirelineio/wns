@@ -15,6 +15,7 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
+// GetQueryCmd returns query commands.
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	nameserviceQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -26,6 +27,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	nameserviceQueryCmd.AddCommand(client.GetCommands(
 		GetCmdList(storeKey, cdc),
 		GetCmdGetResource(storeKey, cdc),
+		GetCmdNames(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
 }
@@ -66,6 +68,29 @@ func GetCmdGetResource(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			id := args[0]
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/get/%s", queryRoute, id), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdNames queries all naming records.
+func GetCmdNames(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "names",
+		Short: "List name records.",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/names", queryRoute), nil)
 			if err != nil {
 				return err
 			}
