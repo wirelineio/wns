@@ -42,10 +42,22 @@ func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store.Set(append(prefixRecord, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
 }
 
+// SetNameRecord - sets a name record.
+func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(append(prefixNamingIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
+}
+
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(append(prefixRecord, []byte(id)...))
+}
+
+// HasNameRecord - checks if a name record exists.
+func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(append(prefixNamingIndex, []byte(wrn)...))
 }
 
 // GetRecord - gets a record from the store.
@@ -57,6 +69,17 @@ func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
 	return obj.ToRecord()
+}
+
+// GetNameRecord - gets a name record from the store.
+func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) types.NameRecord {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(append(prefixNamingIndex, []byte(wrn)...))
+	var obj types.NameRecord
+	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+	return obj
 }
 
 // ListRecords - get all records.
@@ -72,6 +95,25 @@ func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 			records = append(records, obj.ToRecord())
+		}
+	}
+
+	return records
+}
+
+// ListNameRecords - get all name records.
+func (k Keeper) ListNameRecords(ctx sdk.Context) []types.NameRecord {
+	var records []types.NameRecord
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, prefixNamingIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var record types.NameRecord
+			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+			records = append(records, record)
 		}
 	}
 

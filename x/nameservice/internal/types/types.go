@@ -6,6 +6,8 @@ package types
 
 import (
 	"crypto/sha256"
+	"fmt"
+	"strings"
 
 	canonicalJson "github.com/gibson042/canonicaljson-go"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
@@ -36,6 +38,16 @@ func (r Record) Version() string {
 	return r.Attributes["version"].(string)
 }
 
+// WRN returns the record `wrn`, e.g. `wrn:bot:wireline.io/chess#0.1.0`.
+func (r Record) WRN() string {
+	return strings.ToLower(fmt.Sprintf("%s#%s", r.BaseWRN(), r.Version()))
+}
+
+// BaseWRN returns the record `wrn` minus the version, e.g. `wrn:bot:wireline.io/chess`.
+func (r Record) BaseWRN() string {
+	return strings.ToLower(fmt.Sprintf("%s:%s", r.Type(), r.Name()))
+}
+
 // GetOwners returns the list of owners (for GQL).
 func (r Record) GetOwners() []*string {
 	owners := []*string{}
@@ -56,6 +68,15 @@ func (r *Record) ToRecordObj() RecordObj {
 	resourceObj.Attributes = helpers.MarshalMapToJSONBytes(r.Attributes)
 
 	return resourceObj
+}
+
+// ToNameRecord gets a naming record entry for the record.
+func (r *Record) ToNameRecord() NameRecord {
+	var nameRecord NameRecord
+	nameRecord.ID = r.ID
+	nameRecord.Version = r.Version()
+
+	return nameRecord
 }
 
 // CanonicalJSON returns the canonical JSON respresentation of the record.
@@ -150,4 +171,10 @@ func (payload *Payload) ToPayloadObj() PayloadObj {
 	payloadObj.Signatures = payload.Signatures
 
 	return payloadObj
+}
+
+// NameRecord is a naming record entry for a WRN.
+type NameRecord struct {
+	ID      ID     `json:"id"`
+	Version string `json:"version"`
 }

@@ -42,6 +42,10 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		return sdk.Result{}
 	}
 
+	if exists := keeper.HasNameRecord(ctx, record.WRN()); exists {
+		return sdk.ErrUnauthorized("Name record already exists.").Result()
+	}
+
 	record.Owners = []string{}
 	for _, sig := range payload.Signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
@@ -60,6 +64,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	}
 
 	keeper.PutRecord(ctx, record)
+	processNameRecords(ctx, keeper, record)
 
 	return sdk.Result{}
 }
@@ -100,4 +105,28 @@ func checkAccess(owners []string, record types.Record, signatures []types.Signat
 	}
 
 	return true
+}
+
+func processNameRecords(ctx sdk.Context, keeper Keeper, record types.Record) {
+	keeper.SetNameRecord(ctx, record.WRN(), record.ToNameRecord())
+	maybeUpdateBaseNameRecord(ctx, keeper, record)
+}
+
+func maybeUpdateBaseNameRecord(ctx sdk.Context, keeper Keeper, record types.Record) {
+	if !keeper.HasNameRecord(ctx, record.BaseWRN()) {
+		// Create base name record.
+		keeper.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
+		return
+	}
+
+	// Get current base record (which will have current latest version).
+	baseNameRecord := keeper.GetNameRecord(ctx, record.BaseWRN())
+	latestRecord := keeper.GetRecord(ctx, baseNameRecord.ID)
+
+	latestVersion := helpers.GetSemver(latestRecord.Version())
+	createdVersion := helpers.GetSemver(record.Version())
+	if createdVersion.GreaterThan(latestVersion) {
+		// Need to update the base name record.
+		keeper.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
+	}
 }
