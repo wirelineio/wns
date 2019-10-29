@@ -5,6 +5,9 @@
 package types
 
 import (
+	"strings"
+
+	"github.com/Masterminds/semver"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -46,16 +49,28 @@ func (msg MsgSetRecord) ValidateBasic() sdk.Error {
 	}
 
 	record := msg.Payload.Record.ToRecord()
-	if record.Type() == "" {
+	wrnType := record.Type()
+	if wrnType == "" {
 		return sdk.ErrInternal("Record 'type' not set.")
 	}
 
+	if !strings.HasPrefix(wrnType, "wrn:") {
+		return sdk.ErrInternal("Record 'type' is invalid.")
+	}
+
+	// TODO(ashwin): More validation checks.
 	if record.Name() == "" {
 		return sdk.ErrInternal("Record 'name' not set.")
 	}
 
-	if record.Version() == "" {
+	version := record.Version()
+	if version == "" {
 		return sdk.ErrInternal("Record 'version' not set.")
+	}
+
+	_, err := semver.NewVersion(version)
+	if err != nil {
+		return sdk.ErrInternal("Record 'version' is invalid.")
 	}
 
 	return nil

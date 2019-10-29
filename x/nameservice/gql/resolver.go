@@ -109,7 +109,7 @@ type queryResolver struct{ *Resolver }
 func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*Record, error) {
 	records := make([]*Record, len(ids))
 	for index, id := range ids {
-		record, err := r.GetResource(ctx, id)
+		record, err := r.GetRecord(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +125,7 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	records := r.keeper.MatchResources(sdkContext, func(record *types.Record) bool {
+	records := r.keeper.MatchRecords(sdkContext, func(record *types.Record) bool {
 		return matchesOnAttributes(record, attributes)
 	})
 
@@ -205,12 +205,12 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 	}, nil
 }
 
-func (r *queryResolver) GetResource(ctx context.Context, id string) (*Record, error) {
+func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 
 	dbID := types.ID(id)
-	if r.keeper.HasResource(sdkContext, dbID) {
-		record := r.keeper.GetResource(sdkContext, dbID)
+	if r.keeper.HasRecord(sdkContext, dbID) {
+		record := r.keeper.GetRecord(sdkContext, dbID)
 		return getGQLRecord(ctx, r, record)
 	}
 

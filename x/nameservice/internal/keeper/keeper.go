@@ -11,6 +11,13 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
+// prefixRecord is the prefix for records in the KVStore (used for iterating).
+// Note: golang doesn't support const arrays.
+var prefixRecord = []byte{0x00}
+
+// prefixNamingIndex is the prefix for the unique naming index in the KVStore (used for iterating).
+var prefixNamingIndex = []byte{0x01}
+
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	CoinKeeper bank.Keeper
@@ -29,35 +36,58 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 	}
 }
 
-// PutResource - saves a record to the store.
-func (k Keeper) PutResource(ctx sdk.Context, record types.Record) {
+// PutRecord - saves a record to the store.
+func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	store.Set(append(prefixRecord, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
 }
 
-// HasResource - checks if a record by the given ID exists.
-func (k Keeper) HasResource(ctx sdk.Context, id types.ID) bool {
+// SetNameRecord - sets a name record.
+func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has([]byte(id))
+	store.Set(append(prefixNamingIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
 }
 
-// GetResource - gets a record from the store.
-func (k Keeper) GetResource(ctx sdk.Context, id types.ID) types.Record {
+// HasRecord - checks if a record by the given ID exists.
+func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(append(prefixRecord, []byte(id)...))
+}
+
+// HasNameRecord - checks if a name record exists.
+func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(append(prefixNamingIndex, []byte(wrn)...))
+}
+
+// GetRecord - gets a record from the store.
+func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get([]byte(id))
+	bz := store.Get(append(prefixRecord, []byte(id)...))
 	var obj types.RecordObj
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
 	return obj.ToRecord()
 }
 
-// ListResources - get all records.
-func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
+// GetNameRecord - gets a name record from the store.
+func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) types.NameRecord {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(append(prefixNamingIndex, []byte(wrn)...))
+	var obj types.NameRecord
+	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+	return obj
+}
+
+// ListRecords - get all records.
+func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 	var records []types.Record
 
 	store := ctx.KVStore(k.storeKey)
-	itr := store.Iterator(nil, nil)
+	itr := sdk.KVStorePrefixIterator(store, prefixRecord)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -71,12 +101,31 @@ func (k Keeper) ListResources(ctx sdk.Context) []types.Record {
 	return records
 }
 
-// MatchResources - get all matching records.
-func (k Keeper) MatchResources(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
+// ListNameRecords - get all name records.
+func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
+	nameRecords := make(map[string]types.NameRecord)
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, prefixNamingIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var record types.NameRecord
+			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+			nameRecords[string(itr.Key()[len(prefixNamingIndex):])] = record
+		}
+	}
+
+	return nameRecords
+}
+
+// MatchRecords - get all matching records.
+func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
 	var records []types.Record
 
 	store := ctx.KVStore(k.storeKey)
-	itr := store.Iterator(nil, nil)
+	itr := sdk.KVStorePrefixIterator(store, prefixRecord)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -93,16 +142,11 @@ func (k Keeper) MatchResources(ctx sdk.Context, matchFn func(*types.Record) bool
 	return records
 }
 
-// DeleteResource - deletes a record from the store.
-func (k Keeper) DeleteResource(ctx sdk.Context, id types.ID) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete([]byte(id))
-}
-
-// ClearResources - Deletes all records.
+// ClearRecords - Deletes all records.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) ClearResources(ctx sdk.Context) {
+func (k Keeper) ClearRecords(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
+	// Note: Clear everything, records and indexes.
 	itr := store.Iterator(nil, nil)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {

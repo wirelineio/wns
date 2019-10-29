@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/Masterminds/semver"
 	cid "github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 	"github.com/tendermint/tendermint/crypto"
@@ -113,4 +114,14 @@ func Intersection(a, b []string) (c []string) {
 	}
 
 	return
+}
+
+// GetSemver returns the semver object for a string version.
+func GetSemver(versionStr string) *semver.Version {
+	version, err := semver.NewVersion(versionStr)
+	if err != nil {
+		panic("Invalid version string.")
+	}
+
+	return version
 }
