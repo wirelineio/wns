@@ -130,7 +130,24 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 	})
 
 	for _, record := range records {
-		gqlRecord, err := getGQLRecord(ctx, r, record)
+		gqlRecord, err := getGQLRecord(ctx, r, &record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	return gqlResponse, nil
+}
+
+// ResolveRecords resolves records by ref/WRN, with semver range support.
+func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*Record, error) {
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*Record{}
+
+	for _, ref := range refs {
+		gqlRecord, err := getGQLRecord(ctx, r, r.keeper.ResolveWRN(sdkContext, ref))
 		if err != nil {
 			return nil, err
 		}
@@ -211,7 +228,7 @@ func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, erro
 	dbID := types.ID(id)
 	if r.keeper.HasRecord(sdkContext, dbID) {
 		record := r.keeper.GetRecord(sdkContext, dbID)
-		return getGQLRecord(ctx, r, record)
+		return getGQLRecord(ctx, r, &record)
 	}
 
 	return nil, nil

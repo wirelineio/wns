@@ -85,6 +85,7 @@ type ComplexityRoot struct {
 		GetAccounts     func(childComplexity int, addresses []string) int
 		GetRecordsByIds func(childComplexity int, ids []string) int
 		QueryRecords    func(childComplexity int, attributes []*KeyValueInput) int
+		ResolveRecords  func(childComplexity int, refs []string) int
 	}
 
 	Record struct {
@@ -137,6 +138,7 @@ type QueryResolver interface {
 	GetAccounts(ctx context.Context, addresses []string) ([]*Account, error)
 	GetRecordsByIds(ctx context.Context, ids []string) ([]*Record, error)
 	QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error)
+	ResolveRecords(ctx context.Context, refs []string) ([]*Record, error)
 }
 
 type executableSchema struct {
@@ -311,6 +313,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.QueryRecords(childComplexity, args["attributes"].([]*KeyValueInput)), true
+
+	case "Query.ResolveRecords":
+		if e.complexity.Query.ResolveRecords == nil {
+			break
+		}
+
+		args, err := ec.field_Query_resolveRecords_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ResolveRecords(childComplexity, args["refs"].([]string)), true
 
 	case "Record.ID":
 		if e.complexity.Record.ID == nil {
@@ -663,9 +677,15 @@ type Query {
     ids: [String!]
   ): [Record]
 
+  # Query records.
   queryRecords(
     # Multiple attribute conditions are in a logical AND.
     attributes: [KeyValueInput]
+  ): [Record]
+
+  # Resolve WRNs to records.
+  resolveRecords(
+    refs: [String!]
   ): [Record]
 }
 
@@ -768,6 +788,20 @@ func (ec *executionContext) field_Query_queryRecords_args(ctx context.Context, r
 		}
 	}
 	args["attributes"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_resolveRecords_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []string
+	if tmp, ok := rawArgs["refs"]; ok {
+		arg0, err = ec.unmarshalOString2ᚕstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["refs"] = arg0
 	return args, nil
 }
 
@@ -1301,6 +1335,36 @@ func (ec *executionContext) _Query_queryRecords(ctx context.Context, field graph
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().QueryRecords(rctx, args["attributes"].([]*KeyValueInput))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*Record)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_resolveRecords(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_resolveRecords_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ResolveRecords(rctx, args["refs"].([]string))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -3038,6 +3102,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_queryRecords(ctx, field)
+				return res
+			})
+		case "resolveRecords":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resolveRecords(ctx, field)
 				return res
 			})
 		case "__type":

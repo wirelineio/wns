@@ -19,6 +19,7 @@ const (
 	ListRecords = "list"
 	GetRecord   = "get"
 	ListNames   = "names"
+	ResolveName = "resolve"
 )
 
 // NewQuerier is the module level router for state queries
@@ -31,6 +32,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return getResource(ctx, path[1:], req, keeper)
 		case ListNames:
 			return listNames(ctx, path[1:], req, keeper)
+		case ResolveName:
+			return resolveName(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -72,6 +75,20 @@ func listNames(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Kee
 	records := keeper.ListNameRecords(ctx)
 
 	bz, err2 := json.MarshalIndent(records, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func resolveName(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	wrn := strings.Join(path, "/")
+
+	record := keeper.ResolveWRN(ctx, wrn)
+
+	bz, err2 := json.MarshalIndent(record, "", "  ")
 	if err2 != nil {
 		panic("Could not marshal result to JSON.")
 	}

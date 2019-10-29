@@ -20,7 +20,7 @@ type ID string
 type Record struct {
 	ID         ID                     `json:"id,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
-	Attributes map[string]interface{} `json:"attributes"`
+	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
 
 // Type of Record.
@@ -141,7 +141,7 @@ func (payloadObj PayloadObj) ToPayload() Payload {
 type RecordObj struct {
 	ID         ID       `json:"id,omitempty"`
 	Owners     []string `json:"owners,omitempty"`
-	Attributes []byte   `json:"attributes"`
+	Attributes []byte   `json:"attributes,omitempty"`
 }
 
 // ToRecord convers RecordObj to Record.
