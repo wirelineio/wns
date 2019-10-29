@@ -5,6 +5,9 @@
 package keeper
 
 import (
+	"strings"
+
+	"github.com/Masterminds/semver"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -118,6 +121,76 @@ func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
 	}
 
 	return nameRecords
+}
+
+// ResolveWRN resolves a WRN to a record.
+// Note: Version part of the WRN might have a semver range.
+func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
+	segments := strings.Split(wrn, "#")
+	if len(segments) == 2 {
+		baseWRN, semver := segments[0], segments[1]
+		if strings.HasPrefix(semver, "^") || strings.HasPrefix(semver, "~") {
+			// Handle semver range.
+			return k.ResolveBaseWRN(ctx, baseWRN, semver)
+		}
+	}
+
+	return k.ResolveWRNPath(ctx, wrn)
+}
+
+// ResolveWRNPath resolves a WRN (full path) to a record.
+// Note: Version part of the WRN MUST NOT have a semver range.
+func (k Keeper) ResolveWRNPath(ctx sdk.Context, wrn string) *types.Record {
+	store := ctx.KVStore(k.storeKey)
+	nameKey := append(prefixNamingIndex, []byte(wrn)...)
+
+	if store.Has(nameKey) {
+		bz := store.Get(nameKey)
+		var obj types.NameRecord
+		k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+		record := k.GetRecord(ctx, obj.ID)
+		return &record
+	}
+
+	return nil
+}
+
+// ResolveBaseWRN resolves a BaseWRN + semver range to a record.
+func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange string) *types.Record {
+	semverConstraint, err := semver.NewConstraint(semverRange)
+	if err != nil {
+		// Handle constraint not being parsable.
+		return nil
+	}
+
+	var highestSemver, _ = semver.NewVersion("0.0.0")
+	var highestNameRecord types.NameRecord = types.NameRecord{}
+
+	baseWRNPrefix := append(prefixNamingIndex, []byte(baseWRN)...)
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, baseWRNPrefix)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var record types.NameRecord
+			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+
+			semver, err := semver.NewVersion(record.Version)
+			if err == nil && semverConstraint.Check(semver) && semver.GreaterThan(highestSemver) {
+				highestSemver = semver
+				highestNameRecord = record
+			}
+		}
+	}
+
+	if highestNameRecord.ID != "" {
+		record := k.GetRecord(ctx, highestNameRecord.ID)
+		return &record
+	}
+
+	return nil
 }
 
 // MatchRecords - get all matching records.

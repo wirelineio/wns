@@ -28,6 +28,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdList(storeKey, cdc),
 		GetCmdGetResource(storeKey, cdc),
 		GetCmdNames(storeKey, cdc),
+		GetCmdResolve(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
 }
@@ -91,6 +92,31 @@ func GetCmdNames(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/names", queryRoute), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdResolve resolves a WRN to a record.
+func GetCmdResolve(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "resolve [wrn]",
+		Short: "Resolve WRN to record.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			wrn := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", queryRoute, wrn), nil)
 			if err != nil {
 				return err
 			}
