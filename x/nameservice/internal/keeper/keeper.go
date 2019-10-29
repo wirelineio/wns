@@ -164,11 +164,17 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 		return nil
 	}
 
+	store := ctx.KVStore(k.storeKey)
+
+	baseNameKey := append(prefixNamingIndex, []byte(baseWRN)...)
+	if !store.Has(baseNameKey) {
+		return nil
+	}
+
 	var highestSemver, _ = semver.NewVersion("0.0.0")
 	var highestNameRecord types.NameRecord = types.NameRecord{}
 
 	baseWRNPrefix := append(prefixNamingIndex, []byte(baseWRN)...)
-	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, baseWRNPrefix)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {

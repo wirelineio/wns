@@ -120,9 +120,15 @@ type Query {
     ids: [String!]
   ): [Record]
 
+  # Query records.
   queryRecords(
     # Multiple attribute conditions are in a logical AND.
     attributes: [KeyValueInput]
+  ): [Record]
+
+  # Resolve WRNs to records.
+  resolveRecords(
+    refs: [String!]
   ): [Record]
 }
 

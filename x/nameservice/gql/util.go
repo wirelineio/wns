@@ -12,18 +12,23 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
-func getGQLRecord(ctx context.Context, resolver *queryResolver, record types.Record) (*Record, error) {
-	attributes, err := getAttributes(&record)
+func getGQLRecord(ctx context.Context, resolver *queryResolver, record *types.Record) (*Record, error) {
+	// Nil record.
+	if record == nil {
+		return nil, nil
+	}
+
+	attributes, err := getAttributes(record)
 	if err != nil {
 		return nil, err
 	}
 
-	extension, err := getExtension(&record)
+	extension, err := getExtension(record)
 	if err != nil {
 		return nil, err
 	}
 
-	references, err := getReferences(ctx, resolver, &record)
+	references, err := getReferences(ctx, resolver, record)
 	if err != nil {
 		return nil, err
 	}
