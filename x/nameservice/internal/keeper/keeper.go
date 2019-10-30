@@ -134,18 +134,18 @@ func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
 	segments := strings.Split(wrn, "#")
 	if len(segments) == 2 {
 		baseWRN, semver := segments[0], segments[1]
-		if strings.HasPrefix(semver, "^") || strings.HasPrefix(semver, "~") {
+		if strings.ContainsAny(semver, "^~<>=!") {
 			// Handle semver range.
 			return k.ResolveBaseWRN(ctx, baseWRN, semver)
 		}
 	}
 
-	return k.ResolveWRNPath(ctx, wrn)
+	return k.ResolveFullWRN(ctx, wrn)
 }
 
-// ResolveWRNPath resolves a WRN (full path) to a record.
+// ResolveFullWRN resolves a WRN (full path) to a record.
 // Note: Version part of the WRN MUST NOT have a semver range.
-func (k Keeper) ResolveWRNPath(ctx sdk.Context, wrn string) *types.Record {
+func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
 	store := ctx.KVStore(k.storeKey)
 	nameKey := append(prefixWRNToNameRecordIndex, []byte(wrn)...)
 
@@ -161,7 +161,7 @@ func (k Keeper) ResolveWRNPath(ctx sdk.Context, wrn string) *types.Record {
 	return nil
 }
 
-// ResolveBaseWRN resolves a BaseWRN + semver range to a record.
+// ResolveBaseWRN resolves a BaseWRN + semver range to a record (picks the highest matching version).
 func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange string) *types.Record {
 	semverConstraint, err := semver.NewConstraint(semverRange)
 	if err != nil {
