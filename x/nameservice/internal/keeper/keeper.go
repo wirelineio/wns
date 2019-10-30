@@ -205,8 +205,8 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 }
 
 // MatchRecords - get all matching records.
-func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) []types.Record {
-	var records []types.Record
+func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) []*types.Record {
+	var records []*types.Record
 
 	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, prefixCIDToRecordIndex)
@@ -218,7 +218,7 @@ func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) 
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 			record := obj.ToRecord()
 			if matchFn(&record) {
-				records = append(records, record)
+				records = append(records, &record)
 			}
 		}
 	}

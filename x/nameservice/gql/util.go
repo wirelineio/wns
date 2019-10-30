@@ -8,9 +8,19 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/Masterminds/semver"
 	"github.com/mitchellh/mapstructure"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
+
+// VersionAttributeName denotes the version attribute name in a record.
+const VersionAttributeName = "version"
+
+// VersionMatchAll represents a special value to match all versions.
+const VersionMatchAll = "*"
+
+// VersionMatchLatest represents a special value to match only the latest version of each record.
+const VersionMatchLatest = "latest"
 
 func getGQLRecord(ctx context.Context, resolver *queryResolver, record *types.Record) (*Record, error) {
 	// Nil record.
@@ -135,7 +145,7 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 	return kvPairs, nil
 }
 
-func matchesOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
+func matchOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
 	recAttrs := record.Attributes
 
 	for _, attr := range attributes {
@@ -160,7 +170,16 @@ func matchesOnAttributes(record *types.Record, attributes []*KeyValueInput) bool
 
 		if attr.Value.String != nil {
 			recAttrValString, ok := recAttrVal.(string)
-			if !ok || *attr.Value.String != recAttrValString {
+			if !ok {
+				return false
+			}
+
+			// Special handling for version attribute.
+			if attr.Key == VersionAttributeName {
+				return matchOnVersionAttribute(*attr.Value.String, recAttrValString)
+			}
+
+			if *attr.Value.String != recAttrValString {
 				return false
 			}
 		}
@@ -187,4 +206,69 @@ func matchesOnAttributes(record *types.Record, attributes []*KeyValueInput) bool
 	}
 
 	return true
+}
+
+func matchOnVersionAttribute(querySemverStr string, recordVersionStr string) bool {
+	if querySemverStr == VersionMatchAll || querySemverStr == VersionMatchLatest {
+		return true
+	}
+
+	querySemverConstraint, err := semver.NewConstraint(querySemverStr)
+	if err != nil {
+		// Handle constraint not being parsable.
+		return false
+	}
+
+	recordVersion, err := semver.NewVersion(recordVersionStr)
+	if err != nil {
+		return false
+	}
+
+	return querySemverConstraint.Check(recordVersion)
+}
+
+func requestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
+	for _, attr := range attributes {
+		if attr.Key == VersionAttributeName && attr.Value.String != nil {
+			if *attr.Value.String == VersionMatchAll {
+				return false
+			}
+
+			if *attr.Value.String == VersionMatchLatest {
+				return true
+			}
+		}
+	}
+
+	return true
+}
+
+// Used to filter records and retain only the latest versions.
+type bestMatch struct {
+	version *semver.Version
+	record  *types.Record
+}
+
+// Only return the latest version of each record.
+func getLatestVersions(records []*types.Record) []*types.Record {
+	baseWrnBestMatch := make(map[string]bestMatch)
+	for _, record := range records {
+		baseWrn := record.BaseWRN()
+		recordVersion, _ := semver.NewVersion(record.Version())
+
+		currentBestMatch, exists := baseWrnBestMatch[baseWrn]
+		if !exists || recordVersion.GreaterThan(currentBestMatch.version) {
+			// Update current best match.
+			baseWrnBestMatch[baseWrn] = bestMatch{recordVersion, record}
+		}
+	}
+
+	var matches = make([]*types.Record, len(baseWrnBestMatch))
+	var index int
+	for _, match := range baseWrnBestMatch {
+		matches[index] = match.record
+		index++
+	}
+
+	return matches
 }
