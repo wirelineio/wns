@@ -125,12 +125,16 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	records := r.keeper.MatchRecords(sdkContext, func(record *types.Record) bool {
-		return matchesOnAttributes(record, attributes)
+	var records = r.keeper.MatchRecords(sdkContext, func(record *types.Record) bool {
+		return matchOnAttributes(record, attributes)
 	})
 
+	if requestedLatestVersionsOnly(attributes) {
+		records = getLatestVersions(records)
+	}
+
 	for _, record := range records {
-		gqlRecord, err := getGQLRecord(ctx, r, &record)
+		gqlRecord, err := getGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
 		}
