@@ -17,11 +17,11 @@ Adding some ENV variables is necessary if you've never used `go mod` on your mac
 
 ```
 mkdir -p $HOME/go/bin
-echo "export GOPATH=$HOME/go" >> ~/.bash_profile
-echo "export GOBIN=\$GOPATH/bin" >> ~/.bash_profile
-echo "export PATH=\$PATH:\$GOBIN" >> ~/.bash_profile
-echo "export GO111MODULE=on" >> ~/.bash_profile
-source ~/.bash_profile
+echo "export GOPATH=$HOME/go" >> ~/.profile
+echo "export GOBIN=\$GOPATH/bin" >> ~/.profile
+echo "export PATH=\$PATH:\$GOBIN" >> ~/.profile
+echo "export GO111MODULE=on" >> ~/.profile
+source ~/.profile
 ```
 
 Clone the repo (e.g. inside ~/wireline), build and install the binaries.
