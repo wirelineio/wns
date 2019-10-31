@@ -176,11 +176,13 @@ func matchOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
 
 			// Special handling for version attribute.
 			if attr.Key == VersionAttributeName {
-				return matchOnVersionAttribute(*attr.Value.String, recAttrValString)
-			}
-
-			if *attr.Value.String != recAttrValString {
-				return false
+				if !matchOnVersionAttribute(*attr.Value.String, recAttrValString) {
+					return false
+				}
+			} else {
+				if *attr.Value.String != recAttrValString {
+					return false
+				}
 			}
 		}
 
