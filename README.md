@@ -98,6 +98,48 @@ The GQL server is controlled using the following `wnsd` flags:
 
 See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
 
+## Testnets
+
+### Development
+
+Endpoints
+
+* GQL: https://wns-testnet.dev.wireline.ninja/graphql
+* GQL Playground: https://wns-testnet.dev.wireline.ninja/console
+* RPC: tcp://wns-testnet.dev.wireline.ninja:26657
+
+### Production
+
+Endpoints
+
+* GQL: https://wns-testnet.wireline.ninja/graphql
+* GQL Playground: https://wns-testnet.wireline.ninja/console
+* RPC: tcp://wns-testnet.wireline.ninja:26657
+
+Note: The `wnscli` command accepts a `--node` flag for the RPC endpoint.
+
+## Faucet
+
+The testnets come with a genesis account (`root`) that can be used to transfer funds to a new account. Run these commands locally to restore the keys on your own machine.
+
+Note: Access to the mnemonic means access to all funds in the account. Don't share or use this mnemonic for non-testing purposes.
+
+```
+$ wnscli keys add root-dev-env --recover
+
+# Use the following mnemonic for recovery:
+# salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple
+
+$ wnscli tx bank send $(wnscli keys show root-dev-env -a) cosmos1lpzffjhasv5qhn7rn6lks9u4dvpzpuj922tdmy 1000wire  --from root-dev-env --chain-id=wireline --node tcp://wns-testnet.dev.wireline.ninja:26657
+
+# Replace cosmos1lpzffjhasv5qhn7rn6lks9u4dvpzpuj922tdmy with the address you want to transfer funds to.
+
+# Query updated balances.
+
+$ wnscli query account $(wnscli keys show root-dev-env -a) --chain-id=wireline --node tcp://wns-testnet.dev.wireline.ninja:26657
+$ wnscli query account cosmos1lpzffjhasv5qhn7rn6lks9u4dvpzpuj922tdmy --chain-id=wireline --node tcp://wns-testnet.dev.wireline.ninja:26657
+```
+
 ## References
 
 * https://golang.org/doc/install
