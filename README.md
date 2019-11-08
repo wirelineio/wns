@@ -6,7 +6,7 @@ Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
 ### Setup Machine
 
-Install golang 1.13.0+ for your platform.
+[Install golang](https://golang.org/doc/install) 1.13.0+ for your platform.
 
 ```
 $ go version
