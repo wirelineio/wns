@@ -51,9 +51,9 @@ Initialize configuration files and genesis file.
 $ wnsd init my-node --chain-id wireline
 
 $ wnscli keys add root --recover
-# Use the following mnemonic:
+# Use the following mnemonic (or pass your own saved mnemonic from earlier runs):
 # salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple
-# If you'd like to use your own mnemonic, don't pass the --recover option.
+# To generate a new mnemonic & key, skip the --recover option.
 
 $ wnsd add-genesis-account $(wnscli keys show root -a) 100000000wire,100000000stake
 ```
