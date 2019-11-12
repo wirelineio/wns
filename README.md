@@ -6,14 +6,15 @@ Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
 ### Setup Machine
 
-[Install golang](https://golang.org/doc/install) 1.13.0+ for your platform.
+* [Install golang](https://golang.org/doc/install) 1.13.0+ for the required platform.
+* Test that `golang` has been successfully installed on the machine.
 
 ```
 $ go version
 go version go1.13 linux/amd64
 ```
 
-Adding some ENV variables is necessary if you've never used `go mod` on your machine.
+Adding some ENV variables is necessary if `go mod` has never been used on the machine.
 
 ```
 mkdir -p $HOME/go/bin
@@ -33,7 +34,7 @@ $ cd wns
 $ make install
 ```
 
-Now you should be able to run the following commands:
+Test that the following commands work:
 
 ```
 $ wnsd help
@@ -42,7 +43,7 @@ $ wnscli help
 
 ### Initialize Blockchain
 
-Initialize the blockchain if you're never run it before (or run `rm -rf ~/.wnsd ~/.wnscli` first to delete all existing data and start over).
+Initialize the blockchain if it has never been run before (or run `rm -rf ~/.wnsd ~/.wnscli` first to delete all existing data and start over).
 
 Initialize configuration files and genesis file.
 
@@ -58,7 +59,7 @@ $ wnscli keys add root --recover
 $ wnsd add-genesis-account $(wnscli keys show root -a) 100000000wire,100000000stake
 ```
 
-Configure your CLI to eliminate need for chain-id flag.
+Configure the CLI to eliminate the need for the `chain-id` flag.
 
 ```
 $ wnscli config chain-id wireline
@@ -81,7 +82,7 @@ Start the server.
 $ wnsd start start --gql-server --gql-playground
 ```
 
-Check that the WNS is up and running by querying the GQL endpoint in another terminal.
+Check that WNS is up and running by querying the GQL endpoint in another terminal.
 
 ```
 $ curl -s -X POST -H "Content-Type: application/json" \
@@ -120,7 +121,7 @@ Note: The `wnscli` command accepts a `--node` flag for the RPC endpoint.
 
 ## Faucet
 
-The testnets come with a genesis account (`root`) that can be used to transfer funds to a new account. Run these commands locally to restore the keys on your own machine.
+The testnets come with a genesis account (`root`) that can be used to transfer funds to a new account. Run these commands locally to restore the keys.
 
 Note: Access to the mnemonic means access to all funds in the account. Don't share or use this mnemonic for non-testing purposes.
 
@@ -132,7 +133,7 @@ $ wnscli keys add root-dev-env --recover
 
 $ wnscli tx bank send $(wnscli keys show root-dev-env -a) cosmos1lpzffjhasv5qhn7rn6lks9u4dvpzpuj922tdmy 1000wire  --from root-dev-env --chain-id=wireline --node tcp://wns-testnet.dev.wireline.ninja:26657
 
-# Replace cosmos1lpzffjhasv5qhn7rn6lks9u4dvpzpuj922tdmy with the address you want to transfer funds to.
+# Replace cosmos1lpzffjhasv5qhn7rn6lks9u4dvpzpuj922tdmy with the address to transfer funds to.
 
 # Query updated balances.
 
