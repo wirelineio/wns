@@ -2,14 +2,14 @@
 
 ## Clear Remote WNS
 
-To clear a remote WNS, you need to know:
+To clear a remote WNS, the following information is required:
 
 * The RPC endpoint of the remote WNS (e.g. see https://github.com/wirelineio/wns#testnets).
 * The mnemonic for an account that has funds on the WNS.
 
 The following example will work for https://wns-testnet.dev.wireline.ninja/console.
 
-Create an account on your machine, using the mnemonic for the remote `root` account.
+Create an account on a different machine (e.g. laptop/desktop), using the mnemonic for the remote `root` account.
 
 ```
 $ wnscli keys add root-testnet-dev --recover
