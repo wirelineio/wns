@@ -99,6 +99,10 @@ The GQL server is controlled using the following `wnsd` flags:
 
 See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
 
+## WNS CLI
+
+[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying wns records. 
+
 ## Testnets
 
 ### Development
