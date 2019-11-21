@@ -89,7 +89,7 @@ func (r *mutationResolver) InsertRecord(ctx context.Context, attributes []*KeyVa
 }
 
 func (r *mutationResolver) Submit(ctx context.Context, tx string) (*string, error) {
-	stdTx, err := decodeStdTx(tx)
+	stdTx, err := decodeStdTx(r.codec, tx)
 	if err != nil {
 		return nil, err
 	}
