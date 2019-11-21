@@ -6,6 +6,8 @@ package nameservice
 
 import (
 	"fmt"
+	"reflect"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
@@ -63,6 +65,18 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		record.Owners = append(record.Owners, helpers.GetAddressFromPubKey(pubKey))
 	}
 
+	// Sort owners list.
+	sort.Strings(record.Owners)
+
+	// Basic access control - check if record owners === owners of `latest` (according to semver) version.
+	if keeper.HasNameRecord(ctx, record.BaseWRN()) {
+		latestNameRecord := keeper.GetNameRecord(ctx, record.BaseWRN())
+		latestRecord := keeper.GetRecord(ctx, latestNameRecord.ID)
+		if !reflect.DeepEqual(latestRecord.Owners, record.Owners) {
+			return sdk.ErrUnauthorized("Owners mismatch, operation not allowed.").Result()
+		}
+	}
+
 	keeper.PutRecord(ctx, record)
 	processNameRecords(ctx, keeper, record)
 
@@ -74,37 +88,6 @@ func handleMsgClearRecords(ctx sdk.Context, keeper Keeper, msg types.MsgClearRec
 	keeper.ClearRecords(ctx)
 
 	return sdk.Result{}
-}
-
-func checkAccess(owners []string, record types.Record, signatures []types.Signature) bool {
-	addresses := []string{}
-
-	// Check signatures.
-	resourceSignBytes, _ := record.GetSignBytes()
-	for _, sig := range signatures {
-		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
-		if err != nil {
-			fmt.Println("Error decoding pubKey from bytes: ", err)
-			return false
-		}
-
-		allow := pubKey.VerifyBytes(resourceSignBytes, helpers.BytesFromBase64(sig.Signature))
-		if !allow {
-			fmt.Println("Signature mismatch: ", sig.PubKey)
-
-			return false
-		}
-
-		addresses = append(addresses, helpers.GetAddressFromPubKey(pubKey))
-	}
-
-	// Check one of the addresses matches the owner.
-	matches := helpers.Intersection(addresses, owners)
-	if len(matches) == 0 {
-		return false
-	}
-
-	return true
 }
 
 func processNameRecords(ctx sdk.Context, keeper Keeper, record types.Record) {
