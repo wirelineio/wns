@@ -227,6 +227,7 @@ func NewNameServiceApp(
 		bank.ModuleName,
 		slashing.ModuleName,
 		nameservice.ModuleName,
+		supply.ModuleName,
 		genutil.ModuleName,
 	)
 
