@@ -29,6 +29,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 	"github.com/wirelineio/wns/x/nameservice/gql"
 )
@@ -55,6 +56,7 @@ var (
 		supply.AppModuleBasic{},
 
 		nameservice.AppModule{},
+		bond.AppModule{},
 	)
 	// account permissions
 	maccPerms = map[string][]string{
@@ -91,6 +93,7 @@ type nameServiceApp struct {
 	supplyKeeper   supply.Keeper
 	paramsKeeper   params.Keeper
 	nsKeeper       nameservice.Keeper
+	bondKeeper     bond.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -110,7 +113,7 @@ func NewNameServiceApp(
 	bApp.SetAppVersion(version.Version)
 
 	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, distr.StoreKey, slashing.StoreKey, params.StoreKey, nameservice.StoreKey)
+		supply.StoreKey, distr.StoreKey, slashing.StoreKey, params.StoreKey, nameservice.StoreKey, bond.StoreKey)
 
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -193,11 +196,15 @@ func NewNameServiceApp(
 			app.slashingKeeper.Hooks()),
 	)
 
-	// The NameserviceKeeper is the Keeper from the module for this tutorial
-	// It handles interactions with the namestore
 	app.nsKeeper = nameservice.NewKeeper(
 		app.bankKeeper,
 		keys[nameservice.StoreKey],
+		app.cdc,
+	)
+
+	app.bondKeeper = bond.NewKeeper(
+		app.bankKeeper,
+		keys[bond.StoreKey],
 		app.cdc,
 	)
 
@@ -207,6 +214,7 @@ func NewNameServiceApp(
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		nameservice.NewAppModule(app.nsKeeper, app.bankKeeper),
+		bond.NewAppModule(app.bondKeeper, app.bankKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
@@ -227,6 +235,7 @@ func NewNameServiceApp(
 		bank.ModuleName,
 		slashing.ModuleName,
 		nameservice.ModuleName,
+		bond.ModuleName,
 		supply.ModuleName,
 		genutil.ModuleName,
 	)
