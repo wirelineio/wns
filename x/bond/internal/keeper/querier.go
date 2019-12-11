@@ -15,8 +15,9 @@ import (
 
 // query endpoints supported by the bond Querier
 const (
-	ListBonds = "list"
-	GetBond   = "get"
+	ListBonds   = "list"
+	GetBond     = "get"
+	ListByOwner = "list-by-owner"
 )
 
 // NewQuerier is the module level router for state queries
@@ -27,6 +28,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return listBonds(ctx, path[1:], req, keeper)
 		case GetBond:
 			return getBond(ctx, path[1:], req, keeper)
+		case ListByOwner:
+			return listBondsByOwner(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown bond query endpoint")
 		}
@@ -56,6 +59,18 @@ func getBond(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keepe
 	bond := keeper.GetBond(ctx, id)
 
 	bz, err2 := json.MarshalIndent(bond, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func listBondsByOwner(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	bonds := keeper.ListBondsByOwner(ctx, path[0])
+
+	bz, err2 := json.MarshalIndent(bonds, "", "  ")
 	if err2 != nil {
 		panic("Could not marshal result to JSON.")
 	}

@@ -92,6 +92,28 @@ func (k Keeper) ListBonds(ctx sdk.Context) []types.Bond {
 	return bonds
 }
 
+// ListBondsByOwner - list bonds by owner.
+func (k Keeper) ListBondsByOwner(ctx sdk.Context, ownerAddress string) []types.Bond {
+	var bonds []types.Bond
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, prefixIDToBondIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.Bond
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+			if obj.Owner == ownerAddress {
+				bonds = append(bonds, obj)
+			}
+		}
+	}
+
+	return bonds
+}
+
 // Clear - Deletes all entries and indexes.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
 func (k Keeper) Clear(ctx sdk.Context) {
