@@ -54,3 +54,41 @@ func (msg MsgCreateBond) GetSignBytes() []byte {
 func (msg MsgCreateBond) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
+
+// MsgClear defines a MsgClear message.
+type MsgClear struct {
+	Signer sdk.AccAddress
+}
+
+// NewMsgClear is the constructor function for MsgClear.
+func NewMsgClear(signer sdk.AccAddress) MsgClear {
+	return MsgClear{
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgClear) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgClear) Type() string { return "clear" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgClear) ValidateBasic() sdk.Error {
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgClear) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgClear) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}

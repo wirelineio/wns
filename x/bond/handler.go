@@ -18,6 +18,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.MsgCreateBond:
 			return handleMsgCreateBond(ctx, keeper, msg)
+		case types.MsgClear:
+			return handleMsgClear(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized bond Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -51,5 +53,11 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 	// Save bond in store.
 	keeper.CreateBond(ctx, types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins})
 
+	return sdk.Result{}
+}
+
+// Handle handleMsgClear.
+func handleMsgClear(ctx sdk.Context, keeper Keeper, msg types.MsgClear) sdk.Result {
+	keeper.Clear(ctx)
 	return sdk.Result{}
 }
