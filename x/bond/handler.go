@@ -12,12 +12,18 @@ import (
 	"github.com/wirelineio/wns/x/bond/internal/types"
 )
 
+// MaxBondBalance is the maximum amount a bond can hold.
+// TODO(ashwin): Needs to be made a param under consensus (https://github.com/wirelineio/wns/issues/88).
+const MaxBondBalance int64 = 10000
+
 // NewHandler returns a handler for "bond" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case types.MsgCreateBond:
 			return handleMsgCreateBond(ctx, keeper, msg)
+		case types.MsgRefillBond:
+			return handleMsgRefillBond(ctx, keeper, msg)
 		case types.MsgClear:
 			return handleMsgClear(ctx, keeper, msg)
 		default:
@@ -33,13 +39,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 
 	// Check if account has funds.
 	if !keeper.CoinKeeper.HasCoins(ctx, ownerAddress, msg.Coins) {
-		return sdk.ErrInsufficientCoins("Insufficient bond amount.").Result()
-	}
-
-	// Move funds into the bond account module.
-	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
-	if err != nil {
-		return err.Result()
+		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
 	}
 
 	// Generate bond ID.
@@ -50,8 +50,55 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 		Sequence: account.GetSequence(),
 	}.Generate()
 
+	bond := types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins}
+	if helpers.AnyCoinAmountExceeds(bond.Balance, MaxBondBalance) {
+		return sdk.ErrInternal("Max bond amount exceeded.").Result()
+	}
+
+	// Move funds into the bond account module.
+	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
+	if err != nil {
+		return err.Result()
+	}
+
 	// Save bond in store.
-	keeper.CreateBond(ctx, types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins})
+	keeper.SaveBond(ctx, bond)
+
+	return sdk.Result{}
+}
+
+// Handle handleMsgRefillBond.
+func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond) sdk.Result {
+
+	if !keeper.HasBond(ctx, msg.ID) {
+		return sdk.ErrInternal("Bond not found.").Result()
+	}
+
+	ownerAddress := msg.Signer
+	bond := keeper.GetBond(ctx, msg.ID)
+	if bond.Owner != ownerAddress.String() {
+		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
+	}
+
+	// Check if account has funds.
+	if !keeper.CoinKeeper.HasCoins(ctx, ownerAddress, msg.Coins) {
+		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
+	}
+
+	updatedBalance := bond.Balance.Add(msg.Coins)
+	if helpers.AnyCoinAmountExceeds(updatedBalance, MaxBondBalance) {
+		return sdk.ErrInternal("Max bond amount exceeded.").Result()
+	}
+
+	// Move funds into the bond account module.
+	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
+	if err != nil {
+		return err.Result()
+	}
+
+	// Update bond balance and save.
+	bond.Balance = updatedBalance
+	keeper.SaveBond(ctx, bond)
 
 	return sdk.Result{}
 }

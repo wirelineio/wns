@@ -27,6 +27,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 	nameserviceTxCmd.AddCommand(client.PostCommands(
 		GetCmdCreateBond(cdc),
+		GetCmdRefillBond(cdc),
 		GetCmdClear(cdc),
 	)...)
 
@@ -59,7 +60,35 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Bool("sign-only", false, "Only sign the transaction payload.")
+	return cmd
+}
+
+// GetCmdRefillBond is the CLI command for creating a bond.
+func GetCmdRefillBond(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "refill [bond ID] [amount]",
+		Short: "Refill bond.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			bondID := args[0]
+			coin, err := sdk.ParseCoin(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgRefillBond(bondID, coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 
 	return cmd
 }

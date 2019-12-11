@@ -43,8 +43,8 @@ func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyK
 	}
 }
 
-// CreateBond - saves a bond to the store.
-func (k Keeper) CreateBond(ctx sdk.Context, bond types.Bond) {
+// SaveBond - saves a bond to the store.
+func (k Keeper) SaveBond(ctx sdk.Context, bond types.Bond) {
 	store := ctx.KVStore(k.storeKey)
 
 	// Bond ID -> Bond index.
