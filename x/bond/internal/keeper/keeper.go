@@ -56,6 +56,42 @@ func (k Keeper) CreateBond(ctx sdk.Context, bond types.Bond) {
 	store.Set(key, []byte{})
 }
 
+// HasBond - checks if a bond by the given ID exists.
+func (k Keeper) HasBond(ctx sdk.Context, id types.ID) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(append(prefixIDToBondIndex, []byte(id)...))
+}
+
+// GetBond - gets a record from the store.
+func (k Keeper) GetBond(ctx sdk.Context, id types.ID) types.Bond {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(append(prefixIDToBondIndex, []byte(id)...))
+	var obj types.Bond
+	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+	return obj
+}
+
+// ListBonds - get all bonds.
+func (k Keeper) ListBonds(ctx sdk.Context) []types.Bond {
+	var bonds []types.Bond
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, prefixIDToBondIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.Bond
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			bonds = append(bonds, obj)
+		}
+	}
+
+	return bonds
+}
+
 // Clear - Deletes all entries and indexes.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
 func (k Keeper) Clear(ctx sdk.Context) {
