@@ -55,3 +55,15 @@ func (k Keeper) CreateBond(ctx sdk.Context, bond types.Bond) {
 	key = append(key, []byte(bond.ID)...)
 	store.Set(key, []byte{})
 }
+
+// Clear - Deletes all entries and indexes.
+// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
+func (k Keeper) Clear(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	// Note: Clear everything, entries and indexes.
+	itr := store.Iterator(nil, nil)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		store.Delete(itr.Key())
+	}
+}
