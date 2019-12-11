@@ -55,6 +55,56 @@ func (msg MsgCreateBond) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
 
+// MsgRefillBond defines a refill bond message.
+type MsgRefillBond struct {
+	ID     ID
+	Coins  sdk.Coins
+	Signer sdk.AccAddress
+}
+
+// NewMsgRefillBond is the constructor function for MsgRefillBond.
+func NewMsgRefillBond(id string, denom string, amount int64, signer sdk.AccAddress) MsgRefillBond {
+	return MsgRefillBond{
+		ID:     ID(id),
+		Coins:  sdk.NewCoins(sdk.NewInt64Coin(denom, amount)),
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgRefillBond) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgRefillBond) Type() string { return "refill" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgRefillBond) ValidateBasic() sdk.Error {
+
+	if string(msg.ID) == "" {
+		return sdk.ErrInternal("Invalid bond ID.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	if !msg.Coins.IsValid() {
+		return sdk.ErrInvalidCoins("Invalid bond amount.")
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgRefillBond) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgRefillBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
+
 // MsgClear defines a MsgClear message.
 type MsgClear struct {
 	Signer sdk.AccAddress
