@@ -38,8 +38,8 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress(msg.Signer.String())
 	}
 
-	if !msg.Coins.IsValid() {
-		return sdk.ErrInvalidCoins("Invalid bond amount.")
+	if len(msg.Coins) == 0 || !msg.Coins.IsValid() {
+		return sdk.ErrInvalidCoins("Invalid amount.")
 	}
 
 	return nil
@@ -88,8 +88,8 @@ func (msg MsgRefillBond) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress(msg.Signer.String())
 	}
 
-	if !msg.Coins.IsValid() {
-		return sdk.ErrInvalidCoins("Invalid bond amount.")
+	if len(msg.Coins) == 0 || !msg.Coins.IsValid() {
+		return sdk.ErrInvalidCoins("Invalid amount.")
 	}
 
 	return nil
@@ -102,6 +102,56 @@ func (msg MsgRefillBond) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgRefillBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
+
+// MsgWithdrawBond defines a withdraw (funds from) bond message.
+type MsgWithdrawBond struct {
+	ID     ID
+	Coins  sdk.Coins
+	Signer sdk.AccAddress
+}
+
+// NewMsgWithdrawBond is the constructor function for MsgWithdrawBond.
+func NewMsgWithdrawBond(id string, denom string, amount int64, signer sdk.AccAddress) MsgWithdrawBond {
+	return MsgWithdrawBond{
+		ID:     ID(id),
+		Coins:  sdk.NewCoins(sdk.NewInt64Coin(denom, amount)),
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgWithdrawBond) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgWithdrawBond) Type() string { return "withdraw" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgWithdrawBond) ValidateBasic() sdk.Error {
+
+	if string(msg.ID) == "" {
+		return sdk.ErrInternal("Invalid bond ID.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	if len(msg.Coins) == 0 || !msg.Coins.IsValid() {
+		return sdk.ErrInvalidCoins("Invalid amount.")
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgWithdrawBond) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgWithdrawBond) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
 

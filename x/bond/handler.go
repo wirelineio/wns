@@ -24,6 +24,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgCreateBond(ctx, keeper, msg)
 		case types.MsgRefillBond:
 			return handleMsgRefillBond(ctx, keeper, msg)
+		case types.MsgWithdrawBond:
+			return handleMsgWithdrawBond(ctx, keeper, msg)
 		case types.MsgClear:
 			return handleMsgClear(ctx, keeper, msg)
 		default:
@@ -92,6 +94,37 @@ func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond
 
 	// Move funds into the bond account module.
 	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
+	if err != nil {
+		return err.Result()
+	}
+
+	// Update bond balance and save.
+	bond.Balance = updatedBalance
+	keeper.SaveBond(ctx, bond)
+
+	return sdk.Result{}
+}
+
+// Handle handleMsgWithdrawBond.
+func handleMsgWithdrawBond(ctx sdk.Context, keeper Keeper, msg types.MsgWithdrawBond) sdk.Result {
+
+	if !keeper.HasBond(ctx, msg.ID) {
+		return sdk.ErrInternal("Bond not found.").Result()
+	}
+
+	ownerAddress := msg.Signer
+	bond := keeper.GetBond(ctx, msg.ID)
+	if bond.Owner != ownerAddress.String() {
+		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
+	}
+
+	updatedBalance, isNeg := bond.Balance.SafeSub(msg.Coins)
+	if isNeg {
+		return sdk.ErrInsufficientCoins("Insufficient bond balance.").Result()
+	}
+
+	// Move funds from the bond into the account.
+	err := keeper.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, msg.Coins)
 	if err != nil {
 		return err.Result()
 	}

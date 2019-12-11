@@ -19,5 +19,6 @@ func init() {
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCreateBond{}, "bond/CreateBond", nil)
 	cdc.RegisterConcrete(MsgRefillBond{}, "bond/RefillBond", nil)
+	cdc.RegisterConcrete(MsgWithdrawBond{}, "bond/WithdrawBond", nil)
 	cdc.RegisterConcrete(MsgClear{}, "bond/Clear", nil)
 }
