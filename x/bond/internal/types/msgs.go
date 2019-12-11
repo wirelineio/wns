@@ -13,12 +13,14 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 // MsgCreateBond defines a create bond message.
 type MsgCreateBond struct {
+	Coins  sdk.Coins
 	Signer sdk.AccAddress
 }
 
 // NewMsgCreateBond is the constructor function for MsgCreateBond.
-func NewMsgCreateBond(signer sdk.AccAddress) MsgCreateBond {
+func NewMsgCreateBond(denom string, amount int64, signer sdk.AccAddress) MsgCreateBond {
 	return MsgCreateBond{
+		Coins:  sdk.NewCoins(sdk.NewInt64Coin(denom, amount)),
 		Signer: signer,
 	}
 }
@@ -34,6 +36,10 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 
 	if msg.Signer.Empty() {
 		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	if !msg.Coins.IsValid() {
+		return sdk.ErrInvalidCoins("Invalid bond amount.")
 	}
 
 	return nil

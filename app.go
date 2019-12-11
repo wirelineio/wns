@@ -64,6 +64,7 @@ var (
 		distr.ModuleName:          nil,
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		bond.ModuleName:           nil,
 	}
 )
 
@@ -203,7 +204,9 @@ func NewNameServiceApp(
 	)
 
 	app.bondKeeper = bond.NewKeeper(
+		app.accountKeeper,
 		app.bankKeeper,
+		app.supplyKeeper,
 		keys[bond.StoreKey],
 		app.cdc,
 	)

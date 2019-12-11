@@ -35,15 +35,21 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdCreateBond is the CLI command for creating a bond.
 func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [type] [quantity]",
+		Use:   "create [amount]",
 		Short: "Create bond.",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			msg := types.NewMsgCreateBond(cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
+
+			coin, err := sdk.ParseCoin(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgCreateBond(coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
+			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
