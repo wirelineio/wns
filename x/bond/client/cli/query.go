@@ -27,6 +27,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	bondQueryCmd.AddCommand(client.GetCommands(
 		GetCmdList(storeKey, cdc),
 		GetCmdGetBond(storeKey, cdc),
+		GetCmdListByOwner(storeKey, cdc),
 	)...)
 	return bondQueryCmd
 }
@@ -67,6 +68,30 @@ func GetCmdGetBond(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			id := args[0]
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/get/%s", queryRoute, id), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdListByOwner queries bonds by owner.
+func GetCmdListByOwner(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "list-by-owner [address]",
+		Short: "List bonds by owner.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			address := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/list-by-owner/%s", queryRoute, address), nil)
 			if err != nil {
 				return err
 			}
