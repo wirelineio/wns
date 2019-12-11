@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/wirelineio/wns/x/bond/internal/helpers"
 	"github.com/wirelineio/wns/x/bond/internal/types"
 )
 
@@ -26,6 +27,29 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle MsgCreateBond.
 func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond) sdk.Result {
+	ownerAddress := msg.Signer
+
+	// Check if account has funds.
+	if !keeper.CoinKeeper.HasCoins(ctx, ownerAddress, msg.Coins) {
+		return sdk.ErrInsufficientCoins("Insufficient bond amount.").Result()
+	}
+
+	// Move funds into the bond account module.
+	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
+	if err != nil {
+		return err.Result()
+	}
+
+	// Generate bond ID.
+	account := keeper.AccountKeeper.GetAccount(ctx, ownerAddress)
+	bondID := helpers.BondID{
+		Address:  ownerAddress,
+		AccNum:   account.GetAccountNumber(),
+		Sequence: account.GetSequence(),
+	}.Generate()
+
+	// Save bond in store.
+	keeper.CreateBond(ctx, types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins})
 
 	return sdk.Result{}
 }
