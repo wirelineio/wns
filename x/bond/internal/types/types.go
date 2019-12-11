@@ -15,5 +15,5 @@ type ID string
 type Bond struct {
 	ID      ID        `json:"id,omitempty"`
 	Owner   string    `json:"owner,omitempty"`
-	Balance sdk.Coins `json:"balance,omitempty"`
+	Balance sdk.Coins `json:"balance"`
 }
