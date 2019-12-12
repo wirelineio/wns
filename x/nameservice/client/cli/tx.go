@@ -24,6 +24,7 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
+// GetTxCmd returns transaction commands for this module.
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	nameserviceTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -38,6 +39,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdClearResources(cdc),
 		GetCmdAssociateBond(cdc),
 		GetCmdDissociateBond(cdc),
+		GetCmdDissociateRecords(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -115,6 +117,30 @@ func GetCmdDissociateBond(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgDissociateBond(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdDissociateRecords is the CLI command for dissociating all records from a bond.
+func GetCmdDissociateRecords(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "dissociate-records [bond-id]",
+		Short: "Dissociate all records from bond.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgDissociateRecords(args[0], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
