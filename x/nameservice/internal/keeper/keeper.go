@@ -255,18 +255,17 @@ func (k Keeper) ClearRecords(ctx sdk.Context) {
 func (k Keeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Record {
 	var records []types.Record
 
+	bondIDPrefix := append(prefixBondIDToRecordsIndex, []byte(bondID)...)
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixCIDToRecordIndex)
+	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
-		bz := store.Get(itr.Key())
+		cid := itr.Key()[len(bondIDPrefix):]
+		bz := store.Get(append(prefixCIDToRecordIndex, cid...))
 		if bz != nil {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
-
-			if obj.BondID == bondID {
-				records = append(records, obj.ToRecord())
-			}
+			records = append(records, obj.ToRecord())
 		}
 	}
 
