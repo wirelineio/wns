@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,10 +17,11 @@ import (
 
 // query endpoints supported by the nameservice Querier
 const (
-	ListRecords = "list"
-	GetRecord   = "get"
-	ListNames   = "names"
-	ResolveName = "resolve"
+	ListRecords        = "list"
+	GetRecord          = "get"
+	ListNames          = "names"
+	ResolveName        = "resolve"
+	QueryRecordsByBond = "query-by-bond"
 )
 
 // NewQuerier is the module level router for state queries
@@ -34,6 +36,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return listNames(ctx, path[1:], req, keeper)
 		case ResolveName:
 			return resolveName(ctx, path[1:], req, keeper)
+		case QueryRecordsByBond:
+			return queryRecordsByBond(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -89,6 +93,20 @@ func resolveName(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 	record := keeper.ResolveWRN(ctx, wrn)
 
 	bz, err2 := json.MarshalIndent(record, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func queryRecordsByBond(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+
+	id := bond.ID(strings.Join(path, "/"))
+	records := keeper.QueryRecordsByBond(ctx, id)
+
+	bz, err2 := json.MarshalIndent(records, "", "  ")
 	if err2 != nil {
 		panic("Could not marshal result to JSON.")
 	}
