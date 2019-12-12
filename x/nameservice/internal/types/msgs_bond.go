@@ -146,3 +146,53 @@ func (msg MsgDissociateRecords) GetSignBytes() []byte {
 func (msg MsgDissociateRecords) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
+
+// MsgReassociateRecords defines a reassociate records message.
+type MsgReassociateRecords struct {
+	OldBondID bond.ID
+	NewBondID bond.ID
+	Signer    sdk.AccAddress
+}
+
+// NewMsgReassociateRecords is the constructor function for MsgReassociateRecords.
+func NewMsgReassociateRecords(oldBondID string, newBondID string, signer sdk.AccAddress) MsgReassociateRecords {
+	return MsgReassociateRecords{
+		OldBondID: bond.ID(oldBondID),
+		NewBondID: bond.ID(newBondID),
+		Signer:    signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgReassociateRecords) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgReassociateRecords) Type() string { return "reassociate-records" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgReassociateRecords) ValidateBasic() sdk.Error {
+
+	if msg.OldBondID == "" {
+		return sdk.ErrInternal("Old Bond ID is required.")
+	}
+
+	if msg.NewBondID == "" {
+		return sdk.ErrInternal("New Bond ID is required.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgReassociateRecords) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgReassociateRecords) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
