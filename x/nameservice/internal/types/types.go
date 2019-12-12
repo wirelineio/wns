@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	canonicalJson "github.com/gibson042/canonicaljson-go"
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 )
 
@@ -19,6 +20,7 @@ type ID string
 // Record represents a WNS record.
 type Record struct {
 	ID         ID                     `json:"id,omitempty"`
+	BondID     bond.ID                `json:"bondId,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
@@ -64,6 +66,7 @@ func (r *Record) ToRecordObj() RecordObj {
 	var resourceObj RecordObj
 
 	resourceObj.ID = r.ID
+	resourceObj.BondID = r.BondID
 	resourceObj.Owners = r.Owners
 	resourceObj.Attributes = helpers.MarshalMapToJSONBytes(r.Attributes)
 
@@ -140,6 +143,7 @@ func (payloadObj PayloadObj) ToPayload() Payload {
 // RecordObj represents a WNS record.
 type RecordObj struct {
 	ID         ID       `json:"id,omitempty"`
+	BondID     bond.ID  `json:"bondId,omitempty"`
 	Owners     []string `json:"owners,omitempty"`
 	Attributes []byte   `json:"attributes,omitempty"`
 }
@@ -150,6 +154,7 @@ func (resourceObj *RecordObj) ToRecord() Record {
 	var record Record
 
 	record.ID = resourceObj.ID
+	record.BondID = resourceObj.BondID
 	record.Owners = resourceObj.Owners
 	record.Attributes = helpers.UnMarshalMapFromJSONBytes(resourceObj.Attributes)
 

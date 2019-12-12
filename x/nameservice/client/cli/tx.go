@@ -36,6 +36,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	nameserviceTxCmd.AddCommand(client.PostCommands(
 		GetCmdSetResource(cdc),
 		GetCmdClearResources(cdc),
+		GetCmdAssociateBond(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -73,6 +74,30 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("sign-only", false, "Only sign the transaction payload.")
+
+	return cmd
+}
+
+// GetCmdAssociateBond is the CLI command for associating a record with a bond.
+func GetCmdAssociateBond(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "associate-bond [id] [bond-id]",
+		Short: "Associate record with bond.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgAssociateBond(args[0], args[1], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 
 	return cmd
 }

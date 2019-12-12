@@ -21,6 +21,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.MsgSetRecord:
 			return handleMsgSetRecord(ctx, keeper, msg)
+		case types.MsgAssociateBond:
+			return handleMsgAssociateBond(ctx, keeper, msg)
 		case types.MsgClearRecords:
 			return handleMsgClearRecords(ctx, keeper, msg)
 		default:
@@ -86,6 +88,35 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 // Handle MsgClearRecords.
 func handleMsgClearRecords(ctx sdk.Context, keeper Keeper, msg types.MsgClearRecords) sdk.Result {
 	keeper.ClearRecords(ctx)
+
+	return sdk.Result{}
+}
+
+// Handle MsgAssociateBond.
+func handleMsgAssociateBond(ctx sdk.Context, keeper Keeper, msg types.MsgAssociateBond) sdk.Result {
+
+	if !keeper.HasRecord(ctx, msg.ID) {
+		return sdk.ErrInternal("Record not found.").Result()
+	}
+
+	if !keeper.BondKeeper.HasBond(ctx, msg.BondID) {
+		return sdk.ErrInternal("Bond not found.").Result()
+	}
+
+	// Check if already associated with a bond.
+	record := keeper.GetRecord(ctx, msg.ID)
+	if record.BondID != "" {
+		return sdk.ErrUnauthorized("Bond already exists.").Result()
+	}
+
+	// Only the bond owner can associate a record with the bond.
+	bond := keeper.BondKeeper.GetBond(ctx, msg.BondID)
+	if msg.Signer.String() != bond.Owner {
+		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
+	}
+
+	record.BondID = msg.BondID
+	keeper.PutRecord(ctx, record)
 
 	return sdk.Result{}
 }
