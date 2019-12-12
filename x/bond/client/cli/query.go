@@ -82,8 +82,8 @@ func GetCmdGetBond(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // GetCmdListByOwner queries bonds by owner.
 func GetCmdListByOwner(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "list-by-owner [address]",
-		Short: "List bonds by owner.",
+		Use:   "query-by-owner [address]",
+		Short: "Query bonds by owner.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			viper.Set("trust-node", true)
@@ -91,7 +91,7 @@ func GetCmdListByOwner(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 			address := args[0]
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/list-by-owner/%s", queryRoute, address), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/query-by-owner/%s", queryRoute, address), nil)
 			if err != nil {
 				return err
 			}

@@ -92,22 +92,21 @@ func (k Keeper) ListBonds(ctx sdk.Context) []types.Bond {
 	return bonds
 }
 
-// ListBondsByOwner - list bonds by owner.
-func (k Keeper) ListBondsByOwner(ctx sdk.Context, ownerAddress string) []types.Bond {
+// QueryBondsByOwner - query bonds by owner.
+func (k Keeper) QueryBondsByOwner(ctx sdk.Context, ownerAddress string) []types.Bond {
 	var bonds []types.Bond
 
+	ownerPrefix := append(prefixOwnerToBondsIndex, []byte(ownerAddress)...)
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixIDToBondIndex)
+	itr := sdk.KVStorePrefixIterator(store, ownerPrefix)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
-		bz := store.Get(itr.Key())
+		bondID := itr.Key()[len(ownerPrefix):]
+		bz := store.Get(append(prefixIDToBondIndex, bondID...))
 		if bz != nil {
 			var obj types.Bond
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
-
-			if obj.Owner == ownerAddress {
-				bonds = append(bonds, obj)
-			}
+			bonds = append(bonds, obj)
 		}
 	}
 
