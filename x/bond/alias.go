@@ -23,6 +23,7 @@ var (
 )
 
 type (
+	ID            = types.ID
 	Keeper        = keeper.Keeper
 	MsgCreateBond = types.MsgCreateBond
 )
