@@ -102,3 +102,47 @@ func (msg MsgDissociateBond) GetSignBytes() []byte {
 func (msg MsgDissociateBond) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
+
+// MsgDissociateRecords defines a dissociate all records from bond message.
+type MsgDissociateRecords struct {
+	BondID bond.ID
+	Signer sdk.AccAddress
+}
+
+// NewMsgDissociateRecords is the constructor function for MsgDissociateRecords.
+func NewMsgDissociateRecords(bondID string, signer sdk.AccAddress) MsgDissociateRecords {
+	return MsgDissociateRecords{
+		BondID: bond.ID(bondID),
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgDissociateRecords) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgDissociateRecords) Type() string { return "dissociate-records" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgDissociateRecords) ValidateBasic() sdk.Error {
+
+	if msg.BondID == "" {
+		return sdk.ErrInternal("Bond ID is required.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgDissociateRecords) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgDissociateRecords) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
