@@ -50,17 +50,27 @@ func NewKeeper(coinKeeper bank.Keeper, bondKeeper bond.Keeper, storeKey sdk.Stor
 	}
 }
 
-// PutRecord - saves a record to the store.
+// PutRecord - saves a record to the store and updates ID -> Record index.
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-
-	// ID -> Record index.
 	store.Set(append(prefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+}
 
-	// Bond ID -> [Record] index.
-	var key = append(prefixBondIDToRecordsIndex, []byte(record.BondID)...)
-	key = append(key, []byte(record.ID)...)
-	store.Set(key, []byte{})
+// Generates Bond ID -> Records index key.
+func getBondIDToRecordsIndexKey(bondID bond.ID, id types.ID) []byte {
+	return append(append(prefixBondIDToRecordsIndex, []byte(bondID)...), []byte(id)...)
+}
+
+// AddBondToRecordIndexEntry adds the Bond ID -> [Record] index entry.
+func (k Keeper) AddBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id types.ID) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(getBondIDToRecordsIndexKey(bondID, id), []byte{})
+}
+
+// RemoveBondToRecordIndexEntry removes the Bond ID -> [Record] index entry.
+func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id types.ID) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(getBondIDToRecordsIndexKey(bondID, id))
 }
 
 // SetNameRecord - sets a name record.

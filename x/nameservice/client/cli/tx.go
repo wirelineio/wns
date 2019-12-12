@@ -37,6 +37,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdSetResource(cdc),
 		GetCmdClearResources(cdc),
 		GetCmdAssociateBond(cdc),
+		GetCmdDissociateBond(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -81,7 +82,7 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 // GetCmdAssociateBond is the CLI command for associating a record with a bond.
 func GetCmdAssociateBond(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "associate-bond [id] [bond-id]",
+		Use:   "associate-bond [record-id] [bond-id]",
 		Short: "Associate record with bond.",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -90,6 +91,30 @@ func GetCmdAssociateBond(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgAssociateBond(args[0], args[1], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdDissociateBond is the CLI command for dissociating a record from a bond.
+func GetCmdDissociateBond(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "dissociate-bond [record-id]",
+		Short: "Dissociate record from (existing) bond.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgDissociateBond(args[0], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
