@@ -40,6 +40,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdAssociateBond(cdc),
 		GetCmdDissociateBond(cdc),
 		GetCmdDissociateRecords(cdc),
+		GetCmdReassociateRecords(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -141,6 +142,30 @@ func GetCmdDissociateRecords(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgDissociateRecords(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdReassociateRecords is the CLI command for reassociating all records from old to new bond.
+func GetCmdReassociateRecords(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reassociate-records [old-bond-id] [new-bond-id]",
+		Short: "Reassociates all records from old to new bond.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgReassociateRecords(args[0], args[1], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
