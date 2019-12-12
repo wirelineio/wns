@@ -29,6 +29,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdGetResource(storeKey, cdc),
 		GetCmdNames(storeKey, cdc),
 		GetCmdResolve(storeKey, cdc),
+		GetCmdQueryByBond(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
 }
@@ -117,6 +118,30 @@ func GetCmdResolve(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			wrn := args[0]
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", queryRoute, wrn), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdQueryByBond queries records by bond ID.
+func GetCmdQueryByBond(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "query-by-bond [bond-id]",
+		Short: "Query records by bond ID.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			bondID := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/query-by-bond/%s", queryRoute, bondID), nil)
 			if err != nil {
 				return err
 			}

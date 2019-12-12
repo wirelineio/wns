@@ -250,3 +250,25 @@ func (k Keeper) ClearRecords(ctx sdk.Context) {
 		store.Delete(itr.Key())
 	}
 }
+
+// QueryRecordsByBond - get all records for the given bond.
+func (k Keeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Record {
+	var records []types.Record
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, prefixCIDToRecordIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.RecordObj
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+			if obj.BondID == bondID {
+				records = append(records, obj.ToRecord())
+			}
+		}
+	}
+
+	return records
+}
