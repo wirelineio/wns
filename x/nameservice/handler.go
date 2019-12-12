@@ -27,6 +27,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgDissociateBond(ctx, keeper, msg)
 		case types.MsgDissociateRecords:
 			return handleMsgDissociateRecords(ctx, keeper, msg)
+		case types.MsgReassociateRecords:
+			return handleMsgReassociateRecords(ctx, keeper, msg)
 		case types.MsgClearRecords:
 			return handleMsgClearRecords(ctx, keeper, msg)
 		default:
@@ -174,6 +176,42 @@ func handleMsgDissociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgDis
 		record.BondID = ""
 		keeper.PutRecord(ctx, record)
 		keeper.RemoveBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
+	}
+
+	return sdk.Result{}
+}
+
+// Handle MsgReassociateRecords.
+func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgReassociateRecords) sdk.Result {
+
+	if !keeper.BondKeeper.HasBond(ctx, msg.OldBondID) {
+		return sdk.ErrInternal("Old bond not found.").Result()
+	}
+
+	if !keeper.BondKeeper.HasBond(ctx, msg.NewBondID) {
+		return sdk.ErrInternal("New bond not found.").Result()
+	}
+
+	// Only the bond owner can reassociate all records.
+	oldBond := keeper.BondKeeper.GetBond(ctx, msg.OldBondID)
+	if msg.Signer.String() != oldBond.Owner {
+		return sdk.ErrUnauthorized("Old bond owner mismatch.").Result()
+	}
+
+	newBond := keeper.BondKeeper.GetBond(ctx, msg.NewBondID)
+	if msg.Signer.String() != newBond.Owner {
+		return sdk.ErrUnauthorized("New bond owner mismatch.").Result()
+	}
+
+	// Reassociate all records.
+	records := keeper.QueryRecordsByBond(ctx, msg.OldBondID)
+	for _, record := range records {
+		// Switch bond ID.
+		record.BondID = msg.NewBondID
+		keeper.PutRecord(ctx, record)
+
+		keeper.RemoveBondToRecordIndexEntry(ctx, msg.OldBondID, record.ID)
+		keeper.AddBondToRecordIndexEntry(ctx, msg.NewBondID, record.ID)
 	}
 
 	return sdk.Result{}
