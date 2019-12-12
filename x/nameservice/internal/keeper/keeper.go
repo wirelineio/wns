@@ -11,24 +11,29 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
-// prefixCIDToRecordIndex is the prefix for CID -> Record index in the KVStore.
+// prefixCIDToRecordIndex is the prefix for CID -> Record index.
 // Note: This is the primary index in the system.
 // Note: Golang doesn't support const arrays.
 var prefixCIDToRecordIndex = []byte{0x00}
 
-// prefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index in the KVStore.
+// prefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index.
 var prefixWRNToNameRecordIndex = []byte{0x01}
 
-// prefixBaseWRNToNameRecordIndex is the prefix for the Base WRN -> NamingRecord index in the KVStore.
+// prefixBaseWRNToNameRecordIndex is the prefix for the Base WRN -> NamingRecord index.
 // Note: BaseWRL => WRN minus `version`, i.e. latest version.
 var prefixBaseWRNToNameRecordIndex = []byte{0x02}
+
+// prefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
+var prefixBondIDToRecordsIndex = []byte{0x03}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	CoinKeeper bank.Keeper
+	BondKeeper bond.Keeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -36,9 +41,10 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
+func NewKeeper(coinKeeper bank.Keeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
 	return Keeper{
 		CoinKeeper: coinKeeper,
+		BondKeeper: bondKeeper,
 		storeKey:   storeKey,
 		cdc:        cdc,
 	}
@@ -47,7 +53,14 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 // PutRecord - saves a record to the store.
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
+
+	// ID -> Record index.
 	store.Set(append(prefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+
+	// Bond ID -> [Record] index.
+	var key = append(prefixBondIDToRecordsIndex, []byte(record.BondID)...)
+	key = append(key, []byte(record.ID)...)
+	store.Set(key, []byte{})
 }
 
 // SetNameRecord - sets a name record.

@@ -197,17 +197,18 @@ func NewNameServiceApp(
 			app.slashingKeeper.Hooks()),
 	)
 
-	app.nsKeeper = nameservice.NewKeeper(
-		app.bankKeeper,
-		keys[nameservice.StoreKey],
-		app.cdc,
-	)
-
 	app.bondKeeper = bond.NewKeeper(
 		app.accountKeeper,
 		app.bankKeeper,
 		app.supplyKeeper,
 		keys[bond.StoreKey],
+		app.cdc,
+	)
+
+	app.nsKeeper = nameservice.NewKeeper(
+		app.bankKeeper,
+		app.bondKeeper,
+		keys[nameservice.StoreKey],
 		app.cdc,
 	)
 
