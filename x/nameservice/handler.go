@@ -25,6 +25,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgAssociateBond(ctx, keeper, msg)
 		case types.MsgDissociateBond:
 			return handleMsgDissociateBond(ctx, keeper, msg)
+		case types.MsgDissociateRecords:
+			return handleMsgDissociateRecords(ctx, keeper, msg)
 		case types.MsgClearRecords:
 			return handleMsgClearRecords(ctx, keeper, msg)
 		default:
@@ -148,6 +150,31 @@ func handleMsgDissociateBond(ctx sdk.Context, keeper Keeper, msg types.MsgDissoc
 	record.BondID = ""
 	keeper.PutRecord(ctx, record)
 	keeper.RemoveBondToRecordIndexEntry(ctx, bondID, record.ID)
+
+	return sdk.Result{}
+}
+
+// Handle MsgDissociateRecords.
+func handleMsgDissociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgDissociateRecords) sdk.Result {
+
+	if !keeper.BondKeeper.HasBond(ctx, msg.BondID) {
+		return sdk.ErrInternal("Bond not found.").Result()
+	}
+
+	// Only the bond owner can dissociate all records from the bond.
+	bond := keeper.BondKeeper.GetBond(ctx, msg.BondID)
+	if msg.Signer.String() != bond.Owner {
+		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
+	}
+
+	// Dissociate all records from the bond.
+	records := keeper.QueryRecordsByBond(ctx, msg.BondID)
+	for _, record := range records {
+		// Clear bond ID.
+		record.BondID = ""
+		keeper.PutRecord(ctx, record)
+		keeper.RemoveBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
+	}
 
 	return sdk.Result{}
 }

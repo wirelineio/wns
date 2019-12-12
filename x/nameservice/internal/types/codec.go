@@ -20,5 +20,6 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSetRecord{}, "nameservice/SetRecord", nil)
 	cdc.RegisterConcrete(MsgAssociateBond{}, "nameservice/AssociateBond", nil)
 	cdc.RegisterConcrete(MsgDissociateBond{}, "nameservice/DissociateBond", nil)
+	cdc.RegisterConcrete(MsgDissociateRecords{}, "nameservice/DissociateRecords", nil)
 	cdc.RegisterConcrete(MsgClearRecords{}, "nameservice/ClearRecords", nil)
 }
