@@ -58,13 +58,15 @@ var (
 		nameservice.AppModule{},
 		bond.AppModule{},
 	)
-	// account permissions
+
+	// Account permissions (https://github.com/cosmos/cosmos-sdk/blob/master/x/supply/spec/01_concepts.md).
 	maccPerms = map[string][]string{
-		auth.FeeCollectorName:     nil,
-		distr.ModuleName:          nil,
-		staking.BondedPoolName:    {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		bond.ModuleName:           nil,
+		auth.FeeCollectorName:            nil,
+		distr.ModuleName:                 nil,
+		staking.BondedPoolName:           {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName:        {supply.Burner, supply.Staking},
+		bond.ModuleName:                  nil,
+		bond.RecordRentModuleAccountName: nil,
 	}
 )
 
