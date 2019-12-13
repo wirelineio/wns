@@ -9,6 +9,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bond "github.com/wirelineio/wns/x/bond"
 )
 
 // RouterKey is the module name router key
@@ -17,13 +18,15 @@ const RouterKey = ModuleName // this was defined in your key.go file
 // MsgSetRecord defines a SetResource message.
 type MsgSetRecord struct {
 	Payload PayloadObj
+	BondID  bond.ID
 	Signer  sdk.AccAddress
 }
 
 // NewMsgSetRecord is the constructor function for MsgSetRecord.
-func NewMsgSetRecord(payload PayloadObj, signer sdk.AccAddress) MsgSetRecord {
+func NewMsgSetRecord(payload PayloadObj, bondID string, signer sdk.AccAddress) MsgSetRecord {
 	return MsgSetRecord{
 		Payload: payload,
+		BondID:  bond.ID(bondID),
 		Signer:  signer,
 	}
 }
@@ -71,6 +74,10 @@ func (msg MsgSetRecord) ValidateBasic() sdk.Error {
 	_, err := semver.NewVersion(version)
 	if err != nil {
 		return sdk.ErrInternal("Record 'version' is invalid.")
+	}
+
+	if msg.BondID == "" {
+		return sdk.ErrUnauthorized("Bond ID is required.")
 	}
 
 	return nil
