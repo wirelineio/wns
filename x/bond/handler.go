@@ -13,7 +13,9 @@ import (
 )
 
 // MaxBondBalance is the maximum amount a bond can hold.
+// https://github.com/wirelineio/specs/blob/master/wns/testnet-mechanism.md#pricing
 // TODO(ashwin): Needs to be made a param under consensus (https://github.com/wirelineio/wns/issues/88).
+// TODO(ashwin): Figure out denom unit to use (https://github.com/wirelineio/wns/issues/123).
 const MaxBondBalance int64 = 10000
 
 // NewHandler returns a handler for "bond" type messages.

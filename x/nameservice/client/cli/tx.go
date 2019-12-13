@@ -49,9 +49,9 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdSetResource is the CLI command for creating/updating a record.
 func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set [payload file path]",
+		Use:   "set [payload file path] [bond-id]",
 		Short: "Set record.",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
@@ -67,7 +67,7 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 				return signResource(payload)
 			}
 
-			msg := types.NewMsgSetRecord(payload.ToPayloadObj(), cliCtx.GetFromAddress())
+			msg := types.NewMsgSetRecord(payload.ToPayloadObj(), args[1], cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

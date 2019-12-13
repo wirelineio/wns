@@ -11,9 +11,16 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
+
+// RecordAnnualRent is the record rent for 1 year.
+// https://github.com/wirelineio/specs/blob/master/wns/testnet-mechanism.md#pricing
+// TODO(ashwin): Make param under consensus (https://github.com/wirelineio/wns/issues/99).
+// TODO(ashwin): Figure out denom unit to use (https://github.com/wirelineio/wns/issues/123).
+const RecordAnnualRent string = "1wire"
 
 // NewHandler returns a handler for "nameservice" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
@@ -41,7 +48,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 // Handle MsgSetRecord.
 func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) sdk.Result {
 	payload := msg.Payload.ToPayload()
-	record := types.Record{Attributes: payload.Record}
+	record := types.Record{Attributes: payload.Record, BondID: msg.BondID}
 
 	// Check signatures.
 	resourceSignBytes, _ := record.GetSignBytes()
@@ -85,6 +92,35 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		}
 	}
 
+	// Check bond.
+	if !keeper.BondKeeper.HasBond(ctx, msg.BondID) {
+		return sdk.ErrUnauthorized("Bond not found.").Result()
+	}
+
+	bondObj := keeper.BondKeeper.GetBond(ctx, msg.BondID)
+	rent, err := sdk.ParseCoins(RecordAnnualRent)
+	if err != nil {
+		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
+	}
+
+	// Deduct one year rent from bond.
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(rent)
+	if isNeg {
+		// Check if bond has sufficient funds.
+		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
+	}
+
+	// Move funds from bond module to record rent module.
+	err = keeper.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, rent)
+	if err != nil {
+		return sdk.ErrInternal("Error withdrawing rent.").Result()
+	}
+
+	// Update bond balance.
+	bondObj.Balance = updatedBalance
+	keeper.BondKeeper.SaveBond(ctx, bondObj)
+
+	// TODO(ashwin): Set expiry/TTL for record (https://github.com/wirelineio/wns/issues/109).
 	keeper.PutRecord(ctx, record)
 	processNameRecords(ctx, keeper, record)
 
