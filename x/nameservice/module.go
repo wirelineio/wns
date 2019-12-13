@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/wirelineio/wns/x/nameservice/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -69,16 +68,14 @@ func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 type AppModule struct {
 	AppModuleBasic
-	keeper     Keeper
-	coinKeeper bank.Keeper
+	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k Keeper, bankKeeper bank.Keeper) AppModule {
+func NewAppModule(k Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
-		coinKeeper:     bankKeeper,
 	}
 }
 

@@ -26,6 +26,7 @@ type Keeper struct {
 	AccountKeeper auth.AccountKeeper
 	CoinKeeper    bank.Keeper
 	SupplyKeeper  supply.Keeper
+	RecordKeeper  types.RecordKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -33,14 +34,25 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the bond Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper, recordKeeper types.RecordKeeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
 	return Keeper{
 		AccountKeeper: accountKeeper,
 		CoinKeeper:    coinKeeper,
 		SupplyKeeper:  supplyKeeper,
+		RecordKeeper:  recordKeeper,
 		storeKey:      storeKey,
 		cdc:           cdc,
 	}
+}
+
+// Generates Bond ID -> Bond index key.
+func getBondIndexKey(id types.ID) []byte {
+	return append(prefixIDToBondIndex, []byte(id)...)
+}
+
+// Generates Owner -> Bonds index key.
+func getOwnerToBondsIndexKey(owner string, bondID types.ID) []byte {
+	return append(append(prefixOwnerToBondsIndex, []byte(owner)...), []byte(bondID)...)
 }
 
 // SaveBond - saves a bond to the store.
@@ -48,25 +60,30 @@ func (k Keeper) SaveBond(ctx sdk.Context, bond types.Bond) {
 	store := ctx.KVStore(k.storeKey)
 
 	// Bond ID -> Bond index.
-	store.Set(append(prefixIDToBondIndex, []byte(bond.ID)...), k.cdc.MustMarshalBinaryBare(bond))
+	store.Set(getBondIndexKey(bond.ID), k.cdc.MustMarshalBinaryBare(bond))
 
 	// Owner -> [Bond] index.
-	var key = append(prefixOwnerToBondsIndex, []byte(bond.Owner)...)
-	key = append(key, []byte(bond.ID)...)
-	store.Set(key, []byte{})
+	store.Set(getOwnerToBondsIndexKey(bond.Owner, bond.ID), []byte{})
 }
 
 // HasBond - checks if a bond by the given ID exists.
 func (k Keeper) HasBond(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(append(prefixIDToBondIndex, []byte(id)...))
+	return store.Has(getBondIndexKey(id))
+}
+
+// DeleteBond - deletes the bond.
+func (k Keeper) DeleteBond(ctx sdk.Context, bond types.Bond) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(getBondIndexKey(bond.ID))
+	store.Delete(getOwnerToBondsIndexKey(bond.Owner, bond.ID))
 }
 
 // GetBond - gets a record from the store.
 func (k Keeper) GetBond(ctx sdk.Context, id types.ID) types.Bond {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(append(prefixIDToBondIndex, []byte(id)...))
+	bz := store.Get(getBondIndexKey(id))
 	var obj types.Bond
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 

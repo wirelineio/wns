@@ -16,13 +16,15 @@ const (
 )
 
 var (
-	NewKeeper     = keeper.NewKeeper
-	NewQuerier    = keeper.NewQuerier
-	ModuleCdc     = types.ModuleCdc
-	RegisterCodec = types.RegisterCodec
+	NewKeeper       = keeper.NewKeeper
+	NewRecordKeeper = keeper.NewRecordKeeper
+	NewQuerier      = keeper.NewQuerier
+	ModuleCdc       = types.ModuleCdc
+	RegisterCodec   = types.RegisterCodec
 )
 
 type (
 	Keeper       = keeper.Keeper
+	RecordKeeper = keeper.RecordKeeper
 	MsgSetRecord = types.MsgSetRecord
 )

@@ -104,7 +104,7 @@ func resolveName(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 func queryRecordsByBond(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
 
 	id := bond.ID(strings.Join(path, "/"))
-	records := keeper.QueryRecordsByBond(ctx, id)
+	records := keeper.RecordKeeper.QueryRecordsByBond(ctx, id)
 
 	bz, err2 := json.MarshalIndent(records, "", "  ")
 	if err2 != nil {

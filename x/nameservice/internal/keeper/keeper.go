@@ -10,7 +10,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -32,8 +31,8 @@ var prefixBondIDToRecordsIndex = []byte{0x03}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	CoinKeeper bank.Keeper
-	BondKeeper bond.Keeper
+	RecordKeeper RecordKeeper
+	BondKeeper   bond.Keeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -41,12 +40,26 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(coinKeeper bank.Keeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
+func NewKeeper(recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
 	return Keeper{
-		CoinKeeper: coinKeeper,
-		BondKeeper: bondKeeper,
-		storeKey:   storeKey,
-		cdc:        cdc,
+		RecordKeeper: recordKeeper,
+		BondKeeper:   bondKeeper,
+		storeKey:     storeKey,
+		cdc:          cdc,
+	}
+}
+
+// RecordKeeper exposes the bare minimal read-only API for other modules.
+type RecordKeeper struct {
+	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
+	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
+}
+
+// NewRecordKeeper creates new instances of the nameservice RecordKeeper
+func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
+	return RecordKeeper{
+		storeKey: storeKey,
+		cdc:      cdc,
 	}
 }
 
@@ -54,6 +67,11 @@ func NewKeeper(coinKeeper bank.Keeper, bondKeeper bond.Keeper, storeKey sdk.Stor
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(append(prefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+}
+
+// Generates Bond ID -> Bond index key.
+func getRecordIndexKey(id types.ID) []byte {
+	return append(prefixCIDToRecordIndex, []byte(id)...)
 }
 
 // Generates Bond ID -> Records index key.
@@ -82,7 +100,7 @@ func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.Name
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(append(prefixCIDToRecordIndex, []byte(id)...))
+	return store.Has(getRecordIndexKey(id))
 }
 
 // HasNameRecord - checks if a name record exists.
@@ -95,7 +113,7 @@ func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
 func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(append(prefixCIDToRecordIndex, []byte(id)...))
+	bz := store.Get(getRecordIndexKey(id))
 	var obj types.RecordObj
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
@@ -262,7 +280,7 @@ func (k Keeper) ClearRecords(ctx sdk.Context) {
 }
 
 // QueryRecordsByBond - get all records for the given bond.
-func (k Keeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Record {
+func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Record {
 	var records []types.Record
 
 	bondIDPrefix := append(prefixBondIDToRecordsIndex, []byte(bondID)...)
@@ -280,4 +298,13 @@ func (k Keeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Reco
 	}
 
 	return records
+}
+
+// BondHasAssociatedRecords returns true if the bond has associated records.
+func (k RecordKeeper) BondHasAssociatedRecords(ctx sdk.Context, bondID bond.ID) bool {
+	bondIDPrefix := append(prefixBondIDToRecordsIndex, []byte(bondID)...)
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
+	defer itr.Close()
+	return itr.Valid()
 }
