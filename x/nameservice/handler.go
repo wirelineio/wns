@@ -170,7 +170,7 @@ func handleMsgDissociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgDis
 	}
 
 	// Dissociate all records from the bond.
-	records := keeper.QueryRecordsByBond(ctx, msg.BondID)
+	records := keeper.RecordKeeper.QueryRecordsByBond(ctx, msg.BondID)
 	for _, record := range records {
 		// Clear bond ID.
 		record.BondID = ""
@@ -204,7 +204,7 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 	}
 
 	// Reassociate all records.
-	records := keeper.QueryRecordsByBond(ctx, msg.OldBondID)
+	records := keeper.RecordKeeper.QueryRecordsByBond(ctx, msg.OldBondID)
 	for _, record := range records {
 		// Switch bond ID.
 		record.BondID = msg.NewBondID

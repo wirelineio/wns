@@ -93,8 +93,9 @@ type nameServiceApp struct {
 	distrKeeper    distr.Keeper
 	supplyKeeper   supply.Keeper
 	paramsKeeper   params.Keeper
-	nsKeeper       nameservice.Keeper
+	recordKeeper   nameservice.RecordKeeper
 	bondKeeper     bond.Keeper
+	nsKeeper       nameservice.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -197,16 +198,22 @@ func NewNameServiceApp(
 			app.slashingKeeper.Hooks()),
 	)
 
+	app.recordKeeper = nameservice.NewRecordKeeper(
+		keys[nameservice.StoreKey],
+		app.cdc,
+	)
+
 	app.bondKeeper = bond.NewKeeper(
 		app.accountKeeper,
 		app.bankKeeper,
 		app.supplyKeeper,
+		app.recordKeeper,
 		keys[bond.StoreKey],
 		app.cdc,
 	)
 
 	app.nsKeeper = nameservice.NewKeeper(
-		app.bankKeeper,
+		app.recordKeeper,
 		app.bondKeeper,
 		keys[nameservice.StoreKey],
 		app.cdc,
@@ -217,8 +224,8 @@ func NewNameServiceApp(
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
-		nameservice.NewAppModule(app.nsKeeper, app.bankKeeper),
-		bond.NewAppModule(app.bondKeeper, app.bankKeeper),
+		bond.NewAppModule(app.bondKeeper),
+		nameservice.NewAppModule(app.nsKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
@@ -238,8 +245,8 @@ func NewNameServiceApp(
 		auth.ModuleName,
 		bank.ModuleName,
 		slashing.ModuleName,
-		nameservice.ModuleName,
 		bond.ModuleName,
+		nameservice.ModuleName,
 		supply.ModuleName,
 		genutil.ModuleName,
 	)

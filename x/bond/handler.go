@@ -26,6 +26,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgRefillBond(ctx, keeper, msg)
 		case types.MsgWithdrawBond:
 			return handleMsgWithdrawBond(ctx, keeper, msg)
+		case types.MsgCancelBond:
+			return handleMsgCancelBond(ctx, keeper, msg)
 		case types.MsgClear:
 			return handleMsgClear(ctx, keeper, msg)
 		default:
@@ -132,6 +134,35 @@ func handleMsgWithdrawBond(ctx sdk.Context, keeper Keeper, msg types.MsgWithdraw
 	// Update bond balance and save.
 	bond.Balance = updatedBalance
 	keeper.SaveBond(ctx, bond)
+
+	return sdk.Result{}
+}
+
+// Handle handleMsgCancelBond.
+func handleMsgCancelBond(ctx sdk.Context, keeper Keeper, msg types.MsgCancelBond) sdk.Result {
+
+	if !keeper.HasBond(ctx, msg.ID) {
+		return sdk.ErrInternal("Bond not found.").Result()
+	}
+
+	ownerAddress := msg.Signer
+	bond := keeper.GetBond(ctx, msg.ID)
+	if bond.Owner != ownerAddress.String() {
+		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
+	}
+
+	// Check if bond is associated with any records.
+	if keeper.RecordKeeper.BondHasAssociatedRecords(ctx, msg.ID) {
+		return sdk.ErrUnauthorized("Bond has associated records.").Result()
+	}
+
+	// Move funds from the bond into the account.
+	err := keeper.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, bond.Balance)
+	if err != nil {
+		return err.Result()
+	}
+
+	keeper.DeleteBond(ctx, bond)
 
 	return sdk.Result{}
 }
