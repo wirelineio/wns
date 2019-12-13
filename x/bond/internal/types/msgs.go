@@ -155,6 +155,50 @@ func (msg MsgWithdrawBond) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
 
+// MsgCancelBond defines a cancel bond message.
+type MsgCancelBond struct {
+	ID     ID
+	Signer sdk.AccAddress
+}
+
+// NewMsgCancelBond is the constructor function for MsgCancelBond.
+func NewMsgCancelBond(id string, signer sdk.AccAddress) MsgCancelBond {
+	return MsgCancelBond{
+		ID:     ID(id),
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgCancelBond) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgCancelBond) Type() string { return "cancel" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgCancelBond) ValidateBasic() sdk.Error {
+
+	if string(msg.ID) == "" {
+		return sdk.ErrInternal("Invalid bond ID.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgCancelBond) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgCancelBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
+
 // MsgClear defines a MsgClear message.
 type MsgClear struct {
 	Signer sdk.AccAddress

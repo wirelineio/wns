@@ -16,6 +16,7 @@ import (
 	"github.com/wirelineio/wns/x/bond/internal/types"
 )
 
+// GetTxCmd returns transaction commands for this module.
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	nameserviceTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -29,6 +30,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdCreateBond(cdc),
 		GetCmdRefillBond(cdc),
 		GetCmdWithdrawFromBond(cdc),
+		GetCmdCancelBond(cdc),
 		GetCmdClear(cdc),
 	)...)
 
@@ -83,6 +85,30 @@ func GetCmdRefillBond(cdc *codec.Codec) *cobra.Command {
 
 			msg := types.NewMsgRefillBond(bondID, coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdCancelBond is the CLI command for cancelling a bond.
+func GetCmdCancelBond(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel [bond ID]",
+		Short: "Cancel bond.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgCancelBond(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
