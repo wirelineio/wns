@@ -5,10 +5,8 @@
 package types
 
 import (
-	"bytes"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
@@ -45,14 +43,6 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	}
 }
 
-// Equal returns a boolean determining if two Param types are identical.
-// TODO: This is slower than comparing struct fields directly
-func (p Params) Equal(p2 Params) bool {
-	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	return bytes.Equal(bz1, bz2)
-}
-
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
 	return NewParams(DefaultMaxBondAmount)
@@ -62,24 +52,6 @@ func DefaultParams() Params {
 func (p Params) String() string {
 	return fmt.Sprintf(`Params:
   Max Bond Amount: %d`, p.MaxBondAmount)
-}
-
-// MustUnmarshalParams - unmarshal the current bond params value from store key or panic.
-func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
-	params, err := UnmarshalParams(cdc, value)
-	if err != nil {
-		panic(err)
-	}
-	return params
-}
-
-// UnmarshalParams - unmarshal the current bond params value from store key.
-func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) {
-	err = cdc.UnmarshalBinaryLengthPrefixed(value, &params)
-	if err != nil {
-		return
-	}
-	return
 }
 
 // Validate a set of params.
