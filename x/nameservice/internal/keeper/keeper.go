@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -37,15 +38,18 @@ type Keeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
+
+	paramstore params.Subspace
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
+func NewKeeper(recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		RecordKeeper: recordKeeper,
 		BondKeeper:   bondKeeper,
 		storeKey:     storeKey,
 		cdc:          cdc,
+		paramstore:   paramstore,
 	}
 }
 

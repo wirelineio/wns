@@ -16,12 +16,6 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
-// RecordAnnualRent is the record rent for 1 year.
-// https://github.com/wirelineio/specs/blob/master/wns/testnet-mechanism.md#pricing
-// TODO(ashwin): Make param under consensus (https://github.com/wirelineio/wns/issues/99).
-// TODO(ashwin): Figure out denom unit to use (https://github.com/wirelineio/wns/issues/123).
-const RecordAnnualRent string = "1wire"
-
 // NewHandler returns a handler for "nameservice" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
@@ -98,7 +92,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	}
 
 	bondObj := keeper.BondKeeper.GetBond(ctx, msg.BondID)
-	rent, err := sdk.ParseCoins(RecordAnnualRent)
+	rent, err := sdk.ParseCoins(keeper.RecordAnnualRent(ctx))
 	if err != nil {
 		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
 	}
