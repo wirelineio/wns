@@ -17,10 +17,11 @@ const (
 )
 
 var (
-	NewKeeper     = keeper.NewKeeper
-	NewQuerier    = keeper.NewQuerier
-	ModuleCdc     = types.ModuleCdc
-	RegisterCodec = types.RegisterCodec
+	DefaultParamspace = keeper.DefaultParamspace
+	NewKeeper         = keeper.NewKeeper
+	NewQuerier        = keeper.NewQuerier
+	ModuleCdc         = types.ModuleCdc
+	RegisterCodec     = types.RegisterCodec
 )
 
 type (

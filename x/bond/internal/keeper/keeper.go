@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/wirelineio/wns/x/bond/internal/types"
 )
@@ -31,10 +32,13 @@ type Keeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
+
+	paramstore params.Subspace
 }
 
 // NewKeeper creates new instances of the bond Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper, recordKeeper types.RecordKeeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper,
+	recordKeeper types.RecordKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		AccountKeeper: accountKeeper,
 		CoinKeeper:    coinKeeper,
@@ -42,6 +46,7 @@ func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyK
 		RecordKeeper:  recordKeeper,
 		storeKey:      storeKey,
 		cdc:           cdc,
+		paramstore:    paramstore,
 	}
 }
 

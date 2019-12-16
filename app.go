@@ -137,6 +137,8 @@ func NewNameServiceApp(
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
+	nsSubspace := app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
+	bondSubspace := app.paramsKeeper.Subspace(bond.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -212,6 +214,7 @@ func NewNameServiceApp(
 		app.recordKeeper,
 		keys[bond.StoreKey],
 		app.cdc,
+		bondSubspace,
 	)
 
 	app.nsKeeper = nameservice.NewKeeper(
@@ -219,6 +222,7 @@ func NewNameServiceApp(
 		app.bondKeeper,
 		keys[nameservice.StoreKey],
 		app.cdc,
+		nsSubspace,
 	)
 
 	app.mm = module.NewManager(
