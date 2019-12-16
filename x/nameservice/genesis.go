@@ -16,23 +16,35 @@ type NameEntry struct {
 }
 
 type GenesisState struct {
+	Params  types.Params      `json:"params" yaml:"params"`
 	Names   []NameEntry       `json:"names" yaml:"names"`
 	Records []types.RecordObj `json:"records" yaml:"records"`
 }
 
-func NewGenesisState() GenesisState {
-	return GenesisState{}
+func NewGenesisState(params types.Params, names []NameEntry, records []types.RecordObj) GenesisState {
+	return GenesisState{
+		Params:  params,
+		Names:   names,
+		Records: records,
+	}
 }
 
 func ValidateGenesis(data GenesisState) error {
+	err := data.Params.Validate()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func DefaultGenesisState() GenesisState {
-	return GenesisState{}
+	return GenesisState{Params: types.DefaultParams()}
 }
 
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
+	keeper.SetParams(ctx, data.Params)
+
 	for _, nameEntry := range data.Names {
 		keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry)
 	}
@@ -45,6 +57,8 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 }
 
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
+	params := keeper.GetParams(ctx)
+
 	names := keeper.ListNameRecords(ctx)
 	nameEntries := []NameEntry{}
 	for name, nameRecord := range names {
@@ -57,5 +71,9 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		recordEntries = append(recordEntries, record.ToRecordObj())
 	}
 
-	return GenesisState{nameEntries, recordEntries}
+	return GenesisState{
+		Params:  params,
+		Names:   nameEntries,
+		Records: recordEntries,
+	}
 }
