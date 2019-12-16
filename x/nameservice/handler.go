@@ -116,6 +116,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 
 	// TODO(ashwin): Set expiry/TTL for record (https://github.com/wirelineio/wns/issues/109).
 	keeper.PutRecord(ctx, record)
+	keeper.AddBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
 	processNameRecords(ctx, keeper, record)
 
 	return sdk.Result{}

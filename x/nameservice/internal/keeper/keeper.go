@@ -49,7 +49,7 @@ func NewKeeper(recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.S
 		BondKeeper:   bondKeeper,
 		storeKey:     storeKey,
 		cdc:          cdc,
-		paramstore:   paramstore,
+		paramstore:   paramstore.WithKeyTable(ParamKeyTable()),
 	}
 }
 

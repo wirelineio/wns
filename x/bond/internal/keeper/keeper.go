@@ -46,7 +46,7 @@ func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyK
 		RecordKeeper:  recordKeeper,
 		storeKey:      storeKey,
 		cdc:           cdc,
-		paramstore:    paramstore,
+		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
 	}
 }
 
