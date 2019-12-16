@@ -12,12 +12,6 @@ import (
 	"github.com/wirelineio/wns/x/bond/internal/types"
 )
 
-// MaxBondBalance is the maximum amount a bond can hold.
-// https://github.com/wirelineio/specs/blob/master/wns/testnet-mechanism.md#pricing
-// TODO(ashwin): Needs to be made a param under consensus (https://github.com/wirelineio/wns/issues/88).
-// TODO(ashwin): Figure out denom unit to use (https://github.com/wirelineio/wns/issues/123).
-const MaxBondBalance int64 = 10000
-
 // NewHandler returns a handler for "bond" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
@@ -57,7 +51,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 	}.Generate()
 
 	bond := types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins}
-	if helpers.AnyCoinAmountExceeds(bond.Balance, MaxBondBalance) {
+	if helpers.AnyCoinAmountExceeds(bond.Balance, keeper.MaxBondAmount(ctx)) {
 		return sdk.ErrInternal("Max bond amount exceeded.").Result()
 	}
 
@@ -92,7 +86,7 @@ func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond
 	}
 
 	updatedBalance := bond.Balance.Add(msg.Coins)
-	if helpers.AnyCoinAmountExceeds(updatedBalance, MaxBondBalance) {
+	if helpers.AnyCoinAmountExceeds(updatedBalance, keeper.MaxBondAmount(ctx)) {
 		return sdk.ErrInternal("Max bond amount exceeded.").Result()
 	}
 

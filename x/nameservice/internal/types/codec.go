@@ -13,6 +13,8 @@ var ModuleCdc = codec.New()
 
 func init() {
 	RegisterCodec(ModuleCdc)
+	codec.RegisterCrypto(ModuleCdc)
+	ModuleCdc.Seal()
 }
 
 // RegisterCodec registers concrete types on the Amino codec
