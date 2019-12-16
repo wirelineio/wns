@@ -24,6 +24,7 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -32,6 +33,8 @@ import (
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 	"github.com/wirelineio/wns/x/nameservice/gql"
+
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 )
 
 const appName = "nameservice"
@@ -51,6 +54,7 @@ var (
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		distr.AppModuleBasic{},
+		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distr.ProposalHandler),
 		params.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
@@ -65,6 +69,7 @@ var (
 		distr.ModuleName:                 nil,
 		staking.BondedPoolName:           {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName:        {supply.Burner, supply.Staking},
+		gov.ModuleName:                   {supply.Burner},
 		bond.ModuleName:                  nil,
 		bond.RecordRentModuleAccountName: nil,
 	}
@@ -93,6 +98,7 @@ type nameServiceApp struct {
 	stakingKeeper  staking.Keeper
 	slashingKeeper slashing.Keeper
 	distrKeeper    distr.Keeper
+	govKeeper      gov.Keeper
 	supplyKeeper   supply.Keeper
 	paramsKeeper   params.Keeper
 	recordKeeper   nameservice.RecordKeeper
@@ -117,7 +123,8 @@ func NewNameServiceApp(
 	bApp.SetAppVersion(version.Version)
 
 	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, distr.StoreKey, slashing.StoreKey, params.StoreKey, nameservice.StoreKey, bond.StoreKey)
+		supply.StoreKey, distr.StoreKey, slashing.StoreKey, gov.StoreKey, params.StoreKey,
+		nameservice.StoreKey, bond.StoreKey)
 
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -137,6 +144,7 @@ func NewNameServiceApp(
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
+	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	nsSubspace := app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
 	bondSubspace := app.paramsKeeper.Subspace(bond.DefaultParamspace)
 
@@ -202,6 +210,16 @@ func NewNameServiceApp(
 			app.slashingKeeper.Hooks()),
 	)
 
+	govRouter := gov.NewRouter()
+	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
+		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
+		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper))
+
+	app.govKeeper = gov.NewKeeper(
+		app.cdc, keys[gov.StoreKey], app.paramsKeeper, govSubspace,
+		app.supplyKeeper, &stakingKeeper, gov.DefaultCodespace, govRouter,
+	)
+
 	app.recordKeeper = nameservice.NewRecordKeeper(
 		keys[nameservice.StoreKey],
 		app.cdc,
@@ -233,13 +251,14 @@ func NewNameServiceApp(
 		bond.NewAppModule(app.bondKeeper),
 		nameservice.NewAppModule(app.nsKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
+		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
-	app.mm.SetOrderEndBlockers(staking.ModuleName)
+	app.mm.SetOrderEndBlockers(gov.ModuleName, staking.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	// NOTE: The genutils moodule must occur after staking so that pools are
@@ -251,6 +270,7 @@ func NewNameServiceApp(
 		auth.ModuleName,
 		bank.ModuleName,
 		slashing.ModuleName,
+		gov.ModuleName,
 		bond.ModuleName,
 		nameservice.ModuleName,
 		supply.ModuleName,
