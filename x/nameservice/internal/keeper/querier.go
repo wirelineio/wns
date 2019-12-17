@@ -11,6 +11,7 @@ import (
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -22,6 +23,7 @@ const (
 	ListNames          = "names"
 	ResolveName        = "resolve"
 	QueryRecordsByBond = "query-by-bond"
+	QueryParameters    = "parameters"
 )
 
 // NewQuerier is the module level router for state queries
@@ -38,6 +40,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return resolveName(ctx, path[1:], req, keeper)
 		case QueryRecordsByBond:
 			return queryRecordsByBond(ctx, path[1:], req, keeper)
+		case QueryParameters:
+			return queryParameters(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -112,4 +116,15 @@ func queryRecordsByBond(ctx sdk.Context, path []string, req abci.RequestQuery, k
 	}
 
 	return bz, nil
+}
+
+func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	params := keeper.GetParams(ctx)
+
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
 }

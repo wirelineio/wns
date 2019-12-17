@@ -6,10 +6,12 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
@@ -30,6 +32,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdNames(storeKey, cdc),
 		GetCmdResolve(storeKey, cdc),
 		GetCmdQueryByBond(storeKey, cdc),
+		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
 }
@@ -149,6 +152,37 @@ func GetCmdQueryByBond(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			fmt.Println(string(res))
 
 			return nil
+		},
+	}
+}
+
+// GetCmdQueryParams implements the params query command.
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "Query the current nameservice parameters information",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query values set as nameservice parameters.
+
+Example:
+$ %s query nameservice params
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/parameters", queryRoute)
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			cdc.MustUnmarshalJSON(bz, &params)
+			return cliCtx.PrintOutput(params)
 		},
 	}
 }
