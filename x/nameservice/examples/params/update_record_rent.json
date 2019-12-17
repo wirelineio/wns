@@ -1,10 +1,10 @@
 {
   "title": "Nameservice Param Change",
-  "description": "Update annual record rent.",
+  "description": "Update record rent.",
   "changes": [
     {
       "subspace": "nameservice",
-      "key": "RecordAnnualRent",
+      "key": "RecordRent",
       "value": "5wire"
     }
   ],
