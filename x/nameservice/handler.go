@@ -92,7 +92,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	}
 
 	bondObj := keeper.BondKeeper.GetBond(ctx, msg.BondID)
-	rent, err := sdk.ParseCoins(keeper.RecordAnnualRent(ctx))
+	rent, err := sdk.ParseCoins(keeper.RecordRent(ctx))
 	if err != nil {
 		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
 	}
@@ -114,7 +114,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	bondObj.Balance = updatedBalance
 	keeper.BondKeeper.SaveBond(ctx, bondObj)
 
-	// TODO(ashwin): Set expiry/TTL for record (https://github.com/wirelineio/wns/issues/109).
+	record.ExpiryTime = ctx.BlockHeader().Time.Add(keeper.RecordExpiryTime(ctx))
 	keeper.PutRecord(ctx, record)
 	keeper.AddBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
 	processNameRecords(ctx, keeper, record)
