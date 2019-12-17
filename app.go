@@ -144,7 +144,7 @@ func NewNameServiceApp(
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
-	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
+	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
 	nsSubspace := app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
 	bondSubspace := app.paramsKeeper.Subspace(bond.DefaultParamspace)
 
