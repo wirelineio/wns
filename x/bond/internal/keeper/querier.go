@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/wirelineio/wns/x/bond/internal/types"
@@ -15,9 +16,10 @@ import (
 
 // query endpoints supported by the bond Querier
 const (
-	ListBonds    = "list"
-	GetBond      = "get"
-	QueryByOwner = "query-by-owner"
+	ListBonds       = "list"
+	GetBond         = "get"
+	QueryByOwner    = "query-by-owner"
+	QueryParameters = "parameters"
 )
 
 // NewQuerier is the module level router for state queries
@@ -30,6 +32,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return getBond(ctx, path[1:], req, keeper)
 		case QueryByOwner:
 			return queryBondsByOwner(ctx, path[1:], req, keeper)
+		case QueryParameters:
+			return queryParameters(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown bond query endpoint")
 		}
@@ -76,4 +80,15 @@ func queryBondsByOwner(ctx sdk.Context, path []string, req abci.RequestQuery, ke
 	}
 
 	return bz, nil
+}
+
+func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	params := keeper.GetParams(ctx)
+
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
 }
