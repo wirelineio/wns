@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"strings"
+	"time"
 
 	canonicalJson "github.com/gibson042/canonicaljson-go"
 	"github.com/wirelineio/wns/x/bond"
@@ -21,6 +22,7 @@ type ID string
 type Record struct {
 	ID         ID                     `json:"id,omitempty"`
 	BondID     bond.ID                `json:"bondId,omitempty"`
+	ExpiryTime time.Time              `json:"expiryTime,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
@@ -67,6 +69,7 @@ func (r *Record) ToRecordObj() RecordObj {
 
 	resourceObj.ID = r.ID
 	resourceObj.BondID = r.BondID
+	resourceObj.ExpiryTime = r.ExpiryTime
 	resourceObj.Owners = r.Owners
 	resourceObj.Attributes = helpers.MarshalMapToJSONBytes(r.Attributes)
 
@@ -142,10 +145,11 @@ func (payloadObj PayloadObj) ToPayload() Payload {
 
 // RecordObj represents a WNS record.
 type RecordObj struct {
-	ID         ID       `json:"id,omitempty"`
-	BondID     bond.ID  `json:"bondId,omitempty"`
-	Owners     []string `json:"owners,omitempty"`
-	Attributes []byte   `json:"attributes,omitempty"`
+	ID         ID        `json:"id,omitempty"`
+	BondID     bond.ID   `json:"bondId,omitempty"`
+	ExpiryTime time.Time `json:"expiryTime,omitempty"`
+	Owners     []string  `json:"owners,omitempty"`
+	Attributes []byte    `json:"attributes,omitempty"`
 }
 
 // ToRecord convers RecordObj to Record.
@@ -155,6 +159,7 @@ func (resourceObj *RecordObj) ToRecord() Record {
 
 	record.ID = resourceObj.ID
 	record.BondID = resourceObj.BondID
+	record.ExpiryTime = resourceObj.ExpiryTime
 	record.Owners = resourceObj.Owners
 	record.Attributes = helpers.UnMarshalMapFromJSONBytes(resourceObj.Attributes)
 
