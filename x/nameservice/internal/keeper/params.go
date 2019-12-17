@@ -21,9 +21,9 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// RecordAnnualRent - get the record annual rent.
-func (k Keeper) RecordAnnualRent(ctx sdk.Context) (res string) {
-	k.paramstore.Get(ctx, types.KeyRecordAnnualRent, &res)
+// RecordRent - get the record periodic rent.
+func (k Keeper) RecordRent(ctx sdk.Context) (res string) {
+	k.paramstore.Get(ctx, types.KeyRecordRent, &res)
 	return
 }
 
@@ -36,7 +36,7 @@ func (k Keeper) RecordExpiryTime(ctx sdk.Context) (res time.Duration) {
 // GetParams - Get all parameteras as types.Params.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
-		k.RecordAnnualRent(ctx),
+		k.RecordRent(ctx),
 		k.RecordExpiryTime(ctx),
 	)
 }

@@ -92,7 +92,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	}
 
 	bondObj := keeper.BondKeeper.GetBond(ctx, msg.BondID)
-	rent, err := sdk.ParseCoins(keeper.RecordAnnualRent(ctx))
+	rent, err := sdk.ParseCoins(keeper.RecordRent(ctx))
 	if err != nil {
 		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
 	}
