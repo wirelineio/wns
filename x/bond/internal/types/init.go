@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	Wire      = "wire"  // 1 (base denom unit)
-	MilliWire = "mwire" // 10^-3 (milli)
-	MicroWire = "uwire" // 10^-6 (micro)
+	Wire      = "wire"  // 1 (base denom unit).
+	MilliWire = "mwire" // 10^-3 (milli).
+	MicroWire = "uwire" // 10^-6 (micro).
 )
 
 func init() {
