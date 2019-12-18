@@ -21,7 +21,7 @@ func ParamKeyTable() params.KeyTable {
 }
 
 // MaxBondAmount - get the max bond amount.
-func (k Keeper) MaxBondAmount(ctx sdk.Context) (res int64) {
+func (k Keeper) MaxBondAmount(ctx sdk.Context) (res string) {
 	k.paramstore.Get(ctx, types.KeyMaxBondAmount, &res)
 	return
 }

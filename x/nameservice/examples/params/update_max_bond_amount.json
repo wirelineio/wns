@@ -5,13 +5,13 @@
     {
       "subspace": "bond",
       "key": "MaxBondAmount",
-      "value": "15000"
+      "value": "15000wire"
     }
   ],
   "deposit": [
     {
-      "denom": "wire",
-      "amount": "10000"
+      "denom": "uwire",
+      "amount": "10000000000"
     }
   ]
 }

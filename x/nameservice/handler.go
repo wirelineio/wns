@@ -92,20 +92,25 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	}
 
 	bondObj := keeper.BondKeeper.GetBond(ctx, msg.BondID)
-	rent, err := sdk.ParseCoins(keeper.RecordRent(ctx))
+	coins, err := sdk.ParseCoins(keeper.RecordRent(ctx))
+	if err != nil {
+		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
+	}
+
+	rent, err := sdk.ConvertCoin(coins[0], bond.MicroWire)
 	if err != nil {
 		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
 	}
 
 	// Deduct one year rent from bond.
-	updatedBalance, isNeg := bondObj.Balance.SafeSub(rent)
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
 	if isNeg {
 		// Check if bond has sufficient funds.
 		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
 	}
 
 	// Move funds from bond module to record rent module.
-	err = keeper.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, rent)
+	err = keeper.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, sdk.NewCoins(rent))
 	if err != nil {
 		return sdk.ErrInternal("Error withdrawing rent.").Result()
 	}
