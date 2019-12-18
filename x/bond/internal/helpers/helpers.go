@@ -27,15 +27,3 @@ func (bondID BondID) Generate() string {
 	hasher.Write([]byte(str))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
-
-// AnyCoinAmountExceeds checks if ANY coin amount is greater than the given amount.
-func AnyCoinAmountExceeds(coins sdk.Coins, amount int64) bool {
-	maxAmount := sdk.NewInt(amount)
-	for _, coin := range coins {
-		if coin.Amount.GT(maxAmount) {
-			return true
-		}
-	}
-
-	return false
-}

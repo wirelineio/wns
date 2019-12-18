@@ -33,6 +33,20 @@ func NewHandler(keeper Keeper) sdk.Handler {
 	}
 }
 
+func getMaxBondAmount(ctx sdk.Context, keeper Keeper) (sdk.Coins, error) {
+	maxBondAmount, err := sdk.ParseCoin(keeper.MaxBondAmount(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	maxBondAmountMicroWire, err := sdk.ConvertCoin(maxBondAmount, types.MicroWire)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdk.NewCoins(maxBondAmountMicroWire), nil
+}
+
 // Handle MsgCreateBond.
 func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond) sdk.Result {
 	ownerAddress := msg.Signer
@@ -50,15 +64,20 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 		Sequence: account.GetSequence(),
 	}.Generate()
 
+	maxBondAmountMicroWire, err := getMaxBondAmount(ctx, keeper)
+	if err != nil {
+		return sdk.ErrInternal("Invalid max bond amount.").Result()
+	}
+
 	bond := types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins}
-	if helpers.AnyCoinAmountExceeds(bond.Balance, keeper.MaxBondAmount(ctx)) {
+	if bond.Balance.IsAnyGT(maxBondAmountMicroWire) {
 		return sdk.ErrInternal("Max bond amount exceeded.").Result()
 	}
 
 	// Move funds into the bond account module.
-	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
+	sdkErr := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, bond.Balance)
 	if err != nil {
-		return err.Result()
+		return sdkErr.Result()
 	}
 
 	// Save bond in store.
@@ -85,15 +104,20 @@ func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond
 		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
 	}
 
+	maxBondAmountMicroWire, err := getMaxBondAmount(ctx, keeper)
+	if err != nil {
+		return sdk.ErrInternal("Invalid max bond amount.").Result()
+	}
+
 	updatedBalance := bond.Balance.Add(msg.Coins)
-	if helpers.AnyCoinAmountExceeds(updatedBalance, keeper.MaxBondAmount(ctx)) {
+	if updatedBalance.IsAnyGT(maxBondAmountMicroWire) {
 		return sdk.ErrInternal("Max bond amount exceeded.").Result()
 	}
 
 	// Move funds into the bond account module.
-	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
+	sdkErr := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
 	if err != nil {
-		return err.Result()
+		return sdkErr.Result()
 	}
 
 	// Update bond balance and save.

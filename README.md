@@ -60,13 +60,13 @@ Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `
         "unbonding_time": "1814400000000000",
         "max_validators": 100,
         "max_entries": 7,
-        "bond_denom": "stake"    # --------> Change from "stake" TO "wire".
+        "bond_denom": "stake"    # --------> Change from "stake" TO "uwire".
       }
     }
 ```
 
 ```bash
-$ sed -i '' 's/stake/wire/g' ~/.wnsd/config/genesis.json
+$ sed -i '' 's/stake/uwire/g' ~/.wnsd/config/genesis.json
 ```
 
 ```bash
@@ -76,11 +76,11 @@ $ wnscli keys add root --recover
 # To generate a new mnemonic & key, skip the --recover option.
 
 # Create a genesis validator account provisioned with 100 million WIRE.
-$ wnsd add-genesis-account $(wnscli keys show root -a) 100000000wire
+$ wnsd add-genesis-account $(wnscli keys show root -a) 100000000000000uwire
 
 # Optionally, create a `faucet` genesis account (note the mnemonic).
 $ wnscli keys add faucet
-$ wnsd add-genesis-account $(wnscli keys show faucet -a) 100000000wire
+$ wnsd add-genesis-account $(wnscli keys show faucet -a) 100000000000000uwire
 ```
 
 Configure the CLI to eliminate the need for the `chain-id` flag.
@@ -92,7 +92,7 @@ $ wnscli config indent true
 $ wnscli config trust-node true
 
 # Validator stake/bond => 10 million WIRE (out of total 100 million WIRE).
-$ wnsd gentx --name root --amount 10000000wire
+$ wnsd gentx --name root --amount 10000000000000uwire
 
 $ wnsd collect-gentxs
 $ wnsd validate-genesis
