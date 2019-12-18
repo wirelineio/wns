@@ -146,12 +146,14 @@ List balance across all bonds.
 
 ```bash
 $ wnscli query bond balance
-[
-  {
-    "denom": "uwire",
-    "amount": "4000000000"
-  }
-]
+{
+  "bond": [
+    {
+      "denom": "uwire",
+      "amount": "4198000000"
+    }
+  ]
+}
 ```
 
 Get bond by ID.
@@ -292,6 +294,23 @@ $ wnscli query bond get 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01
     {
       "denom": "uwire",
       "amount": "1198000000"
+    }
+  ]
+}
+
+# Note: Check balance of bond and record rent module accounts.
+$ wnscli query bond balance
+{
+  "bond": [
+    {
+      "denom": "uwire",
+      "amount": "4198000000"
+    }
+  ],
+  "record_rent": [
+    {
+      "denom": "uwire",
+      "amount": "2000000"
     }
   ]
 }
