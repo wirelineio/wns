@@ -20,6 +20,7 @@ const (
 	GetBond         = "get"
 	QueryByOwner    = "query-by-owner"
 	QueryParameters = "parameters"
+	Balance         = "balance"
 )
 
 // NewQuerier is the module level router for state queries
@@ -34,6 +35,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryBondsByOwner(ctx, path[1:], req, keeper)
 		case QueryParameters:
 			return queryParameters(ctx, path[1:], req, keeper)
+		case Balance:
+			return queryBalance(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown bond query endpoint")
 		}
@@ -86,6 +89,17 @@ func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keep
 	params := keeper.GetParams(ctx)
 
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
+}
+
+func queryBalance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	bondModuleAccount := keeper.AccountKeeper.GetAccount(ctx, keeper.SupplyKeeper.GetModuleAddress(types.ModuleName))
+
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, bondModuleAccount.GetCoins())
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
