@@ -7,12 +7,12 @@ package types
 import (
 	"crypto/sha256"
 	"fmt"
-	"strings"
-	"time"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	canonicalJson "github.com/gibson042/canonicaljson-go"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
+	"strings"
+	"time"
 )
 
 // ID for records.
@@ -23,6 +23,7 @@ type Record struct {
 	ID         ID                     `json:"id,omitempty"`
 	BondID     bond.ID                `json:"bondId,omitempty"`
 	ExpiryTime time.Time              `json:"expiryTime,omitempty"`
+	Deleted    bool                   `json:"deleted,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
@@ -70,6 +71,7 @@ func (r *Record) ToRecordObj() RecordObj {
 	resourceObj.ID = r.ID
 	resourceObj.BondID = r.BondID
 	resourceObj.ExpiryTime = r.ExpiryTime
+	resourceObj.Deleted = r.Deleted
 	resourceObj.Owners = r.Owners
 	resourceObj.Attributes = helpers.MarshalMapToJSONBytes(r.Attributes)
 
@@ -120,6 +122,11 @@ func (r *Record) GetCID() ID {
 	return ID(helpers.GetCid(r.CanonicalJSON()))
 }
 
+// HasExpired returns true if the record has expired.
+func (r *Record) HasExpired(ctx sdk.Context) bool {
+	return ctx.BlockTime().After(r.ExpiryTime)
+}
+
 // Signature represents a record signature.
 type Signature struct {
 	PubKey    string `json:"pubKey"`
@@ -148,6 +155,7 @@ type RecordObj struct {
 	ID         ID        `json:"id,omitempty"`
 	BondID     bond.ID   `json:"bondId,omitempty"`
 	ExpiryTime time.Time `json:"expiryTime,omitempty"`
+	Deleted    bool      `json:"deleted,omitempty"`
 	Owners     []string  `json:"owners,omitempty"`
 	Attributes []byte    `json:"attributes,omitempty"`
 }
@@ -160,6 +168,7 @@ func (resourceObj *RecordObj) ToRecord() Record {
 	record.ID = resourceObj.ID
 	record.BondID = resourceObj.BondID
 	record.ExpiryTime = resourceObj.ExpiryTime
+	record.Deleted = resourceObj.Deleted
 	record.Owners = resourceObj.Owners
 	record.Attributes = helpers.UnMarshalMapFromJSONBytes(resourceObj.Attributes)
 

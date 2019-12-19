@@ -5,13 +5,16 @@
 package keeper
 
 import (
+	"bytes"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/wirelineio/wns/x/bond"
+	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
@@ -29,6 +32,9 @@ var prefixBaseWRNToNameRecordIndex = []byte{0x02}
 
 // prefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
 var prefixBondIDToRecordsIndex = []byte{0x03}
+
+// prefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
+var prefixExpiryTimeToRecordsIndex = []byte{0x10}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -311,4 +317,175 @@ func (k RecordKeeper) BondHasAssociatedRecords(ctx sdk.Context, bondID bond.ID) 
 	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
 	defer itr.Close()
 	return itr.Valid()
+}
+
+// getRecordExpiryQueueTimeKey gets the prefix for the record expiry queue.
+func getRecordExpiryQueueTimeKey(timestamp time.Time) []byte {
+	timeBytes := sdk.FormatTimeBytes(timestamp)
+	return append(prefixExpiryTimeToRecordsIndex, timeBytes...)
+}
+
+// GetRecordExpiryQueueTimeSlice gets a specific record queue timeslice.
+// A timeslice is a slice of CIDs corresponding to records that expire at a certain time.
+func (k Keeper) GetRecordExpiryQueueTimeSlice(ctx sdk.Context, timestamp time.Time) (cids []types.ID) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(getRecordExpiryQueueTimeKey(timestamp))
+	if bz == nil {
+		return []types.ID{}
+	}
+
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &cids)
+	return cids
+}
+
+// SetRecordExpiryQueueTimeSlice sets a specific record expiry queue timeslice.
+func (k Keeper) SetRecordExpiryQueueTimeSlice(ctx sdk.Context, timestamp time.Time, cids []types.ID) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(cids)
+	store.Set(getRecordExpiryQueueTimeKey(timestamp), bz)
+}
+
+// DeleteRecordExpiryQueueTimeSlice deletes a specific record expiry queue timeslice.
+func (k Keeper) DeleteRecordExpiryQueueTimeSlice(ctx sdk.Context, timestamp time.Time) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(getRecordExpiryQueueTimeKey(timestamp))
+}
+
+// InsertRecordExpiryQueue inserts a record CID to the appropriate timeslice in the record expiry queue.
+func (k Keeper) InsertRecordExpiryQueue(ctx sdk.Context, val types.Record) {
+	timeSlice := k.GetRecordExpiryQueueTimeSlice(ctx, val.ExpiryTime)
+	timeSlice = append(timeSlice, val.ID)
+	k.SetRecordExpiryQueueTimeSlice(ctx, val.ExpiryTime, timeSlice)
+}
+
+// DeleteRecordExpiryQueue deletes a record CID from the record expiry queue.
+func (k Keeper) DeleteRecordExpiryQueue(ctx sdk.Context, record types.Record) {
+	timeSlice := k.GetRecordExpiryQueueTimeSlice(ctx, record.ExpiryTime)
+	newTimeSlice := []types.ID{}
+
+	for _, cid := range timeSlice {
+		if !bytes.Equal([]byte(cid), []byte(record.ID)) {
+			newTimeSlice = append(newTimeSlice, cid)
+		}
+	}
+
+	if len(newTimeSlice) == 0 {
+		k.DeleteRecordExpiryQueueTimeSlice(ctx, record.ExpiryTime)
+	} else {
+		k.SetRecordExpiryQueueTimeSlice(ctx, record.ExpiryTime, newTimeSlice)
+	}
+}
+
+// RecordExpiryQueueIterator returns all the record expiry queue timeslices from time 0 until endTime.
+func (k Keeper) RecordExpiryQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
+	store := ctx.KVStore(k.storeKey)
+	rangeEndBytes := sdk.InclusiveEndBytes(getRecordExpiryQueueTimeKey(endTime))
+	return store.Iterator(prefixExpiryTimeToRecordsIndex, rangeEndBytes)
+}
+
+// GetAllExpiredRecords returns a concatenated list of all the timeslices before currTime.
+func (k Keeper) GetAllExpiredRecords(ctx sdk.Context, currTime time.Time) (expiredRecordCIDs []types.ID) {
+	// Gets an iterator for all timeslices from time 0 until the current block header time.
+	itr := k.RecordExpiryQueueIterator(ctx, ctx.BlockHeader().Time)
+	defer itr.Close()
+
+	for ; itr.Valid(); itr.Next() {
+		timeslice := []types.ID{}
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(itr.Value(), &timeslice)
+		expiredRecordCIDs = append(expiredRecordCIDs, timeslice...)
+	}
+
+	return expiredRecordCIDs
+}
+
+// ProcessRecordExpiryQueue tries to renew expiring records (by collecting rent) else marks them as deleted.
+func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
+	cids := k.GetAllExpiredRecords(ctx, ctx.BlockHeader().Time)
+	for _, cid := range cids {
+		record := k.GetRecord(ctx, cid)
+
+		// If record doesn't have an associated bond or if bond no longer exists, mark it deleted.
+		if record.BondID == "" || !k.BondKeeper.HasBond(ctx, record.BondID) {
+			record.Deleted = true
+			k.PutRecord(ctx, record)
+			k.DeleteRecordExpiryQueue(ctx, record)
+
+			return
+		}
+
+		// Try to renew the record by taking rent.
+		k.TryTakeRecordRent(ctx, record)
+	}
+}
+
+// ProcessNameRecords creates name records.
+func (k Keeper) ProcessNameRecords(ctx sdk.Context, record types.Record) {
+	k.SetNameRecord(ctx, record.WRN(), record.ToNameRecord())
+	k.MaybeUpdateBaseNameRecord(ctx, record)
+}
+
+// MaybeUpdateBaseNameRecord updates the base name record if required.
+func (k Keeper) MaybeUpdateBaseNameRecord(ctx sdk.Context, record types.Record) {
+	if !k.HasNameRecord(ctx, record.BaseWRN()) {
+		// Create base name record.
+		k.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
+		return
+	}
+
+	// Get current base record (which will have current latest version).
+	baseNameRecord := k.GetNameRecord(ctx, record.BaseWRN())
+	latestRecord := k.GetRecord(ctx, baseNameRecord.ID)
+
+	latestVersion := helpers.GetSemver(latestRecord.Version())
+	createdVersion := helpers.GetSemver(record.Version())
+	if createdVersion.GreaterThan(latestVersion) {
+		// Need to update the base name record.
+		k.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
+	}
+}
+
+// TryTakeRecordRent tries to take rent from the record bond.
+func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
+	bondObj := k.BondKeeper.GetBond(ctx, record.BondID)
+	coins, err := sdk.ParseCoins(k.RecordRent(ctx))
+	if err != nil {
+		panic("Invalid record rent.")
+	}
+
+	rent, err := sdk.ConvertCoin(coins[0], bond.MicroWire)
+	if err != nil {
+		panic("Invalid record rent.")
+	}
+
+	// Try deducting rent from bond.
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
+	if isNeg {
+		// Insufficient funds, mark record as deleted.
+		record.Deleted = true
+		k.PutRecord(ctx, record)
+		k.DeleteRecordExpiryQueue(ctx, record)
+
+		return
+	}
+
+	// Move funds from bond module to record rent module.
+	err = k.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, sdk.NewCoins(rent))
+	if err != nil {
+		panic("Error withdrawing rent.")
+	}
+
+	// Update bond balance.
+	bondObj.Balance = updatedBalance
+	k.BondKeeper.SaveBond(ctx, bondObj)
+
+	// Delete old expiry queue entry, create new one.
+	k.DeleteRecordExpiryQueue(ctx, record)
+	record.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordExpiryTime(ctx))
+	k.InsertRecordExpiryQueue(ctx, record)
+
+	// Save record.
+	record.Deleted = false
+	k.PutRecord(ctx, record)
+	k.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
 }

@@ -102,7 +102,7 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
 	}
 
-	// Deduct one year rent from bond.
+	// Deduct rent from bond.
 	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
 	if isNeg {
 		// Check if bond has sufficient funds.
@@ -120,9 +120,11 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	keeper.BondKeeper.SaveBond(ctx, bondObj)
 
 	record.ExpiryTime = ctx.BlockHeader().Time.Add(keeper.RecordExpiryTime(ctx))
+
 	keeper.PutRecord(ctx, record)
 	keeper.AddBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
-	processNameRecords(ctx, keeper, record)
+	keeper.InsertRecordExpiryQueue(ctx, record)
+	keeper.ProcessNameRecords(ctx, record)
 
 	return sdk.Result{}
 }
@@ -251,28 +253,4 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 	}
 
 	return sdk.Result{}
-}
-
-func processNameRecords(ctx sdk.Context, keeper Keeper, record types.Record) {
-	keeper.SetNameRecord(ctx, record.WRN(), record.ToNameRecord())
-	maybeUpdateBaseNameRecord(ctx, keeper, record)
-}
-
-func maybeUpdateBaseNameRecord(ctx sdk.Context, keeper Keeper, record types.Record) {
-	if !keeper.HasNameRecord(ctx, record.BaseWRN()) {
-		// Create base name record.
-		keeper.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
-		return
-	}
-
-	// Get current base record (which will have current latest version).
-	baseNameRecord := keeper.GetNameRecord(ctx, record.BaseWRN())
-	latestRecord := keeper.GetRecord(ctx, baseNameRecord.ID)
-
-	latestVersion := helpers.GetSemver(latestRecord.Version())
-	createdVersion := helpers.GetSemver(record.Version())
-	if createdVersion.GreaterThan(latestVersion) {
-		// Need to update the base name record.
-		keeper.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
-	}
 }
