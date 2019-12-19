@@ -50,7 +50,13 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 	}
 
 	for _, record := range data.Records {
-		keeper.PutRecord(ctx, record.ToRecord())
+		obj := record.ToRecord()
+		keeper.PutRecord(ctx, obj)
+
+		// Add to record expiry queue if expiry time is in the future.
+		if obj.ExpiryTime.After(ctx.BlockTime()) {
+			keeper.InsertRecordExpiryQueue(ctx, obj)
+		}
 	}
 
 	return []abci.ValidatorUpdate{}
