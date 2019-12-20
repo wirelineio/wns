@@ -12,10 +12,11 @@ import (
 
 type GenesisState struct {
 	Params types.Params `json:"params" yaml:"params"`
+	Bonds  []types.Bond `json:"bonds" yaml:"bonds"`
 }
 
-func NewGenesisState(params types.Params) GenesisState {
-	return GenesisState{Params: params}
+func NewGenesisState(params types.Params, bonds []types.Bond) GenesisState {
+	return GenesisState{Params: params, Bonds: bonds}
 }
 
 func ValidateGenesis(data GenesisState) error {
@@ -34,11 +35,16 @@ func DefaultGenesisState() GenesisState {
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
 	keeper.SetParams(ctx, data.Params)
 
+	for _, bond := range data.Bonds {
+		keeper.SaveBond(ctx, bond)
+	}
+
 	return []abci.ValidatorUpdate{}
 }
 
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	params := keeper.GetParams(ctx)
+	bonds := keeper.ListBonds(ctx)
 
-	return GenesisState{Params: params}
+	return GenesisState{Params: params, Bonds: bonds}
 }
