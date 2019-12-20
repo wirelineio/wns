@@ -57,6 +57,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 		if obj.ExpiryTime.After(ctx.BlockTime()) {
 			keeper.InsertRecordExpiryQueue(ctx, obj)
 		}
+
+		// Note: Bond genesis runs first, so bonds will already be present.
+		if record.BondID != "" {
+			keeper.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
+		}
 	}
 
 	return []abci.ValidatorUpdate{}
