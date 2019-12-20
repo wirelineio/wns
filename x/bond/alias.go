@@ -31,6 +31,7 @@ var (
 
 type (
 	ID            = types.ID
+	Bond          = types.Bond
 	Keeper        = keeper.Keeper
 	MsgCreateBond = types.MsgCreateBond
 )

@@ -30,6 +30,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgDissociateRecords(ctx, keeper, msg)
 		case types.MsgReassociateRecords:
 			return handleMsgReassociateRecords(ctx, keeper, msg)
+		case types.MsgRenewRecord:
+			return handleMsgRenewRecord(ctx, keeper, msg)
 		case types.MsgClearRecords:
 			return handleMsgClearRecords(ctx, keeper, msg)
 		default:
@@ -86,33 +88,62 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		}
 	}
 
-	// Check bond.
-	if !keeper.BondKeeper.HasBond(ctx, msg.BondID) {
-		return sdk.ErrUnauthorized("Bond not found.").Result()
+	sdkErr := processRecord(ctx, keeper, &record, false)
+	if sdkErr != nil {
+		return sdkErr.Result()
 	}
 
-	bondObj := keeper.BondKeeper.GetBond(ctx, msg.BondID)
+	return sdk.Result{}
+}
+
+// Handle MsgRenewRecord.
+func handleMsgRenewRecord(ctx sdk.Context, keeper Keeper, msg types.MsgRenewRecord) sdk.Result {
+	if !keeper.HasRecord(ctx, msg.ID) {
+		return sdk.ErrInternal("Record not found.").Result()
+	}
+
+	// Check if renewal is required (i.e. expired record marked as deleted).
+	record := keeper.GetRecord(ctx, msg.ID)
+	if !record.Deleted || record.ExpiryTime.After(ctx.BlockTime()) {
+		return sdk.ErrInternal("Renewal not required.").Result()
+	}
+
+	err := processRecord(ctx, keeper, &record, true)
+	if err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{}
+}
+
+func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenewal bool) sdk.Error {
+	// Check that the record has an associated bond.
+	if !keeper.BondKeeper.HasBond(ctx, record.BondID) {
+		return sdk.ErrUnauthorized("Bond not found.")
+	}
+
+	bondObj := keeper.BondKeeper.GetBond(ctx, record.BondID)
 	coins, err := sdk.ParseCoins(keeper.RecordRent(ctx))
 	if err != nil {
-		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
+		return sdk.ErrInvalidCoins("Invalid record rent.")
 	}
 
 	rent, err := sdk.ConvertCoin(coins[0], bond.MicroWire)
 	if err != nil {
-		return sdk.ErrInvalidCoins("Invalid record rent.").Result()
+		return sdk.ErrInvalidCoins("Invalid record rent.")
 	}
 
 	// Deduct rent from bond.
 	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
 	if isNeg {
 		// Check if bond has sufficient funds.
-		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
+		return sdk.ErrInsufficientCoins("Insufficient funds.")
 	}
 
 	// Move funds from bond module to record rent module.
 	err = keeper.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, sdk.NewCoins(rent))
 	if err != nil {
-		return sdk.ErrInternal("Error withdrawing rent.").Result()
+		return sdk.ErrInternal("Error withdrawing rent.")
 	}
 
 	// Update bond balance.
@@ -120,13 +151,18 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 	keeper.BondKeeper.SaveBond(ctx, bondObj)
 
 	record.ExpiryTime = ctx.BlockHeader().Time.Add(keeper.RecordExpiryTime(ctx))
+	record.Deleted = false
 
-	keeper.PutRecord(ctx, record)
-	keeper.AddBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
-	keeper.InsertRecordExpiryQueue(ctx, record)
-	keeper.ProcessNameRecords(ctx, record)
+	keeper.PutRecord(ctx, *record)
+	keeper.InsertRecordExpiryQueue(ctx, *record)
 
-	return sdk.Result{}
+	// Renewal doesn't change the name and bond indexes.
+	if !isRenewal {
+		keeper.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
+		keeper.ProcessNameRecords(ctx, *record)
+	}
+
+	return nil
 }
 
 // Handle MsgClearRecords.
