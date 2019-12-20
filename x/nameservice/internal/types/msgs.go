@@ -93,6 +93,50 @@ func (msg MsgSetRecord) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
 
+// MsgRenewRecord defines a renew record message.
+type MsgRenewRecord struct {
+	ID     ID
+	Signer sdk.AccAddress
+}
+
+// NewMsgRenewRecord is the constructor function for MsgRenewRecord.
+func NewMsgRenewRecord(id string, signer sdk.AccAddress) MsgRenewRecord {
+	return MsgRenewRecord{
+		ID:     ID(id),
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgRenewRecord) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgRenewRecord) Type() string { return "set" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgRenewRecord) ValidateBasic() sdk.Error {
+
+	if msg.ID == "" {
+		return sdk.ErrInternal("Record ID is required.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgRenewRecord) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgRenewRecord) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
+
 // MsgClearRecords defines a MsgClearRecords message.
 type MsgClearRecords struct {
 	Signer sdk.AccAddress
