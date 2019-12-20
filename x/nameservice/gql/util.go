@@ -24,7 +24,7 @@ const VersionMatchLatest = "latest"
 
 func getGQLRecord(ctx context.Context, resolver *queryResolver, record *types.Record) (*Record, error) {
 	// Nil record.
-	if record == nil {
+	if record == nil || record.Deleted {
 		return nil, nil
 	}
 
@@ -146,6 +146,11 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 }
 
 func matchOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
+	// Filter deleted records.
+	if record.Deleted {
+		return false
+	}
+
 	recAttrs := record.Attributes
 
 	for _, attr := range attributes {
