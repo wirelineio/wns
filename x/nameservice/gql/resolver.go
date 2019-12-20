@@ -151,7 +151,8 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*R
 	gqlResponse := []*Record{}
 
 	for _, ref := range refs {
-		gqlRecord, err := getGQLRecord(ctx, r, r.keeper.ResolveWRN(sdkContext, ref))
+		record := r.keeper.ResolveWRN(sdkContext, ref)
+		gqlRecord, err := getGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +233,9 @@ func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, erro
 	dbID := types.ID(id)
 	if r.keeper.HasRecord(sdkContext, dbID) {
 		record := r.keeper.GetRecord(sdkContext, dbID)
-		return getGQLRecord(ctx, r, &record)
+		if !record.Deleted {
+			return getGQLRecord(ctx, r, &record)
+		}
 	}
 
 	return nil, nil
