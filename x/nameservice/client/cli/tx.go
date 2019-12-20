@@ -41,6 +41,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdDissociateBond(cdc),
 		GetCmdDissociateRecords(cdc),
 		GetCmdReassociateRecords(cdc),
+		GetCmdRenewRecord(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -191,6 +192,30 @@ func GetCmdClearResources(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgClearRecords(cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdRenewRecord is the CLI command for renewing an expired record.
+func GetCmdRenewRecord(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "renew-record [record-id]",
+		Short: "Renew (expired) record.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgRenewRecord(args[0], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
