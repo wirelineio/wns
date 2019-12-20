@@ -161,7 +161,7 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
-		Short: "Query the current nameservice parameters information",
+		Short: "Query the current nameservice parameters information.",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query values set as nameservice parameters.
 
