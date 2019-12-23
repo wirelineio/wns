@@ -25,6 +25,8 @@ import (
 	app "github.com/wirelineio/wns"
 )
 
+var invCheckPeriod uint
+
 func main() {
 	cobra.EnableCommandSorting = false
 
@@ -63,6 +65,9 @@ func main() {
 	rootCmd.PersistentFlags().Bool("gql-playground", false, "Enable GQL playground.")
 	rootCmd.PersistentFlags().String("gql-port", "9473", "Port to use for the GQL server.")
 
+	// Invariant checking flag.
+	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, "inv-check-period", 0, "Assert registered invariants every N blocks.")
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "NS", app.DefaultNodeHome)
 	err := executor.Execute()
@@ -72,7 +77,7 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewNameServiceApp(logger, db)
+	return app.NewNameServiceApp(logger, db, invCheckPeriod)
 }
 
 func exportAppStateAndTMValidators(
@@ -80,7 +85,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		nsApp := app.NewNameServiceApp(logger, db)
+		nsApp := app.NewNameServiceApp(logger, db, uint(1))
 		err := nsApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
@@ -88,7 +93,7 @@ func exportAppStateAndTMValidators(
 		return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	nsApp := app.NewNameServiceApp(logger, db)
+	nsApp := app.NewNameServiceApp(logger, db, uint(1))
 
 	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

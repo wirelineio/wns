@@ -21,6 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -56,6 +57,7 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distr.ProposalHandler),
 		params.AppModuleBasic{},
+		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
@@ -88,6 +90,8 @@ type nameServiceApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
+	invCheckPeriod uint
+
 	// keys to access the substores
 	keys  map[string]*sdk.KVStoreKey
 	tkeys map[string]*sdk.TransientStoreKey
@@ -99,6 +103,7 @@ type nameServiceApp struct {
 	slashingKeeper slashing.Keeper
 	distrKeeper    distr.Keeper
 	govKeeper      gov.Keeper
+	crisisKeeper   crisis.Keeper
 	supplyKeeper   supply.Keeper
 	paramsKeeper   params.Keeper
 	recordKeeper   nameservice.RecordKeeper
@@ -111,7 +116,7 @@ type nameServiceApp struct {
 
 // NewNameServiceApp is a constructor function for nameServiceApp
 func NewNameServiceApp(
-	logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp),
+	logger log.Logger, db dbm.DB, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
 ) *nameServiceApp {
 
 	// First define the top level codec that will be shared by the different modules
@@ -130,10 +135,11 @@ func NewNameServiceApp(
 
 	// Here you initialize your application with the store keys it requires
 	var app = &nameServiceApp{
-		BaseApp: bApp,
-		cdc:     cdc,
-		keys:    keys,
-		tkeys:   tkeys,
+		BaseApp:        bApp,
+		cdc:            cdc,
+		invCheckPeriod: invCheckPeriod,
+		keys:           keys,
+		tkeys:          tkeys,
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
@@ -145,6 +151,7 @@ func NewNameServiceApp(
 	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
 	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
+	crisisSubspace := app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 	nsSubspace := app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
 	bondSubspace := app.paramsKeeper.Subspace(bond.DefaultParamspace)
 
@@ -220,6 +227,8 @@ func NewNameServiceApp(
 		app.supplyKeeper, &stakingKeeper, gov.DefaultCodespace, govRouter,
 	)
 
+	app.crisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName)
+
 	app.recordKeeper = nameservice.NewRecordKeeper(
 		keys[nameservice.StoreKey],
 		app.cdc,
@@ -248,6 +257,7 @@ func NewNameServiceApp(
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
+		crisis.NewAppModule(&app.crisisKeeper),
 		bond.NewAppModule(app.bondKeeper),
 		nameservice.NewAppModule(app.nsKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
@@ -258,7 +268,7 @@ func NewNameServiceApp(
 	)
 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
-	app.mm.SetOrderEndBlockers(gov.ModuleName, staking.ModuleName, nameservice.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, nameservice.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	// NOTE: The genutils moodule must occur after staking so that pools are
@@ -274,10 +284,11 @@ func NewNameServiceApp(
 		bond.ModuleName,
 		nameservice.ModuleName,
 		supply.ModuleName,
+		crisis.ModuleName,
 		genutil.ModuleName,
 	)
 
-	// register all module routes and module queriers
+	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
 	// The initChainer handles translating the genesis.json file into initial state for the network
@@ -353,6 +364,11 @@ func (app *nameServiceApp) ExportAppStateAndValidators(forZeroHeight bool, jailW
 
 	// as if they could withdraw from the start of the next block
 	ctx := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
+
+	if forZeroHeight {
+		/* Just to be safe, assert the invariants on current state. */
+		app.crisisKeeper.AssertInvariants(ctx)
+	}
 
 	genState := app.mm.ExportGenesis(ctx)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
