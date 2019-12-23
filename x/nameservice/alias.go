@@ -22,6 +22,8 @@ var (
 	NewQuerier        = keeper.NewQuerier
 	ModuleCdc         = types.ModuleCdc
 	RegisterCodec     = types.RegisterCodec
+
+	RegisterInvariants = keeper.RegisterInvariants
 )
 
 type (
