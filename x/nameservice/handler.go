@@ -199,6 +199,11 @@ func handleMsgAssociateBond(ctx sdk.Context, keeper Keeper, msg types.MsgAssocia
 	keeper.PutRecord(ctx, record)
 	keeper.AddBondToRecordIndexEntry(ctx, msg.BondID, msg.ID)
 
+	// Required so that renewal is triggered (with new bond ID) for expired records.
+	if record.Deleted {
+		keeper.InsertRecordExpiryQueue(ctx, record)
+	}
+
 	return sdk.Result{}
 }
 
@@ -286,6 +291,11 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 
 		keeper.RemoveBondToRecordIndexEntry(ctx, msg.OldBondID, record.ID)
 		keeper.AddBondToRecordIndexEntry(ctx, msg.NewBondID, record.ID)
+
+		// Required so that renewal is triggered (with new bond ID) for expired records.
+		if record.Deleted {
+			keeper.InsertRecordExpiryQueue(ctx, record)
+		}
 	}
 
 	return sdk.Result{}
