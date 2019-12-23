@@ -18,23 +18,23 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
-// prefixCIDToRecordIndex is the prefix for CID -> Record index.
+// PrefixCIDToRecordIndex is the prefix for CID -> Record index.
 // Note: This is the primary index in the system.
 // Note: Golang doesn't support const arrays.
-var prefixCIDToRecordIndex = []byte{0x00}
+var PrefixCIDToRecordIndex = []byte{0x00}
 
-// prefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index.
-var prefixWRNToNameRecordIndex = []byte{0x01}
+// PrefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index.
+var PrefixWRNToNameRecordIndex = []byte{0x01}
 
-// prefixBaseWRNToNameRecordIndex is the prefix for the Base WRN -> NamingRecord index.
+// PrefixBaseWRNToNameRecordIndex is the prefix for the Base WRN -> NamingRecord index.
 // Note: BaseWRL => WRN minus `version`, i.e. latest version.
-var prefixBaseWRNToNameRecordIndex = []byte{0x02}
+var PrefixBaseWRNToNameRecordIndex = []byte{0x02}
 
-// prefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
-var prefixBondIDToRecordsIndex = []byte{0x03}
+// PrefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
+var PrefixBondIDToRecordsIndex = []byte{0x03}
 
-// prefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
-var prefixExpiryTimeToRecordsIndex = []byte{0x10}
+// PrefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
+var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -76,17 +76,17 @@ func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
 // PutRecord - saves a record to the store and updates ID -> Record index.
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(append(prefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	store.Set(append(PrefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
 }
 
 // Generates Bond ID -> Bond index key.
 func getRecordIndexKey(id types.ID) []byte {
-	return append(prefixCIDToRecordIndex, []byte(id)...)
+	return append(PrefixCIDToRecordIndex, []byte(id)...)
 }
 
 // Generates Bond ID -> Records index key.
 func getBondIDToRecordsIndexKey(bondID bond.ID, id types.ID) []byte {
-	return append(append(prefixBondIDToRecordsIndex, []byte(bondID)...), []byte(id)...)
+	return append(append(PrefixBondIDToRecordsIndex, []byte(bondID)...), []byte(id)...)
 }
 
 // AddBondToRecordIndexEntry adds the Bond ID -> [Record] index entry.
@@ -104,7 +104,7 @@ func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id
 // SetNameRecord - sets a name record.
 func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(append(prefixWRNToNameRecordIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
+	store.Set(append(PrefixWRNToNameRecordIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
 }
 
 // HasRecord - checks if a record by the given ID exists.
@@ -116,7 +116,7 @@ func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
 // HasNameRecord - checks if a name record exists.
 func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(append(prefixWRNToNameRecordIndex, []byte(wrn)...))
+	return store.Has(append(PrefixWRNToNameRecordIndex, []byte(wrn)...))
 }
 
 // GetRecord - gets a record from the store.
@@ -134,7 +134,7 @@ func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) types.NameRecord {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(append(prefixWRNToNameRecordIndex, []byte(wrn)...))
+	bz := store.Get(append(PrefixWRNToNameRecordIndex, []byte(wrn)...))
 	var obj types.NameRecord
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
@@ -146,7 +146,7 @@ func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 	var records []types.Record
 
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixCIDToRecordIndex)
+	itr := sdk.KVStorePrefixIterator(store, PrefixCIDToRecordIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -165,14 +165,14 @@ func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
 	nameRecords := make(map[string]types.NameRecord)
 
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixWRNToNameRecordIndex)
+	itr := sdk.KVStorePrefixIterator(store, PrefixWRNToNameRecordIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
 		if bz != nil {
 			var record types.NameRecord
 			k.cdc.MustUnmarshalBinaryBare(bz, &record)
-			nameRecords[string(itr.Key()[len(prefixWRNToNameRecordIndex):])] = record
+			nameRecords[string(itr.Key()[len(PrefixWRNToNameRecordIndex):])] = record
 		}
 	}
 
@@ -198,7 +198,7 @@ func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
 // Note: Version part of the WRN MUST NOT have a semver range.
 func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
 	store := ctx.KVStore(k.storeKey)
-	nameKey := append(prefixWRNToNameRecordIndex, []byte(wrn)...)
+	nameKey := append(PrefixWRNToNameRecordIndex, []byte(wrn)...)
 
 	if store.Has(nameKey) {
 		bz := store.Get(nameKey)
@@ -222,7 +222,7 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 
 	store := ctx.KVStore(k.storeKey)
 
-	baseNameKey := append(prefixWRNToNameRecordIndex, []byte(baseWRN)...)
+	baseNameKey := append(PrefixWRNToNameRecordIndex, []byte(baseWRN)...)
 	if !store.Has(baseNameKey) {
 		return nil
 	}
@@ -230,7 +230,7 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 	var highestSemver, _ = semver.NewVersion("0.0.0")
 	var highestNameRecord types.NameRecord = types.NameRecord{}
 
-	baseWRNPrefix := append(prefixWRNToNameRecordIndex, []byte(baseWRN)...)
+	baseWRNPrefix := append(PrefixWRNToNameRecordIndex, []byte(baseWRN)...)
 	itr := sdk.KVStorePrefixIterator(store, baseWRNPrefix)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
@@ -260,7 +260,7 @@ func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) 
 	var records []*types.Record
 
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixCIDToRecordIndex)
+	itr := sdk.KVStorePrefixIterator(store, PrefixCIDToRecordIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -293,13 +293,13 @@ func (k Keeper) ClearRecords(ctx sdk.Context) {
 func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Record {
 	var records []types.Record
 
-	bondIDPrefix := append(prefixBondIDToRecordsIndex, []byte(bondID)...)
+	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
 	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		cid := itr.Key()[len(bondIDPrefix):]
-		bz := store.Get(append(prefixCIDToRecordIndex, cid...))
+		bz := store.Get(append(PrefixCIDToRecordIndex, cid...))
 		if bz != nil {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
@@ -312,7 +312,7 @@ func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []type
 
 // BondHasAssociatedRecords returns true if the bond has associated records.
 func (k RecordKeeper) BondHasAssociatedRecords(ctx sdk.Context, bondID bond.ID) bool {
-	bondIDPrefix := append(prefixBondIDToRecordsIndex, []byte(bondID)...)
+	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
 	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
 	defer itr.Close()
@@ -322,7 +322,7 @@ func (k RecordKeeper) BondHasAssociatedRecords(ctx sdk.Context, bondID bond.ID) 
 // getRecordExpiryQueueTimeKey gets the prefix for the record expiry queue.
 func getRecordExpiryQueueTimeKey(timestamp time.Time) []byte {
 	timeBytes := sdk.FormatTimeBytes(timestamp)
-	return append(prefixExpiryTimeToRecordsIndex, timeBytes...)
+	return append(PrefixExpiryTimeToRecordsIndex, timeBytes...)
 }
 
 // GetRecordExpiryQueueTimeSlice gets a specific record queue timeslice.
@@ -381,7 +381,7 @@ func (k Keeper) DeleteRecordExpiryQueue(ctx sdk.Context, record types.Record) {
 func (k Keeper) RecordExpiryQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
 	store := ctx.KVStore(k.storeKey)
 	rangeEndBytes := sdk.InclusiveEndBytes(getRecordExpiryQueueTimeKey(endTime))
-	return store.Iterator(prefixExpiryTimeToRecordsIndex, rangeEndBytes)
+	return store.Iterator(PrefixExpiryTimeToRecordsIndex, rangeEndBytes)
 }
 
 // GetAllExpiredRecords returns a concatenated list of all the timeslices before currTime.
