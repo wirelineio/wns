@@ -33,7 +33,7 @@ import (
 
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
-	"github.com/wirelineio/wns/x/nameservice/gql"
+	"github.com/wirelineio/wns/gql"
 
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 )
