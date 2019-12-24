@@ -10,7 +10,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/mitchellh/mapstructure"
-	"github.com/wirelineio/wns/x/nameservice/internal/types"
+	"github.com/wirelineio/wns/x/nameservice"
 )
 
 // VersionAttributeName denotes the version attribute name in a record.
@@ -22,7 +22,7 @@ const VersionMatchAll = "*"
 // VersionMatchLatest represents a special value to match only the latest version of each record.
 const VersionMatchLatest = "latest"
 
-func getGQLRecord(ctx context.Context, resolver *queryResolver, record *types.Record) (*Record, error) {
+func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameservice.Record) (*Record, error) {
 	// Nil record.
 	if record == nil || record.Deleted {
 		return nil, nil
@@ -55,7 +55,7 @@ func getGQLRecord(ctx context.Context, resolver *queryResolver, record *types.Re
 	}, nil
 }
 
-func getReferences(ctx context.Context, resolver *queryResolver, r *types.Record) ([]*Record, error) {
+func getReferences(ctx context.Context, resolver *queryResolver, r *nameservice.Record) ([]*Record, error) {
 	var ids []string
 
 	for _, value := range r.Attributes {
@@ -72,11 +72,11 @@ func getReferences(ctx context.Context, resolver *queryResolver, r *types.Record
 	return resolver.GetRecordsByIds(ctx, ids)
 }
 
-func getAttributes(r *types.Record) ([]*KeyValue, error) {
+func getAttributes(r *nameservice.Record) ([]*KeyValue, error) {
 	return mapToKeyValuePairs(r.Attributes)
 }
 
-func getExtension(r *types.Record) (ext Extension, err error) {
+func getExtension(r *nameservice.Record) (ext Extension, err error) {
 	switch r.Type() {
 	case WnsTypeProtocol:
 		var protocol Protocol
@@ -145,7 +145,7 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 	return kvPairs, nil
 }
 
-func matchOnAttributes(record *types.Record, attributes []*KeyValueInput) bool {
+func matchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
 	// Filter deleted records.
 	if record.Deleted {
 		return false
@@ -253,11 +253,11 @@ func requestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
 // Used to filter records and retain only the latest versions.
 type bestMatch struct {
 	version *semver.Version
-	record  *types.Record
+	record  *nameservice.Record
 }
 
 // Only return the latest version of each record.
-func getLatestVersions(records []*types.Record) []*types.Record {
+func getLatestVersions(records []*nameservice.Record) []*nameservice.Record {
 	baseWrnBestMatch := make(map[string]bestMatch)
 	for _, record := range records {
 		baseWrn := record.BaseWRN()
@@ -270,7 +270,7 @@ func getLatestVersions(records []*types.Record) []*types.Record {
 		}
 	}
 
-	var matches = make([]*types.Record, len(baseWrnBestMatch))
+	var matches = make([]*nameservice.Record, len(baseWrnBestMatch))
 	var index int
 	for _, match := range baseWrnBestMatch {
 		matches[index] = match.record

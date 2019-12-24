@@ -30,4 +30,7 @@ type (
 	Keeper       = keeper.Keeper
 	RecordKeeper = keeper.RecordKeeper
 	MsgSetRecord = types.MsgSetRecord
+
+	ID     = types.ID
+	Record = types.Record
 )
