@@ -135,6 +135,27 @@ func (k Keeper) QueryBondsByOwner(ctx sdk.Context, ownerAddress string) []types.
 	return bonds
 }
 
+// MatchBonds - get all matching bonds.
+func (k Keeper) MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*types.Bond {
+	var bonds []*types.Bond
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, prefixIDToBondIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.Bond
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			if matchFn(&obj) {
+				bonds = append(bonds, &obj)
+			}
+		}
+	}
+
+	return bonds
+}
+
 // Clear - Deletes all entries and indexes.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
 func (k Keeper) Clear(ctx sdk.Context) {
