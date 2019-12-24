@@ -67,7 +67,7 @@ type Record {
   name:       String!         # e.g. wireline.io/chess
   version:    String!         # Version (e.g. 0.1.0).
 
-  bondId:     String          # Associated bond ID.
+  bondId:     String!         # Associated bond ID.
   expiryTime: String!         # Record expiry time.
 
   owners:     [String]!       # Addresses of record owners.

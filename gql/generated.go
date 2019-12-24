@@ -695,7 +695,7 @@ type Record {
   name:       String!         # e.g. wireline.io/chess
   version:    String!         # Version (e.g. 0.1.0).
 
-  bondId:     String          # Associated bond ID.
+  bondId:     String!         # Associated bond ID.
   expiryTime: String!         # Record expiry time.
 
   owners:     [String]!       # Addresses of record owners.
@@ -1802,12 +1802,15 @@ func (ec *executionContext) _Record_bondId(ctx context.Context, field graphql.Co
 		return obj.BondID, nil
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_expiryTime(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
@@ -3523,6 +3526,9 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "bondId":
 			out.Values[i] = ec._Record_bondId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "expiryTime":
 			out.Values[i] = ec._Record_expiryTime(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
