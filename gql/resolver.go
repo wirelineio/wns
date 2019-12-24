@@ -253,5 +253,21 @@ func (r *queryResolver) GetBond(ctx context.Context, id string) (*Bond, error) {
 }
 
 func (r *queryResolver) QueryBonds(ctx context.Context, attributes []*KeyValueInput) ([]*Bond, error) {
-	panic("not implemented")
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*Bond{}
+
+	var bonds = r.keeper.BondKeeper.MatchBonds(sdkContext, func(bondObj *bond.Bond) bool {
+		return matchBondOnAttributes(bondObj, attributes)
+	})
+
+	for _, bondObj := range bonds {
+		gqlBond, err := getGQLBond(ctx, r, bondObj)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlBond)
+	}
+
+	return gqlResponse, nil
 }
