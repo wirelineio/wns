@@ -712,7 +712,7 @@ func (ec *executionContext) field_Mutation_insertRecord_args(ctx context.Context
 	args := map[string]interface{}{}
 	var arg0 []*KeyValueInput
 	if tmp, ok := rawArgs["attributes"]; ok {
-		arg0, err = ec.unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx, tmp)
+		arg0, err = ec.unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -782,7 +782,7 @@ func (ec *executionContext) field_Query_queryRecords_args(ctx context.Context, r
 	args := map[string]interface{}{}
 	var arg0 []*KeyValueInput
 	if tmp, ok := rawArgs["attributes"]; ok {
-		arg0, err = ec.unmarshalOKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx, tmp)
+		arg0, err = ec.unmarshalOKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -958,7 +958,7 @@ func (ec *executionContext) _Account_balance(ctx context.Context, field graphql.
 	res := resTmp.([]Coin)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐCoin(ctx, field.Selections, res)
+	return ec.marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐCoin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Bot_name(ctx context.Context, field graphql.CollectedField, obj *Bot) graphql.Marshaler {
@@ -1114,7 +1114,7 @@ func (ec *executionContext) _KeyValue_value(ctx context.Context, field graphql.C
 	res := resTmp.(Value)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNValue2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx, field.Selections, res)
+	return ec.marshalNValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_insertRecord(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1144,7 +1144,7 @@ func (ec *executionContext) _Mutation_insertRecord(ctx context.Context, field gr
 	res := resTmp.(*Record)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, field.Selections, res)
+	return ec.marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_submit(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1252,7 +1252,7 @@ func (ec *executionContext) _Query_getStatus(ctx context.Context, field graphql.
 	res := resTmp.(*Status)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStatus2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐStatus(ctx, field.Selections, res)
+	return ec.marshalNStatus2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getAccounts(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1282,7 +1282,7 @@ func (ec *executionContext) _Query_getAccounts(ctx context.Context, field graphq
 	res := resTmp.([]*Account)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOAccount2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐAccount(ctx, field.Selections, res)
+	return ec.marshalOAccount2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getRecordsByIds(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1312,7 +1312,7 @@ func (ec *executionContext) _Query_getRecordsByIds(ctx context.Context, field gr
 	res := resTmp.([]*Record)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, field.Selections, res)
+	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_queryRecords(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1342,7 +1342,7 @@ func (ec *executionContext) _Query_queryRecords(ctx context.Context, field graph
 	res := resTmp.([]*Record)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, field.Selections, res)
+	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_resolveRecords(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1372,7 +1372,7 @@ func (ec *executionContext) _Query_resolveRecords(ctx context.Context, field gra
 	res := resTmp.([]*Record)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, field.Selections, res)
+	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1578,7 +1578,7 @@ func (ec *executionContext) _Record_attributes(ctx context.Context, field graphq
 	res := resTmp.([]*KeyValue)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOKeyValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValue(ctx, field.Selections, res)
+	return ec.marshalOKeyValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValue(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_references(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
@@ -1601,7 +1601,7 @@ func (ec *executionContext) _Record_references(ctx context.Context, field graphq
 	res := resTmp.([]*Record)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, field.Selections, res)
+	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_extension(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
@@ -1624,7 +1624,7 @@ func (ec *executionContext) _Record_extension(ctx context.Context, field graphql
 	res := resTmp.(Extension)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOExtension2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐExtension(ctx, field.Selections, res)
+	return ec.marshalOExtension2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐExtension(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Reference_id(ctx context.Context, field graphql.CollectedField, obj *Reference) graphql.Marshaler {
@@ -1840,7 +1840,7 @@ func (ec *executionContext) _Value_reference(ctx context.Context, field graphql.
 	res := resTmp.(*Reference)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOReference2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReference(ctx, field.Selections, res)
+	return ec.marshalOReference2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReference(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Value_values(ctx context.Context, field graphql.CollectedField, obj *Value) graphql.Marshaler {
@@ -1863,7 +1863,7 @@ func (ec *executionContext) _Value_values(ctx context.Context, field graphql.Col
 	res := resTmp.([]*Value)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx, field.Selections, res)
+	return ec.marshalOValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) graphql.Marshaler {
@@ -2679,7 +2679,7 @@ func (ec *executionContext) unmarshalInputKeyValueInput(ctx context.Context, v i
 			}
 		case "value":
 			var err error
-			it.Value, err = ec.unmarshalNValueInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx, v)
+			it.Value, err = ec.unmarshalNValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2745,13 +2745,13 @@ func (ec *executionContext) unmarshalInputValueInput(ctx context.Context, v inte
 			}
 		case "reference":
 			var err error
-			it.Reference, err = ec.unmarshalOReferenceInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReferenceInput(ctx, v)
+			it.Reference, err = ec.unmarshalOReferenceInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReferenceInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "values":
 			var err error
-			it.Values, err = ec.unmarshalOValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx, v)
+			it.Values, err = ec.unmarshalOValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3561,11 +3561,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return graphql.MarshalBoolean(v)
 }
 
-func (ec *executionContext) marshalNCoin2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐCoin(ctx context.Context, sel ast.SelectionSet, v Coin) graphql.Marshaler {
+func (ec *executionContext) marshalNCoin2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐCoin(ctx context.Context, sel ast.SelectionSet, v Coin) graphql.Marshaler {
 	return ec._Coin(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) ([]*KeyValueInput, error) {
+func (ec *executionContext) unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) ([]*KeyValueInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -3577,7 +3577,7 @@ func (ec *executionContext) unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelin
 	var err error
 	res := make([]*KeyValueInput, len(vSlice))
 	for i := range vSlice {
-		res[i], err = ec.unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -3585,11 +3585,11 @@ func (ec *executionContext) unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelin
 	return res, nil
 }
 
-func (ec *executionContext) marshalNStatus2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐStatus(ctx context.Context, sel ast.SelectionSet, v Status) graphql.Marshaler {
+func (ec *executionContext) marshalNStatus2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐStatus(ctx context.Context, sel ast.SelectionSet, v Status) graphql.Marshaler {
 	return ec._Status(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStatus2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐStatus(ctx context.Context, sel ast.SelectionSet, v *Status) graphql.Marshaler {
+func (ec *executionContext) marshalNStatus2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐStatus(ctx context.Context, sel ast.SelectionSet, v *Status) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3636,11 +3636,11 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNValue2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {
+func (ec *executionContext) marshalNValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {
 	return ec._Value(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNValueInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx context.Context, v interface{}) (ValueInput, error) {
+func (ec *executionContext) unmarshalNValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx context.Context, v interface{}) (ValueInput, error) {
 	return ec.unmarshalInputValueInput(ctx, v)
 }
 
@@ -3858,11 +3858,11 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return graphql.MarshalString(v)
 }
 
-func (ec *executionContext) marshalOAccount2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐAccount(ctx context.Context, sel ast.SelectionSet, v Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAccount(ctx context.Context, sel ast.SelectionSet, v Account) graphql.Marshaler {
 	return ec._Account(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐAccount(ctx context.Context, sel ast.SelectionSet, v []*Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAccount(ctx context.Context, sel ast.SelectionSet, v []*Account) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3886,7 +3886,7 @@ func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋwirelineioᚋwn
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAccount2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐAccount(ctx, sel, v[i])
+			ret[i] = ec.marshalOAccount2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAccount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3899,7 +3899,7 @@ func (ec *executionContext) marshalOAccount2ᚕᚖgithubᚗcomᚋwirelineioᚋwn
 	return ret
 }
 
-func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐAccount(ctx context.Context, sel ast.SelectionSet, v *Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAccount(ctx context.Context, sel ast.SelectionSet, v *Account) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3929,7 +3929,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐCoin(ctx context.Context, sel ast.SelectionSet, v []Coin) graphql.Marshaler {
+func (ec *executionContext) marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐCoin(ctx context.Context, sel ast.SelectionSet, v []Coin) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3953,7 +3953,7 @@ func (ec *executionContext) marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋx�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCoin2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐCoin(ctx, sel, v[i])
+			ret[i] = ec.marshalNCoin2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐCoin(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3966,7 +3966,7 @@ func (ec *executionContext) marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋx�
 	return ret
 }
 
-func (ec *executionContext) marshalOExtension2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐExtension(ctx context.Context, sel ast.SelectionSet, v Extension) graphql.Marshaler {
+func (ec *executionContext) marshalOExtension2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐExtension(ctx context.Context, sel ast.SelectionSet, v Extension) graphql.Marshaler {
 	return ec._Extension(ctx, sel, &v)
 }
 
@@ -4016,11 +4016,11 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return ec.marshalOInt2int(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOKeyValue2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValue(ctx context.Context, sel ast.SelectionSet, v KeyValue) graphql.Marshaler {
+func (ec *executionContext) marshalOKeyValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValue(ctx context.Context, sel ast.SelectionSet, v KeyValue) graphql.Marshaler {
 	return ec._KeyValue(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOKeyValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValue(ctx context.Context, sel ast.SelectionSet, v []*KeyValue) graphql.Marshaler {
+func (ec *executionContext) marshalOKeyValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValue(ctx context.Context, sel ast.SelectionSet, v []*KeyValue) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4044,7 +4044,7 @@ func (ec *executionContext) marshalOKeyValue2ᚕᚖgithubᚗcomᚋwirelineioᚋw
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOKeyValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValue(ctx, sel, v[i])
+			ret[i] = ec.marshalOKeyValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValue(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4057,18 +4057,18 @@ func (ec *executionContext) marshalOKeyValue2ᚕᚖgithubᚗcomᚋwirelineioᚋw
 	return ret
 }
 
-func (ec *executionContext) marshalOKeyValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValue(ctx context.Context, sel ast.SelectionSet, v *KeyValue) graphql.Marshaler {
+func (ec *executionContext) marshalOKeyValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValue(ctx context.Context, sel ast.SelectionSet, v *KeyValue) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._KeyValue(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOKeyValueInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) (KeyValueInput, error) {
+func (ec *executionContext) unmarshalOKeyValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) (KeyValueInput, error) {
 	return ec.unmarshalInputKeyValueInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) ([]*KeyValueInput, error) {
+func (ec *executionContext) unmarshalOKeyValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) ([]*KeyValueInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -4080,7 +4080,7 @@ func (ec *executionContext) unmarshalOKeyValueInput2ᚕᚖgithubᚗcomᚋwirelin
 	var err error
 	res := make([]*KeyValueInput, len(vSlice))
 	for i := range vSlice {
-		res[i], err = ec.unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -4088,19 +4088,19 @@ func (ec *executionContext) unmarshalOKeyValueInput2ᚕᚖgithubᚗcomᚋwirelin
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) (*KeyValueInput, error) {
+func (ec *executionContext) unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx context.Context, v interface{}) (*KeyValueInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOKeyValueInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐKeyValueInput(ctx, v)
+	res, err := ec.unmarshalOKeyValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalORecord2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v Record) graphql.Marshaler {
+func (ec *executionContext) marshalORecord2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v Record) graphql.Marshaler {
 	return ec._Record(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v []*Record) graphql.Marshaler {
+func (ec *executionContext) marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v []*Record) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4124,7 +4124,7 @@ func (ec *executionContext) marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwns
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx, sel, v[i])
+			ret[i] = ec.marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4137,33 +4137,33 @@ func (ec *executionContext) marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwns
 	return ret
 }
 
-func (ec *executionContext) marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v *Record) graphql.Marshaler {
+func (ec *executionContext) marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v *Record) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Record(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOReference2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReference(ctx context.Context, sel ast.SelectionSet, v Reference) graphql.Marshaler {
+func (ec *executionContext) marshalOReference2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReference(ctx context.Context, sel ast.SelectionSet, v Reference) graphql.Marshaler {
 	return ec._Reference(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOReference2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReference(ctx context.Context, sel ast.SelectionSet, v *Reference) graphql.Marshaler {
+func (ec *executionContext) marshalOReference2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReference(ctx context.Context, sel ast.SelectionSet, v *Reference) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Reference(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOReferenceInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReferenceInput(ctx context.Context, v interface{}) (ReferenceInput, error) {
+func (ec *executionContext) unmarshalOReferenceInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReferenceInput(ctx context.Context, v interface{}) (ReferenceInput, error) {
 	return ec.unmarshalInputReferenceInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOReferenceInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReferenceInput(ctx context.Context, v interface{}) (*ReferenceInput, error) {
+func (ec *executionContext) unmarshalOReferenceInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReferenceInput(ctx context.Context, v interface{}) (*ReferenceInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOReferenceInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐReferenceInput(ctx, v)
+	res, err := ec.unmarshalOReferenceInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐReferenceInput(ctx, v)
 	return &res, err
 }
 
@@ -4219,11 +4219,11 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOValue2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {
+func (ec *executionContext) marshalOValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {
 	return ec._Value(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v []*Value) graphql.Marshaler {
+func (ec *executionContext) marshalOValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v []*Value) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4247,7 +4247,7 @@ func (ec *executionContext) marshalOValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwns�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx, sel, v[i])
+			ret[i] = ec.marshalOValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4260,18 +4260,18 @@ func (ec *executionContext) marshalOValue2ᚕᚖgithubᚗcomᚋwirelineioᚋwns�
 	return ret
 }
 
-func (ec *executionContext) marshalOValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v *Value) graphql.Marshaler {
+func (ec *executionContext) marshalOValue2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v *Value) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Value(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOValueInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx context.Context, v interface{}) (ValueInput, error) {
+func (ec *executionContext) unmarshalOValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx context.Context, v interface{}) (ValueInput, error) {
 	return ec.unmarshalInputValueInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx context.Context, v interface{}) ([]*ValueInput, error) {
+func (ec *executionContext) unmarshalOValueInput2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx context.Context, v interface{}) ([]*ValueInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -4283,7 +4283,7 @@ func (ec *executionContext) unmarshalOValueInput2ᚕᚖgithubᚗcomᚋwirelineio
 	var err error
 	res := make([]*ValueInput, len(vSlice))
 	for i := range vSlice {
-		res[i], err = ec.unmarshalOValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -4291,11 +4291,11 @@ func (ec *executionContext) unmarshalOValueInput2ᚕᚖgithubᚗcomᚋwirelineio
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx context.Context, v interface{}) (*ValueInput, error) {
+func (ec *executionContext) unmarshalOValueInput2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx context.Context, v interface{}) (*ValueInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOValueInput2githubᚗcomᚋwirelineioᚋwnsᚋxᚋnameserviceᚋgqlᚐValueInput(ctx, v)
+	res, err := ec.unmarshalOValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValueInput(ctx, v)
 	return &res, err
 }
 
