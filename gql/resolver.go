@@ -16,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/wirelineio/wns/x/nameservice"
-	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
 // WnsTypeProtocol => Protocol.
@@ -125,7 +124,7 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	var records = r.keeper.MatchRecords(sdkContext, func(record *types.Record) bool {
+	var records = r.keeper.MatchRecords(sdkContext, func(record *nameservice.Record) bool {
 		return matchOnAttributes(record, attributes)
 	})
 
@@ -230,7 +229,7 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 
-	dbID := types.ID(id)
+	dbID := nameservice.ID(id)
 	if r.keeper.HasRecord(sdkContext, dbID) {
 		record := r.keeper.GetRecord(sdkContext, dbID)
 		if !record.Deleted {
