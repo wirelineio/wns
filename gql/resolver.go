@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -199,21 +200,6 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 		pubKey = &pubKeyStr
 	}
 
-	coins := []sdk.Coin(account.GetCoins())
-	gqlCoins := make([]Coin, len(coins))
-
-	for index, coin := range account.GetCoins() {
-		amount := coin.Amount.Int64()
-		if amount < 0 {
-			return nil, errors.New("amount cannot be negative")
-		}
-
-		gqlCoins[index] = Coin{
-			Type:     coin.Denom,
-			Quantity: BigUInt(amount),
-		}
-	}
-
 	accNum := BigUInt(account.GetAccountNumber())
 	seq := BigUInt(account.GetSequence())
 
@@ -222,7 +208,7 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 		Number:   accNum,
 		Sequence: seq,
 		PubKey:   pubKey,
-		Balance:  gqlCoins,
+		Balance:  getGQLCoins(account.GetCoins()),
 	}, nil
 }
 
@@ -238,4 +224,34 @@ func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, erro
 	}
 
 	return nil, nil
+}
+
+func (r *queryResolver) GetBondsByIds(ctx context.Context, ids []string) ([]*Bond, error) {
+	bonds := make([]*Bond, len(ids))
+	for index, id := range ids {
+		bondObj, err := r.GetBond(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		bonds[index] = bondObj
+	}
+
+	return bonds, nil
+}
+
+func (r *queryResolver) GetBond(ctx context.Context, id string) (*Bond, error) {
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+
+	dbID := bond.ID(id)
+	if r.keeper.BondKeeper.HasBond(sdkContext, dbID) {
+		bondObj := r.keeper.BondKeeper.GetBond(sdkContext, dbID)
+		return getGQLBond(ctx, r, &bondObj)
+	}
+
+	return nil, nil
+}
+
+func (r *queryResolver) QueryBonds(ctx context.Context, attributes []*KeyValueInput) ([]*Bond, error) {
+	panic("not implemented")
 }

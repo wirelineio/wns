@@ -14,6 +14,12 @@ type Account struct {
 	Balance  []Coin  `json:"balance"`
 }
 
+type Bond struct {
+	ID      string `json:"id"`
+	Owner   string `json:"owner"`
+	Balance []Coin `json:"balance"`
+}
+
 type Bot struct {
 	Name      string `json:"name"`
 	AccessKey string `json:"accessKey"`
@@ -53,6 +59,8 @@ type Record struct {
 	Type       string      `json:"type"`
 	Name       string      `json:"name"`
 	Version    string      `json:"version"`
+	BondID     *string     `json:"bondId"`
+	ExpiryTime string      `json:"expiryTime"`
 	Owners     []*string   `json:"owners"`
 	Attributes []*KeyValue `json:"attributes"`
 	References []*Record   `json:"references"`
