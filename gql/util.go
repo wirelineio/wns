@@ -25,6 +25,9 @@ const VersionMatchAll = "*"
 // VersionMatchLatest represents a special value to match only the latest version of each record.
 const VersionMatchLatest = "latest"
 
+// OwnerAttributeName denotes the owner attribute name for a bond.
+const OwnerAttributeName = "owner"
+
 func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameservice.Record) (*Record, error) {
 	// Nil record.
 	if record == nil || record.Deleted {
@@ -295,15 +298,35 @@ func getGQLCoins(coins sdk.Coins) []Coin {
 	return gqlCoins
 }
 
-func getGQLBond(ctx context.Context, resolver *queryResolver, bond *bond.Bond) (*Bond, error) {
+func getGQLBond(ctx context.Context, resolver *queryResolver, bondObj *bond.Bond) (*Bond, error) {
 	// Nil record.
-	if bond == nil {
+	if bondObj == nil {
 		return nil, nil
 	}
 
 	return &Bond{
-		ID:      string(bond.ID),
-		Owner:   bond.Owner,
-		Balance: getGQLCoins(bond.Balance),
+		ID:      string(bondObj.ID),
+		Owner:   bondObj.Owner,
+		Balance: getGQLCoins(bondObj.Balance),
 	}, nil
+}
+
+func matchBondOnAttributes(bondObj *bond.Bond, attributes []*KeyValueInput) bool {
+	for _, attr := range attributes {
+		switch attr.Key {
+		case OwnerAttributeName:
+			{
+				if attr.Value.String == nil || bondObj.Owner != *attr.Value.String {
+					return false
+				}
+			}
+		default:
+			{
+				// Only attributes explicitly listed in the switch are queryable.
+				return false
+			}
+		}
+	}
+
+	return true
 }
