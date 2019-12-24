@@ -10,7 +10,10 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/mitchellh/mapstructure"
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // VersionAttributeName denotes the version attribute name in a record.
@@ -278,4 +281,29 @@ func getLatestVersions(records []*nameservice.Record) []*nameservice.Record {
 	}
 
 	return matches
+}
+
+func getGQLCoins(coins sdk.Coins) []Coin {
+	gqlCoins := make([]Coin, len(coins))
+	for index, coin := range coins {
+		gqlCoins[index] = Coin{
+			Type:     coin.Denom,
+			Quantity: BigUInt(coin.Amount.Int64()),
+		}
+	}
+
+	return gqlCoins
+}
+
+func getGQLBond(ctx context.Context, resolver *queryResolver, bond *bond.Bond) (*Bond, error) {
+	// Nil record.
+	if bond == nil {
+		return nil, nil
+	}
+
+	return &Bond{
+		ID:      string(bond.ID),
+		Owner:   bond.Owner,
+		Balance: getGQLCoins(bond.Balance),
+	}, nil
 }
