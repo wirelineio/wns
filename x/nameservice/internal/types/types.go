@@ -43,6 +43,16 @@ func (r Record) Version() string {
 	return r.Attributes["version"].(string)
 }
 
+// GetBondID returns the BondID of the Record.
+func (r Record) GetBondID() string {
+	return string(r.BondID)
+}
+
+// GetExpiryTime returns the expiry time of the Record.
+func (r Record) GetExpiryTime() string {
+	return string(sdk.FormatTimeBytes(r.ExpiryTime))
+}
+
 // WRN returns the record `wrn`, e.g. `wrn:bot:wireline.io/chess#0.1.0`.
 func (r Record) WRN() string {
 	return strings.ToLower(fmt.Sprintf("%s#%s", r.BaseWRN(), r.Version()))

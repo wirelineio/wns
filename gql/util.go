@@ -28,6 +28,12 @@ const VersionMatchLatest = "latest"
 // OwnerAttributeName denotes the owner attribute name for a bond.
 const OwnerAttributeName = "owner"
 
+// BondIDAttributeName denotes the record bond ID.
+const BondIDAttributeName = "bondId"
+
+// ExpiryTimeAttributeName denotes the record expiry time.
+const ExpiryTimeAttributeName = "expiryTime"
+
 func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameservice.Record) (*Record, error) {
 	// Nil record.
 	if record == nil || record.Deleted {
@@ -54,6 +60,8 @@ func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameserv
 		Type:       record.Type(),
 		Name:       record.Name(),
 		Version:    record.Version(),
+		BondID:     record.GetBondID(),
+		ExpiryTime: record.GetExpiryTime(),
 		Owners:     record.GetOwners(),
 		Attributes: attributes,
 		References: references,
@@ -151,6 +159,32 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 	return kvPairs, nil
 }
 
+func matchOnRecordField(record *nameservice.Record, attr *KeyValueInput) (fieldFound bool, matched bool) {
+	fieldFound = false
+	matched = true
+
+	switch attr.Key {
+	case BondIDAttributeName:
+		{
+			fieldFound = true
+			if attr.Value.String == nil || record.GetBondID() != *attr.Value.String {
+				matched = false
+				return
+			}
+		}
+	case ExpiryTimeAttributeName:
+		{
+			fieldFound = true
+			if attr.Value.String == nil || record.GetExpiryTime() != *attr.Value.String {
+				matched = false
+				return
+			}
+		}
+	}
+
+	return
+}
+
 func matchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
 	// Filter deleted records.
 	if record.Deleted {
@@ -160,6 +194,16 @@ func matchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 	recAttrs := record.Attributes
 
 	for _, attr := range attributes {
+		// First try matching on record struct fields.
+		fieldFound, matched := matchOnRecordField(record, attr)
+		if fieldFound {
+			if !matched {
+				return false
+			}
+
+			continue
+		}
+
 		recAttrVal, recAttrFound := recAttrs[attr.Key]
 		if !recAttrFound {
 			return false
