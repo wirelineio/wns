@@ -13,8 +13,8 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 // MsgCreateBond defines a create bond message.
 type MsgCreateBond struct {
-	Coins  sdk.Coins
-	Signer sdk.AccAddress
+	Coins  sdk.Coins      `json:"coins"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgCreateBond is the constructor function for MsgCreateBond.
@@ -57,9 +57,9 @@ func (msg MsgCreateBond) GetSigners() []sdk.AccAddress {
 
 // MsgRefillBond defines a refill bond message.
 type MsgRefillBond struct {
-	ID     ID
-	Coins  sdk.Coins
-	Signer sdk.AccAddress
+	ID     ID             `json:"id"`
+	Coins  sdk.Coins      `json:"coins"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgRefillBond is the constructor function for MsgRefillBond.
@@ -107,9 +107,9 @@ func (msg MsgRefillBond) GetSigners() []sdk.AccAddress {
 
 // MsgWithdrawBond defines a withdraw (funds from) bond message.
 type MsgWithdrawBond struct {
-	ID     ID
-	Coins  sdk.Coins
-	Signer sdk.AccAddress
+	ID     ID             `json:"id"`
+	Coins  sdk.Coins      `json:"coins"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgWithdrawBond is the constructor function for MsgWithdrawBond.
@@ -157,8 +157,8 @@ func (msg MsgWithdrawBond) GetSigners() []sdk.AccAddress {
 
 // MsgCancelBond defines a cancel bond message.
 type MsgCancelBond struct {
-	ID     ID
-	Signer sdk.AccAddress
+	ID     ID             `json:"id"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgCancelBond is the constructor function for MsgCancelBond.
@@ -201,7 +201,7 @@ func (msg MsgCancelBond) GetSigners() []sdk.AccAddress {
 
 // MsgClear defines a MsgClear message.
 type MsgClear struct {
-	Signer sdk.AccAddress
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgClear is the constructor function for MsgClear.
