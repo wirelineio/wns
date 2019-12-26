@@ -17,9 +17,9 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 // MsgSetRecord defines a SetResource message.
 type MsgSetRecord struct {
-	Payload PayloadObj
-	BondID  bond.ID
-	Signer  sdk.AccAddress
+	Payload PayloadObj     `json:"payload"`
+	BondID  bond.ID        `json:"bondId"`
+	Signer  sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgSetRecord is the constructor function for MsgSetRecord.
@@ -95,8 +95,8 @@ func (msg MsgSetRecord) GetSigners() []sdk.AccAddress {
 
 // MsgRenewRecord defines a renew record message.
 type MsgRenewRecord struct {
-	ID     ID
-	Signer sdk.AccAddress
+	ID     ID             `json:"id"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgRenewRecord is the constructor function for MsgRenewRecord.
