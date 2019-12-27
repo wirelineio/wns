@@ -11,9 +11,9 @@ import (
 
 // MsgAssociateBond defines a associate bond message.
 type MsgAssociateBond struct {
-	ID     ID
-	BondID bond.ID
-	Signer sdk.AccAddress
+	ID     ID             `json:"id"`
+	BondID bond.ID        `json:"bondId"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgAssociateBond is the constructor function for MsgAssociateBond.
@@ -61,8 +61,8 @@ func (msg MsgAssociateBond) GetSigners() []sdk.AccAddress {
 
 // MsgDissociateBond defines a dissociate bond message.
 type MsgDissociateBond struct {
-	ID     ID
-	Signer sdk.AccAddress
+	ID     ID             `json:"id"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgDissociateBond is the constructor function for MsgDissociateBond.
@@ -105,8 +105,8 @@ func (msg MsgDissociateBond) GetSigners() []sdk.AccAddress {
 
 // MsgDissociateRecords defines a dissociate all records from bond message.
 type MsgDissociateRecords struct {
-	BondID bond.ID
-	Signer sdk.AccAddress
+	BondID bond.ID        `json:"bondId"`
+	Signer sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgDissociateRecords is the constructor function for MsgDissociateRecords.
@@ -149,9 +149,9 @@ func (msg MsgDissociateRecords) GetSigners() []sdk.AccAddress {
 
 // MsgReassociateRecords defines a reassociate records message.
 type MsgReassociateRecords struct {
-	OldBondID bond.ID
-	NewBondID bond.ID
-	Signer    sdk.AccAddress
+	OldBondID bond.ID        `json:"oldBondId"`
+	NewBondID bond.ID        `json:"newBondId"`
+	Signer    sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgReassociateRecords is the constructor function for MsgReassociateRecords.
