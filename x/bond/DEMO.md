@@ -8,9 +8,10 @@ Setup the machine as documented in https://github.com/wirelineio/wns#setup-machi
 
 ### Code
 
+WNS:
 
 ```bash
-# Clone `wns` repo. 
+# Clone `wns` repo.
 $ git clone git@github.com:wirelineio/wns.git
 $ cd wns
 
@@ -19,6 +20,38 @@ $ git checkout feature-bonds
 
 # Build and install the binaries.
 $ make install
+```
+
+WNS Client:
+
+```bash
+$ cd registry-client
+
+# Switch to the `feature-bonds` branch.
+$ git checkout feature-bonds
+
+$ yarn && yarn build
+
+$ yarn link
+```
+
+WNS CLI:
+
+```bash
+$ cd registry-cli
+
+# Switch to the `feature-bonds` branch.
+$ git checkout feature-bonds
+
+$ yarn && yarn build
+
+$ yarn link "@wirelineio/registry-client"
+```
+
+Setup a shell alias to run the above CLI.
+
+```bash
+alias wire-dev='node ~/projects/wireline/registry-cli/packages/wire/dist/es/main.js'
 ```
 
 ### Blockchain
@@ -46,11 +79,15 @@ $ sed -i '' 's/10wire/10000wire/g' ~/.wnsd/config/genesis.json
 ```
 
 ```bash
-# Create accounts/keys.
+# Create root accounts/keys.
 $ echo "temp12345\nsalad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple" | wnscli keys add root --recover
-$ echo "temp12345\nquestion cause van artefact belt dish turkey badge twenty bronze breeze visa" | wnscli keys add alice --recover
-$ echo "temp12345\nhospital speak toward arrange tide universe attend surround useless nerve true nasty" | wnscli keys add bob --recover
-```
+
+# Use the same mnemonic to generate the private key for use with the `wire` CLI.
+$ wire-dev keys generate --mnemonic="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
+Mnemonic:  salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple
+Private key:  b1e4e95dd3e3294f15869b56697b5e3bdcaa24d9d0af1be9ee57d5a59457843a
+Public key:  02ead12ad29c532364b2f7b565582499840fcf45a51f16542385072961f4df62d8
+Address:  cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094
 
 ```bash
 # Add genesis accounts to chain.
@@ -76,69 +113,51 @@ $ wnsd validate-genesis
 
 ```bash
 # Start the chain.
-$ wnsd start
+$ wnsd start --gql-server --gql-playground
 ```
 
 ## Run
 
+Set ENV variables for WNS endpoint and private key.
+
+```bash
+export WIRE_WNS_ENDPOINT='http://localhost:9473/graphql'
+export WIRE_WNS_USER_KEY="b1e4e95dd3e3294f15869b56697b5e3bdcaa24d9d0af1be9ee57d5a59457843a"
+```
+
 Create bonds.
 
 ```bash
-# Two bonds from the `root` account.
-$ echo temp12345 | wnscli tx bond create 1000wire --from root --yes -b block
-$ echo temp12345 | wnscli tx bond create 1000wire --from root --yes -b block
-
-# One bond each from the `alice` and `bob` accounts.
-$ echo temp12345 | wnscli tx bond create 1000wire --from alice --yes -b block
-$ echo temp12345 | wnscli tx bond create 1000wire --from bob --yes -b block
+$ wire-dev wns create-bond --type uwire --quantity 1000000000
+$ wire-dev wns create-bond --type uwire --quantity 1000000000
 ```
 
 List bonds.
 
 ```bash
 # Note: Bond ID, owner and balance.
-$ wnscli query bond list
+$ wire-dev wns list-bonds
 [
-  {
-    "id": "319fdfc0f4198643f2eb8adf602fb2e7f08682cb4d123d44d1935c87b554b959",
-    "owner": "cosmos1razr52gj62vvgqtneqmys8hklm02mynv0exky4",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  },
-  {
-    "id": "614b4affedc58705ba7eb8fac1d0fbcc9cffaeeaf787bd042b27a7447b37177e",
-    "owner": "cosmos1zk8etz23phxgtse8re6tggsr3nrfk2vtsesegy",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  },
-  {
-    "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  },
-  {
-    "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  }
+    {
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000000000"
+            }
+        ]
+    },
+    {
+        "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000000000"
+            }
+        ]
+    }
 ]
 ```
 
@@ -150,7 +169,7 @@ $ wnscli query bond balance
   "bond": [
     {
       "denom": "uwire",
-      "amount": "4198000000"
+      "amount": "2000000000"
     }
   ]
 }
@@ -159,441 +178,380 @@ $ wnscli query bond balance
 Get bond by ID.
 
 ```bash
-$ wnscli query bond get 319fdfc0f4198643f2eb8adf602fb2e7f08682cb4d123d44d1935c87b554b959
-{
-  "id": "319fdfc0f4198643f2eb8adf602fb2e7f08682cb4d123d44d1935c87b554b959",
-  "owner": "cosmos1razr52gj62vvgqtneqmys8hklm02mynv0exky4",
-  "balance": [
+$ wire-dev wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+[
     {
-      "denom": "uwire",
-      "amount": "1000000000"
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000000000"
+            }
+        ]
     }
-  ]
-}
+]
 ```
 
 Query bonds by owner.
 
 ```bash
 # Uses a secondary index: Owner -> Bond ID.
-$ wnscli query bond query-by-owner $(wnscli keys show -a root)
+$ wire-dev wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094
 [
-  {
-    "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  },
-  {
-    "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  }
+    {
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000000000"
+            }
+        ]
+    },
+    {
+        "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000000000"
+            }
+        ]
+    }
 ]
 ```
 
 Refill bond.
 
 ```bash
-$ echo temp12345 | wnscli tx bond refill 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 500wire --from root --yes -b block
+$ wire-dev wns refill-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --type uwire --quantity 1000
+```
 
-$ wnscli query bond get 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
-{
-  "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-  "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-  "balance": [
+```bash
+$ wire-dev wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+[
     {
-      "denom": "uwire",
-      "amount": "1500000000"
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000001000"
+            }
+        ]
     }
-  ]
-}
+]
 ```
 
 Withdraw funds from bond.
 
 ```bash
 # Transfers the funds back into the bond owner account.
-$ echo temp12345 | wnscli tx bond withdraw 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 300wire --from root --yes -b block
+$ wire-dev wns withdraw-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --type uwire --quantity 500
 
-$ wnscli query bond get 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
-{
-  "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-  "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-  "balance": [
+$ wire-dev wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+[
     {
-      "denom": "uwire",
-      "amount": "1200000000"
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "1000000500"
+            }
+        ]
     }
-  ]
-}
+]
 ```
 
-Publish a record (w/ bond).
+Publish records (w/ bond).
 
 ```bash
 $ cd x/nameservice/examples
-
-$ echo temp12345 | wnscli tx nameservice set protocol.yml 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
-
-$ echo temp12345 | wnscli tx nameservice set bot.yml 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
+$ wire-dev wns publish --filename protocol.yml --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire-dev wns publish --filename bot.yml --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 
 # Note: bondID and expiryTime attributes on the records.
-$ wnscli query nameservice list
+$ wire-dev wns list-records
 [
-  {
-    "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:54.288525Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
-      "displayName": "ChessBot",
-      "name": "wireline.io/chess-bot",
-      "protocol": {
+    {
+        "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
+        "type": "wrn:bot",
+        "name": "wireline.io/chess-bot",
+        "version": "2.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:55.824917000",
+        "attributes": {
+            "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
+            "displayName": "ChessBot",
+            "name": "wireline.io/chess-bot",
+            "protocol": {
+                "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe"
+            },
+            "type": "wrn:bot",
+            "version": "2.0.0"
+        }
+    },
+    {
         "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-        "type": "wrn:reference"
-      },
-      "type": "wrn:bot",
-      "version": "2.0.0"
+        "type": "wrn:protocol",
+        "name": "wireline.io/chess",
+        "version": "1.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:00.161930000",
+        "attributes": {
+            "displayName": "Chess",
+            "name": "wireline.io/chess",
+            "type": "wrn:protocol",
+            "version": "1.0.0"
+        }
     }
-  },
-  {
-    "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:44.173405Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "displayName": "Chess",
-      "name": "wireline.io/chess",
-      "type": "wrn:protocol",
-      "version": "1.0.0"
-    }
-  }
 ]
 
 # Note: Rent has been deducted from the bond.
-$ wnscli query bond get 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
-{
-  "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-  "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-  "balance": [
+$ wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+[
     {
-      "denom": "uwire",
-      "amount": "1198000000"
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "998000500"
+            }
+        ]
     }
-  ]
-}
+]
 
 # Note: Check balance of bond and record rent module accounts.
 $ wnscli query bond balance
 {
-  "bond": [
-    {
-      "denom": "uwire",
-      "amount": "4198000000"
-    }
-  ],
   "record_rent": [
     {
       "denom": "uwire",
       "amount": "2000000"
     }
+  ],
+  "bond": [
+    {
+      "denom": "uwire",
+      "amount": "1998000500"
+    }
   ]
 }
 ```
 
-Query records by bond.
+List records by bond.
 
 ```bash
-# Note: Uses a secondary index: Bond ID -> Record ID. 
-$ wnscli query nameservice query-by-bond 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+# Note: Uses a secondary index: Bond ID -> Record ID.
+$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
-  {
-    "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:54.288525Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
-      "displayName": "ChessBot",
-      "name": "wireline.io/chess-bot",
-      "protocol": {
+    {
+        "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
+        "type": "wrn:bot",
+        "name": "wireline.io/chess-bot",
+        "version": "2.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:55.824917000",
+        "attributes": {
+            "version": "2.0.0",
+            "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
+            "displayName": "ChessBot",
+            "name": "wireline.io/chess-bot",
+            "protocol": {
+                "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe"
+            },
+            "type": "wrn:bot"
+        }
+    },
+    {
         "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-        "type": "wrn:reference"
-      },
-      "type": "wrn:bot",
-      "version": "2.0.0"
+        "type": "wrn:protocol",
+        "name": "wireline.io/chess",
+        "version": "1.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:00.161930000",
+        "attributes": {
+            "displayName": "Chess",
+            "name": "wireline.io/chess",
+            "type": "wrn:protocol",
+            "version": "1.0.0"
+        }
     }
-  },
-  {
-    "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:44.173405Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "displayName": "Chess",
-      "name": "wireline.io/chess",
-      "type": "wrn:protocol",
-      "version": "1.0.0"
-    }
-  }
 ]
 ```
 
 Dissociate bond from record.
 
 ```bash
-$ echo temp12345 | wnscli tx nameservice dissociate-bond QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i --from root --yes -b block
+$ wire-dev wns dissociate-bond --id QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i
 
-$ wnscli query nameservice query-by-bond 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
-  {
-    "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:44.173405Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "displayName": "Chess",
-      "name": "wireline.io/chess",
-      "type": "wrn:protocol",
-      "version": "1.0.0"
+    {
+        "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
+        "type": "wrn:protocol",
+        "name": "wireline.io/chess",
+        "version": "1.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:00.161930000",
+        "attributes": {
+            "name": "wireline.io/chess",
+            "type": "wrn:protocol",
+            "version": "1.0.0",
+            "displayName": "Chess"
+        }
     }
-  }
 ]
 ```
 
 Associate bond with record.
 
 ```bash
-$ echo temp12345 | wnscli tx nameservice associate-bond QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
+$ wire-dev wns associate-bond --id QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 
-$ wnscli query nameservice query-by-bond 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
-  {
-    "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:54.288525Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
-      "displayName": "ChessBot",
-      "name": "wireline.io/chess-bot",
-      "protocol": {
+    {
+        "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
+        "type": "wrn:bot",
+        "name": "wireline.io/chess-bot",
+        "version": "2.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:55.824917000",
+        "attributes": {
+            "displayName": "ChessBot",
+            "name": "wireline.io/chess-bot",
+            "protocol": {
+                "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe"
+            },
+            "type": "wrn:bot",
+            "version": "2.0.0",
+            "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c"
+        }
+    },
+    {
         "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-        "type": "wrn:reference"
-      },
-      "type": "wrn:bot",
-      "version": "2.0.0"
+        "type": "wrn:protocol",
+        "name": "wireline.io/chess",
+        "version": "1.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "expiryTime": "2021-01-01T11:40:00.161930000",
+        "attributes": {
+            "displayName": "Chess",
+            "name": "wireline.io/chess",
+            "type": "wrn:protocol",
+            "version": "1.0.0"
+        }
     }
-  },
-  {
-    "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:44.173405Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "displayName": "Chess",
-      "name": "wireline.io/chess",
-      "type": "wrn:protocol",
-      "version": "1.0.0"
+]
+```
+
+Reassociate bond.
+
+```bash
+$ wire-dev wns reassociate-records --old-bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --new-bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+
+$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+[]
+
+# Check both records are now associated with bond e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d.
+$ wire-dev wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+[
+    {
+        "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
+        "type": "wrn:bot",
+        "name": "wireline.io/chess-bot",
+        "version": "2.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
+        "expiryTime": "2021-01-01T11:40:55.824917000",
+        "attributes": {
+            "name": "wireline.io/chess-bot",
+            "protocol": {
+                "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe"
+            },
+            "type": "wrn:bot",
+            "version": "2.0.0",
+            "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
+            "displayName": "ChessBot"
+        }
+    },
+    {
+        "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
+        "type": "wrn:protocol",
+        "name": "wireline.io/chess",
+        "version": "1.0.0",
+        "owners": [
+            "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
+        ],
+        "bondId": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
+        "expiryTime": "2021-01-01T11:40:00.161930000",
+        "attributes": {
+            "type": "wrn:protocol",
+            "version": "1.0.0",
+            "displayName": "Chess",
+            "name": "wireline.io/chess"
+        }
     }
-  }
 ]
 ```
 
 Dissociate bond from all records.
 
 ```bash
-$ echo temp12345 | wnscli tx nameservice dissociate-records 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
+$ wire-dev wns dissociate-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
 
 # Note: No records found.
-$ wnscli query nameservice query-by-bond 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
-```
-
-Reassociate bond.
-
-```bash
-# First, associate records with a bond.
-$ echo temp12345 | wnscli tx nameservice associate-bond QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
-
-# First, associate records with a bond.
-$ echo temp12345 | wnscli tx nameservice associate-bond Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
-
-# Check both records as associated with bond 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3.
-$ wnscli query nameservice list
-[
-  {
-    "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:54.288525Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
-      "displayName": "ChessBot",
-      "name": "wireline.io/chess-bot",
-      "protocol": {
-        "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-        "type": "wrn:reference"
-      },
-      "type": "wrn:bot",
-      "version": "2.0.0"
-    }
-  },
-  {
-    "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-    "bondId": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "expiryTime": "2020-12-17T11:00:44.173405Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "displayName": "Chess",
-      "name": "wireline.io/chess",
-      "type": "wrn:protocol",
-      "version": "1.0.0"
-    }
-  }
-]
-
-# List of bonds.
-$ wnscli query bond query-by-owner $(wnscli keys show -a root)
-[
-  {
-    "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1198000000"
-      }
-    ]
-  },
-  {
-    "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  }
-]
-
-# Switch to bond e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d.
-$ echo temp12345 | wnscli tx nameservice reassociate-records 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d --from root --yes -b block
-
-# Note: Records are now associated with bond e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d.
-$ wnscli query nameservice list
-[
-  {
-    "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
-    "bondId": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "expiryTime": "2020-12-17T11:00:54.288525Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "accessKey": "7db6a0c2b8bc79e733612b5cfd45e9f69bec4d05d424076826a0d08a2a62641c",
-      "displayName": "ChessBot",
-      "name": "wireline.io/chess-bot",
-      "protocol": {
-        "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-        "type": "wrn:reference"
-      },
-      "type": "wrn:bot",
-      "version": "2.0.0"
-    }
-  },
-  {
-    "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
-    "bondId": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "expiryTime": "2020-12-17T11:00:44.173405Z",
-    "owners": [
-      "6ee3328f65c8566cd5451e49e97a767d10a8adf7"
-    ],
-    "attributes": {
-      "displayName": "Chess",
-      "name": "wireline.io/chess",
-      "type": "wrn:protocol",
-      "version": "1.0.0"
-    }
-  }
-]
+$ wire-dev wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+[]
 ```
 
 Cancel bond.
 
 ```bash
-$ wnscli query bond query-by-owner $(wnscli keys show -a root)
-[
-  {
-    "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1198000000"
-      }
-    ]
-  },
-  {
-    "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  }
-]
-
-# Note: Cancel fails if there are associated records.
-$ echo temp12345 | wnscli tx bond cancel e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d --from root --yes -b block
-
 # Note: Cancel works if bond doesn't have associated records.
-$ echo temp12345 | wnscli tx bond cancel 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --from root --yes -b block
-
+# Note: Cancel fails if there are associated records.
 # Note: Cancelled bond is deleted.
-$ wnscli query bond query-by-owner $(wnscli keys show -a root)
+$ wire-dev wns cancel-bond --id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+
+$ wire-dev wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094                                                                                      5s
 [
-  {
-    "id": "e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d",
-    "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
-    "balance": [
-      {
-        "denom": "uwire",
-        "amount": "1000000000"
-      }
-    ]
-  }
+    {
+        "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
+        "owner": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+        "balance": [
+            {
+                "type": "uwire",
+                "quantity": "998000500"
+            }
+        ]
+    }
 ]
 ```
 
