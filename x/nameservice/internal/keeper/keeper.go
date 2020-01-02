@@ -277,18 +277,6 @@ func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) 
 	return records
 }
 
-// ClearRecords - Deletes all records and indexes.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) ClearRecords(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// Note: Clear everything, records and indexes.
-	itr := store.Iterator(nil, nil)
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		store.Delete(itr.Key())
-	}
-}
-
 // QueryRecordsByBond - get all records for the given bond.
 func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []types.Record {
 	var records []types.Record
@@ -488,4 +476,19 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	record.Deleted = false
 	k.PutRecord(ctx, record)
 	k.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
+}
+
+// ClearRecords - Deletes all records and indexes.
+// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
+func (k Keeper) ClearRecords(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	// Note: Clear everything, records and indexes.
+	itr := store.Iterator(nil, nil)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		store.Delete(itr.Key())
+	}
+
+	// Clear bonds.
+	k.BondKeeper.Clear(ctx)
 }
