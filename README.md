@@ -52,7 +52,7 @@ Initialize configuration files and genesis file.
 $ wnsd init my-node --chain-id wireline
 ```
 
-Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `wire`.
+Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `uwire`.
 
 ```
     "staking": {
@@ -68,6 +68,13 @@ Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `
 ```bash
 $ sed -i '' 's/stake/uwire/g' ~/.wnsd/config/genesis.json
 ```
+
+Optionally, change the following parameters for local testing purposes to the desired value:
+
+* `app_state.nameservice.params.record_rent` - Record rent per period.
+* `app_state.nameservice.params.record_expiry_time` - Record expiry time in nanoseconds.
+* `app_state.bond.params.max_bond_amount` - Maximum amount a bond can hold.
+* `app_state.gov.voting_params.voting_period` - Voting period for governance proposals (e.g. param changes).
 
 ```bash
 $ wnscli keys add root --recover
@@ -125,7 +132,7 @@ See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
 
 ## WNS CLI
 
-[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records. 
+[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
 
 ## Testnets
 
