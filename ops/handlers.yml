@@ -1,0 +1,13 @@
+- name: restart-wnsd
+  # https://docs.ansible.com/ansible/latest/modules/service_module.html
+  service:
+    name: wnsd
+    state: restarted
+  become: yes
+
+- name: stop-wnsd
+  # https://docs.ansible.com/ansible/latest/modules/service_module.html
+  service:
+    name: wnsd
+    state: stopped
+  become: yes

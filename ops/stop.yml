@@ -1,0 +1,11 @@
+---
+- hosts: servers
+  remote_user: ubuntu
+
+  tasks:
+  - name: trigger stop
+    command: /bin/true
+    notify: stop-wnsd
+
+  handlers:
+  - import_tasks: handlers.yml

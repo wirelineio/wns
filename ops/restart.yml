@@ -1,0 +1,11 @@
+---
+- hosts: servers
+  remote_user: ubuntu
+
+  tasks:
+  - name: trigger restart
+    command: /bin/true
+    notify: restart-wnsd
+
+  handlers:
+  - import_tasks: handlers.yml

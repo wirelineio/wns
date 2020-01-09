@@ -1,0 +1,18 @@
+---
+- hosts: servers
+  remote_user: ubuntu
+
+  tasks:
+  - name: build binaries
+    # https://docs.ansible.com/ansible/latest/modules/shell_module.html
+    shell:
+      cmd: make install
+      chdir: /home/wire-user/wns
+    become: yes
+    become_method: sudo
+    become_flags: "--login"
+    become_user: wire-user
+    notify: restart-wnsd
+
+  handlers:
+  - import_tasks: handlers.yml

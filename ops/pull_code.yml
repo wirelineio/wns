@@ -1,0 +1,10 @@
+---
+- hosts: servers
+  remote_user: wire-user
+
+  tasks:
+  - name: pull latest code
+    # https://docs.ansible.com/ansible/latest/modules/git_module.html
+    git:
+      repo: git@github.com:wirelineio/wns.git
+      dest: /home/wire-user/wns
