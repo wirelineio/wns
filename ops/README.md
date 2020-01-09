@@ -11,6 +11,5 @@ Hard reset development testnet (Warning: Wipes all data on the testnet):
 
 ```bash
 $ cd ~/wirelineio/wns/ops
-$ ansible-playbook -i env/development/inventory.yml reset-full.yml
+$ ansible-playbook -i env/development reset-full.yml
 ```
-

@@ -23,6 +23,14 @@
       src: .out/gentx/
       dest: /home/wire-user/.wnsd/config/gentx/
 
+  - name: create faucet account keys
+    shell:
+      cmd: echo "{{ account_cli_password }}\n{{ faucet_account_mnemonic }}" | /home/wire-user/go/bin/wnscli keys add faucet --recover
+
+  - name: add faucet genesis account
+    shell:
+      cmd: /home/wire-user/go/bin/wnsd add-genesis-account $(/home/wire-user/go/bin/wnscli keys show faucet -a) 100000000000000uwire
+
   - name: add other genesis accounts
     shell:
       cmd: /home/wire-user/go/bin/wnsd add-genesis-account cosmos1dph6ujqkwxsfw3j8p2flm5tjwtwpmet00572kf 100000000000000uwire &&
