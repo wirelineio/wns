@@ -39,11 +39,3 @@
   - name: generate staking transaction
     shell:
       cmd: echo "{{ account_cli_password }}" | /home/wire-user/go/bin/wnsd gentx --name root --amount 10000000000000uwire
-
-  - name: collect genesis transactions
-    shell:
-      cmd: /home/wire-user/go/bin/wnsd collect-gentxs
-
-  - name: validate genesis.json
-    shell:
-      cmd: /home/wire-user/go/bin/wnsd validate-genesis

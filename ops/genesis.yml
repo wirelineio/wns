@@ -1,0 +1,53 @@
+---
+- hosts: 127.0.0.1
+  tasks:
+  - local_action: file path=.out state=absent
+
+- hosts: servers
+  remote_user: wire-user
+  tasks:
+  - name: get gen tx file name
+    command: ls /home/wire-user/.wnsd/config/gentx/
+    register: gentx_file_name
+  - name: fetch gen tx files
+    fetch:
+      src: /home/wire-user/.wnsd/config/gentx/{{ gentx_file_name.stdout }}
+      dest: .out/gentx/
+      flat: yes
+
+- hosts: wns-testnet-1
+  remote_user: wire-user
+  tasks:
+  - name: copy gen tx files
+    copy:
+      src: .out/gentx/
+      dest: /home/wire-user/.wnsd/config/gentx/
+
+  - name: add other genesis accounts
+    shell:
+      cmd: /home/wire-user/go/bin/wnsd add-genesis-account cosmos1dph6ujqkwxsfw3j8p2flm5tjwtwpmet00572kf 100000000000000uwire &&
+        /home/wire-user/go/bin/wnsd add-genesis-account cosmos1s903rs4j34ytvz6gzjhgyx93gnju0hcdkn4z6n 100000000000000uwire &&
+        /home/wire-user/go/bin/wnsd add-genesis-account cosmos16qnt3l8spdtzc505fhcx53cr8mvu60cr34n6qx 100000000000000uwire
+
+  - name: collect genesis transactions
+    shell:
+      cmd: /home/wire-user/go/bin/wnsd collect-gentxs
+
+  - name: validate final genesis.json
+    shell:
+      cmd: /home/wire-user/go/bin/wnsd validate-genesis
+
+  - name: fetch final genesis.json
+    fetch:
+      src: /home/wire-user/.wnsd/config/genesis.json
+      dest: .out/genesis.json
+      flat: yes
+
+- hosts: servers
+  remote_user: wire-user
+  tasks:
+  - name: distribute final genesis.json
+    copy:
+      src: .out/genesis.json
+      dest: /home/wire-user/.wnsd/config/genesis.json
+
