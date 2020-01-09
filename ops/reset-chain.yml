@@ -1,3 +1,7 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
 ---
 - hosts: servers
   remote_user: wire-user
