@@ -1,0 +1,10 @@
+---
+
+- import_playbook: stop.yml
+- import_playbook: pull-code.yml
+- import_playbook: build.yml
+- import_playbook: reset-chain.yml
+- import_playbook: genesis.yml
+- import_playbook: peers.yml
+- import_playbook: restart.yml
+

@@ -12,7 +12,3 @@
     become_method: sudo
     become_flags: "--login"
     become_user: wire-user
-    notify: restart-wnsd
-
-  handlers:
-  - import_tasks: handlers.yml
