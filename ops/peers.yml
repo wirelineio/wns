@@ -1,0 +1,20 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+---
+- hosts: wns-testnet-1
+  remote_user: wire-user
+  tasks:
+  - name: get node info
+    command: /home/wire-user/go/bin/wnsd tendermint show-node-id
+    register: nodeinfo
+
+- hosts: servers
+  remote_user: wire-user
+  tasks:
+  - name: update peers
+    lineinfile:
+      path: /home/wire-user/.wnsd/config/config.toml
+      regexp: '^persistent_peers'
+      line: persistent_peers = "{{ hostvars['wns-testnet-1']['nodeinfo']['stdout_lines'][0] }}@{{ hostvars['wns-testnet-1'].ansible_host }}:26656"

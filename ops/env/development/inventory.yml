@@ -1,0 +1,19 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+all:
+  hosts:
+    wns-testnet-1:
+      ansible_host: 35.190.189.142
+  children:
+    servers:
+      hosts:
+        wns-testnet-1:
+          ansible_host: 35.190.189.142
+        wns-testnet-2:
+          ansible_host: 34.74.228.231
+        wns-testnet-3:
+          ansible_host: 34.74.36.32
+        wns-testnet-4:
+          ansible_host: 35.196.168.193

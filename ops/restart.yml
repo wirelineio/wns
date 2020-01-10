@@ -1,0 +1,15 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+---
+- hosts: servers
+  remote_user: ubuntu
+
+  tasks:
+  - name: trigger restart
+    command: /bin/true
+    notify: restart-wnsd
+
+  handlers:
+  - import_tasks: handlers.yml

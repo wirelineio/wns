@@ -1,0 +1,15 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+---
+
+- import_playbook: stop.yml
+
+- hosts: servers
+  remote_user: wire-user
+  tasks:
+  - name: unsafe reset
+    shell: /home/wire-user/go/bin/wnsd unsafe-reset-all
+
+- import_playbook: restart.yml

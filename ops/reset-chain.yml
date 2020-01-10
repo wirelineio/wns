@@ -1,0 +1,50 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+---
+- hosts: servers
+  remote_user: wire-user
+
+  tasks:
+  - name: delete wnsd data and config
+    file:
+      path: ~/.wnsd
+      state: absent
+
+  - name: delete wnscli data config
+    file:
+      path: ~/.wnscli
+      state: absent
+
+  - name: init chain
+    shell: /home/wire-user/go/bin/wnsd init my-node --chain-id wireline
+
+  - name: change staking token to uwire
+    shell:
+      cmd: sed -i 's/stake/uwire/g' ~/.wnsd/config/genesis.json
+      warn: no
+
+  - name: change max bond amount
+    shell:
+      cmd: sed -i 's/10wire/100000wire/g' ~/.wnsd/config/genesis.json
+      warn: no
+
+  - name: create root account keys
+    shell:
+      cmd: echo "{{ account_cli_password }}\n{{ root_account_mnemonic }}" | /home/wire-user/go/bin/wnscli keys add root --recover
+
+  - name: add genesis account
+    shell:
+      cmd: /home/wire-user/go/bin/wnsd add-genesis-account $(/home/wire-user/go/bin/wnscli keys show root -a) 100000000000000uwire
+
+  - name: config cli
+    shell:
+      cmd: /home/wire-user/go/bin/wnscli config chain-id wireline &&
+        /home/wire-user/go/bin/wnscli config output json &&
+        /home/wire-user/go/bin/wnscli config indent true &&
+        /home/wire-user/go/bin/wnscli config trust-node true
+
+  - name: generate staking transaction
+    shell:
+      cmd: echo "{{ account_cli_password }}" | /home/wire-user/go/bin/wnsd gentx --name root --amount 10000000000000uwire

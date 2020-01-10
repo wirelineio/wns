@@ -1,0 +1,15 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+---
+- hosts: servers
+  remote_user: ubuntu
+
+  tasks:
+  - name: trigger stop
+    command: /bin/true
+    notify: stop-wnsd
+
+  handlers:
+  - import_tasks: handlers.yml
