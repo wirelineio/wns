@@ -1,0 +1,15 @@
+#
+# Copyright 2019-20 Wireline, Inc.
+#
+
+---
+- hosts: wns-testnet-1
+  remote_user: wire-user
+  tasks:
+  - name: create bond
+    shell:
+      cmd: echo "{{ account_cli_password }}" | /home/wire-user/go/bin/wnscli tx bond create 10000wire --from root --yes -b block
+  - name: list bonds
+    command: /home/wire-user/go/bin/wnscli query bond list
+    register: bonds
+  - debug: msg="{{ bonds.stdout }}"
