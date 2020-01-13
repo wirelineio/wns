@@ -2,11 +2,7 @@
 
 ## Setup
 
-### Machine
-
 Setup the machine as documented in https://github.com/wirelineio/wns#setup-machine.
-
-### Code
 
 WNS:
 
@@ -15,43 +11,17 @@ WNS:
 $ git clone git@github.com:wirelineio/wns.git
 $ cd wns
 
-# Switch to the `feature-bonds` branch.
-$ git checkout feature-bonds
-
 # Build and install the binaries.
 $ make install
 ```
 
-WNS Client:
+Install the latest wire CLI:
 
 ```bash
-$ cd registry-client
+$ yarn global add @wirelineio/cli @wirelineio/cli-peer @wirelineio/cli-bot @wirelineio/cli-pad
 
-# Switch to the `feature-bonds` branch.
-$ git checkout feature-bonds
-
-$ yarn && yarn build
-
-$ yarn link
-```
-
-WNS CLI:
-
-```bash
-$ cd registry-cli
-
-# Switch to the `feature-bonds` branch.
-$ git checkout feature-bonds
-
-$ yarn && yarn build
-
-$ yarn link "@wirelineio/registry-client"
-```
-
-Setup a shell alias to run the above CLI.
-
-```bash
-alias wire-dev='node ~/projects/wireline/registry-cli/packages/wire/dist/es/main.js'
+$ wire --version
+0.6.1
 ```
 
 ### Blockchain
@@ -83,7 +53,7 @@ $ sed -i '' 's/10wire/10000wire/g' ~/.wnsd/config/genesis.json
 $ echo "temp12345\nsalad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple" | wnscli keys add root --recover
 
 # Use the same mnemonic to generate the private key for use with the `wire` CLI.
-$ wire-dev keys generate --mnemonic="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
+$ wire keys generate --mnemonic="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
 Mnemonic:  salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple
 Private key:  b1e4e95dd3e3294f15869b56697b5e3bdcaa24d9d0af1be9ee57d5a59457843a
 Public key:  02ead12ad29c532364b2f7b565582499840fcf45a51f16542385072961f4df62d8
@@ -128,15 +98,15 @@ export WIRE_WNS_USER_KEY="b1e4e95dd3e3294f15869b56697b5e3bdcaa24d9d0af1be9ee57d5
 Create bonds.
 
 ```bash
-$ wire-dev wns create-bond --type uwire --quantity 1000000000
-$ wire-dev wns create-bond --type uwire --quantity 1000000000
+$ wire wns create-bond --type uwire --quantity 1000000000
+$ wire wns create-bond --type uwire --quantity 1000000000
 ```
 
 List bonds.
 
 ```bash
 # Note: Bond ID, owner and balance.
-$ wire-dev wns list-bonds
+$ wire wns list-bonds
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
@@ -178,7 +148,7 @@ $ wnscli query bond balance
 Get bond by ID.
 
 ```bash
-$ wire-dev wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
@@ -197,7 +167,7 @@ Query bonds by owner.
 
 ```bash
 # Uses a secondary index: Owner -> Bond ID.
-$ wire-dev wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094
+$ wire wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
@@ -225,11 +195,11 @@ $ wire-dev wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094
 Refill bond.
 
 ```bash
-$ wire-dev wns refill-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --type uwire --quantity 1000
+$ wire wns refill-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --type uwire --quantity 1000
 ```
 
 ```bash
-$ wire-dev wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
@@ -248,9 +218,9 @@ Withdraw funds from bond.
 
 ```bash
 # Transfers the funds back into the bond owner account.
-$ wire-dev wns withdraw-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --type uwire --quantity 500
+$ wire wns withdraw-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --type uwire --quantity 500
 
-$ wire-dev wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
@@ -269,11 +239,11 @@ Publish records (w/ bond).
 
 ```bash
 $ cd x/nameservice/examples
-$ wire-dev wns publish --filename protocol.yml --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
-$ wire-dev wns publish --filename bot.yml --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns publish --filename protocol.yml --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns publish --filename bot.yml --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 
 # Note: bondID and expiryTime attributes on the records.
-$ wire-dev wns list-records
+$ wire wns list-records
 [
     {
         "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
@@ -316,7 +286,7 @@ $ wire-dev wns list-records
 ]
 
 # Note: Rent has been deducted from the bond.
-$ wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns get-bond --id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
@@ -352,7 +322,7 @@ List records by bond.
 
 ```bash
 # Note: Uses a secondary index: Bond ID -> Record ID.
-$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
@@ -398,9 +368,9 @@ $ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6
 Dissociate bond from record.
 
 ```bash
-$ wire-dev wns dissociate-bond --id QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i
+$ wire wns dissociate-bond --id QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i
 
-$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "Qmb8beMVtdjQpRiN9bFLUsisByun8EHPKPo2g1jSUUnHqe",
@@ -425,9 +395,9 @@ $ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6
 Associate bond with record.
 
 ```bash
-$ wire-dev wns associate-bond --id QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns associate-bond --id QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 
-$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 [
     {
         "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
@@ -473,13 +443,13 @@ $ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6
 Reassociate bond.
 
 ```bash
-$ wire-dev wns reassociate-records --old-bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --new-bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+$ wire wns reassociate-records --old-bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3 --new-bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
 
-$ wire-dev wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
+$ wire wns list-records --bond-id 8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3
 []
 
 # Check both records are now associated with bond e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d.
-$ wire-dev wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+$ wire wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
 [
     {
         "id": "QmNgCCwB2AGQADe1X4P1kVjd1asdTandaRHbRp1fKrDH9i",
@@ -525,10 +495,10 @@ $ wire-dev wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d
 Dissociate bond from all records.
 
 ```bash
-$ wire-dev wns dissociate-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+$ wire wns dissociate-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
 
 # Note: No records found.
-$ wire-dev wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+$ wire wns list-records --bond-id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
 []
 ```
 
@@ -538,9 +508,9 @@ Cancel bond.
 # Note: Cancel works if bond doesn't have associated records.
 # Note: Cancel fails if there are associated records.
 # Note: Cancelled bond is deleted.
-$ wire-dev wns cancel-bond --id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
+$ wire wns cancel-bond --id e205a46f6ec6f662cbfad84f4f926973422bf6217d8d2c2eebff94d148fd486d
 
-$ wire-dev wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094                                                                                      5s
+$ wire wns list-bonds --owner cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094
 [
     {
         "id": "8e340dd7cf6fc91c27eeefce9cca1406c262e93fd6f3a4f3b1e99b01161fcef3",
