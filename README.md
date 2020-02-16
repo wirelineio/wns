@@ -48,8 +48,7 @@ Initialize the blockchain if it has never been run before (or run `rm -rf ~/.wns
 Initialize configuration files and genesis file.
 
 ```bash
-# `my-node` is the name of the node.
-$ wnsd init my-node --chain-id wireline
+$ wnsd init <NAME> --chain-id wireline
 ```
 
 Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `uwire`.
