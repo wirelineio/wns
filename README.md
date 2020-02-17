@@ -14,7 +14,7 @@ $ go version
 go version go1.13 linux/amd64
 ```
 
-Adding some ENV variables is necessary if `go mod` has never been used on the machine.
+Set the followin ENV variables (if `go mod` has never been used on the machine).
 
 ```bash
 mkdir -p $HOME/go/bin
@@ -25,7 +25,7 @@ echo "export GO111MODULE=on" >> ~/.profile
 source ~/.profile
 ```
 
-Clone the repo (e.g. inside ~/wireline), build and install the binaries.
+Clone the repo then build and install the binaries.
 
 ```bash
 $ cd ~/wireline
@@ -46,11 +46,9 @@ $ wnscli help
 # TODO(burdon): Create single root directory (e.g., ~/.wns)
 Initialize the blockchain if it has never been run before (or run `rm -rf ~/.wnsd ~/.wnscli` first to delete all existing data and start over).
 
-Initialize configuration files and genesis file.
+Initialize the configuration and genesis files.
 
 # TODO(burdon): Explain why the developer needs to pick a name.
-# TODO(burdon): This seems cosmos specific -- a script should handle set-up.
-# TODO(burdon): Dumps a scary JSON object (no idea what just happened).
 ```bash
 $ wnsd init <NAME> --chain-id wireline
 ```
@@ -83,14 +81,11 @@ Optionally, change the following parameters for local testing purposes to the de
 
 Create a genesis validator account provisioned with 100 million WIRE.
 
-# TODO(burdon): Mention passpharse (here and below).
-# TODO(burdon): Generate the mnemonic?
 Use the following mnemonic (or pass your own saved mnemonic from earlier runs):
 `salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple`
 
 NOTE: To generate a new mnemonic & key, skip the --recover option.
 
-# TODO(burdon): Don't put comments in code blocks -- put them in the document.
 ```bash
 $ wnscli keys add root --recover
 $ wnsd add-genesis-account $(wnscli keys show root -a) 100000000000000uwire
@@ -121,10 +116,6 @@ $ wnscli config indent true
 $ wnscli config trust-node true
 ```
 
-# TODO(burdon): Explain (not part of config).
-# Validator stake/bond => 10 million WIRE (out of total 100 million WIRE).
-# TODO(burdon): Here I'm asked for a "password" where previously I've been asked for a "passphrase"
-# TODO(burdon): Commands below dump very large JSON objects.
 ```bash
 $ wnsd gentx --name root --amount 10000000000000uwire
 
@@ -140,11 +131,6 @@ Start the server.
 ```bash
 $ wnsd start --gql-server --gql-playground
 ```
-
-# TODO(burdon): Threw an exception:
-```I[2020-02-16|12:43:53.640] Starting ABCI with Tendermint                module=main
-panic: [{"msg_index":0,"success":false,"log":"{\"codespace\":\"staking\",\"code\":102,\"message\":\"invalid coin denomination\"}"}]```
-
 
 Check that WNS is up and running by querying the GQL endpoint in another terminal.
 
