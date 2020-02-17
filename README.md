@@ -138,7 +138,7 @@ $ wnsd validate-genesis
 Start the server.
 
 ```bash
-$ wnsd start start --gql-server --gql-playground
+$ wnsd start --gql-server --gql-playground
 ```
 
 # TODO(burdon): Threw an exception:
