@@ -109,7 +109,7 @@ $ wnsd validate-genesis
 Start the server.
 
 ```bash
-$ wnsd start start --gql-server --gql-playground
+$ wnsd start --gql-server --gql-playground
 ```
 
 Check that WNS is up and running by querying the GQL endpoint in another terminal.
