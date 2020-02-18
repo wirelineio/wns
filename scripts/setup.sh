@@ -14,11 +14,14 @@ NODE_NAME=WIRELINE
 CHAIN_ID=wireline
 DENOM=uwire
 
-# TODO(burdon): Generate and save in ~/.wireline/secrets?
 MNEMONIC="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
-
-# TODO(ashwin): Save to ~/.wireline/secrets?
 PASSPHRASE="temp12345"
+
+function save_secrets ()
+{
+  echo "Root Account Mnemonic: ${MNEMONIC} " > ~/.wireline/secrets
+  echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wireline/secrets
+}
 
 function reset ()
 {
@@ -75,5 +78,6 @@ fi
 init_config
 init_node
 init_root
+save_secrets
 
 echo "OK"
