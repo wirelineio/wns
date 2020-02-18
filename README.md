@@ -4,7 +4,7 @@ Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
 ## Getting Started
 
-### Setup Machine
+### Installation
 
 * [Install golang](https://golang.org/doc/install) 1.13.0+ for the required platform.
 * Test that `golang` has been successfully installed on the machine.
@@ -14,7 +14,7 @@ $ go version
 go version go1.13 linux/amd64
 ```
 
-Adding some ENV variables is necessary if `go mod` has never been used on the machine.
+Set the followin ENV variables (if `go mod` has never been used on the machine).
 
 ```bash
 mkdir -p $HOME/go/bin
@@ -25,7 +25,7 @@ echo "export GO111MODULE=on" >> ~/.profile
 source ~/.profile
 ```
 
-Clone the repo (e.g. inside ~/wireline), build and install the binaries.
+Clone the repo then build and install the binaries.
 
 ```bash
 $ cd ~/wireline
@@ -41,83 +41,49 @@ $ wnsd help
 $ wnscli help
 ```
 
-### Initialize Blockchain
-
-Initialize the blockchain if it has never been run before (or run `rm -rf ~/.wnsd ~/.wnscli` first to delete all existing data and start over).
-
-Initialize configuration files and genesis file.
+### Initializing the Local Node
 
 ```bash
-$ wnsd init <NAME> --chain-id wireline
+$ ./scripts/setup.sh
 ```
 
-Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `uwire`.
+### Working with the Local Node
 
-```
-    "staking": {
-      "params": {
-        "unbonding_time": "1814400000000000",
-        "max_validators": 100,
-        "max_entries": 7,
-        "bond_denom": "stake"    # --------> Change from "stake" TO "uwire".
-      }
-    }
-```
+Start the node:
 
 ```bash
-$ sed -i '' 's/stake/uwire/g' ~/.wnsd/config/genesis.json
+$ ./scripts/server.sh start
 ```
 
-Optionally, change the following parameters for local testing purposes to the desired value:
-
-* `app_state.nameservice.params.record_rent` - Record rent per period.
-* `app_state.nameservice.params.record_expiry_time` - Record expiry time in nanoseconds.
-* `app_state.bond.params.max_bond_amount` - Maximum amount a bond can hold.
-* `app_state.gov.voting_params.voting_period` - Voting period for governance proposals (e.g. param changes).
+Test if the node is up:
 
 ```bash
-$ wnscli keys add root --recover
-# Use the following mnemonic (or pass your own saved mnemonic from earlier runs):
-# salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple
-# To generate a new mnemonic & key, skip the --recover option.
-
-# Create a genesis validator account provisioned with 100 million WIRE.
-$ wnsd add-genesis-account $(wnscli keys show root -a) 100000000000000uwire
-
-# Optionally, create a `faucet` genesis account (note the mnemonic).
-$ wnscli keys add faucet
-$ wnsd add-genesis-account $(wnscli keys show faucet -a) 100000000000000uwire
+$ ./scripts/server.sh test
 ```
 
-Configure the CLI to eliminate the need for the `chain-id` flag.
+View the logs:
 
 ```bash
-$ wnscli config chain-id wireline
-$ wnscli config output json
-$ wnscli config indent true
-$ wnscli config trust-node true
-
-# Validator stake/bond => 10 million WIRE (out of total 100 million WIRE).
-$ wnsd gentx --name root --amount 10000000000000uwire
-
-$ wnsd collect-gentxs
-$ wnsd validate-genesis
+$ ./scripts/server.sh log
 ```
 
-### Start Blockchain
-
-Start the server.
+Stop the node:
 
 ```bash
-$ wnsd start --gql-server --gql-playground
+$ ./scripts/server.sh stop
 ```
 
-Check that WNS is up and running by querying the GQL endpoint in another terminal.
+
+## WNS CLI
+
+[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
+
+Setup environment variables for the CLI to work with the local node:
 
 ```bash
-$ curl -s -X POST -H "Content-Type: application/json" \
-  -d '{ "query": "{ getStatus { version } }" }' http://localhost:9473/graphql | jq
+$ source ./scripts/env_localhost.sh
 ```
+
 
 ## GQL Server API
 
@@ -129,11 +95,9 @@ The GQL server is controlled using the following `wnsd` flags:
 
 See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
 
-## WNS CLI
-
-[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
 
 ## Testnets
+
 
 ### Development
 
