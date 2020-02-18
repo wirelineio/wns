@@ -43,100 +43,45 @@ $ wnscli help
 
 ### Initializing the Local Node
 
-# TODO(burdon): Create single root directory (e.g., ~/.wns)
-Initialize the blockchain if it has never been run before (or run `rm -rf ~/.wnsd ~/.wnscli` first to delete all existing data and start over).
-
-Initialize the configuration and genesis files.
-
-# TODO(burdon): Explain why the developer needs to pick a name.
 ```bash
-$ wnsd init <NAME> --chain-id wireline
+$ ./scripts/setup.sh
 ```
 
-Change the staking token name in `~/.wnsd/config/genesis.json` from `stake` to `uwire`.
+### Working with the Local Node
 
-# TODO(burdon): Why does the developer need to do this?
-```
-    "staking": {
-      "params": {
-        "unbonding_time": "1814400000000000",
-        "max_validators": 100,
-        "max_entries": 7,
-        "bond_denom": "stake"    # --------> Change from "stake" TO "uwire".
-      }
-    }
-```
-
-# TODO(burdon): Why "uwire"?
-```bash
-$ sed -i '' 's/stake/uwire/g' ~/.wnsd/config/genesis.json
-```
-
-Optionally, change the following parameters for local testing purposes to the desired value:
-
-* `app_state.nameservice.params.record_rent` - Record rent per period.
-* `app_state.nameservice.params.record_expiry_time` - Record expiry time in nanoseconds.
-* `app_state.bond.params.max_bond_amount` - Maximum amount a bond can hold.
-* `app_state.gov.voting_params.voting_period` - Voting period for governance proposals (e.g. param changes).
-
-Create a genesis validator account provisioned with 100 million WIRE.
-
-Use the following mnemonic (or pass your own saved mnemonic from earlier runs):
-`salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple`
-
-NOTE: To generate a new mnemonic & key, skip the --recover option.
+Start the node:
 
 ```bash
-$ wnscli keys add root --recover
-$ wnsd add-genesis-account $(wnscli keys show root -a) 100000000000000uwire
+$ ./scripts/server.sh start
 ```
 
-# TODO(burdon): Explain what this means.
-Optionally, create a `faucet` genesis account (note the mnemonic).
+Test if the node is up:
 
 ```bash
-$ wnscli keys add faucet
-$ wnsd add-genesis-account $(wnscli keys show faucet -a) 100000000000000uwire
+$ ./scripts/server.sh test
 ```
 
-# TODO(burdon): I'm being asked for multiple passphrases for things I don't understand and multiple mnemonics.
-# Guarantee this will cost you hours supporting the team in trying to reset a week after they've gone through this.
-
-# TODO(burdon): Why is this a user-step? Could I call the chain something else?
-Configure the CLI:
-
-
-# TODO(burdon): /Users/burdon/.wnscli/config/config.toml does not exist (sounds like an error).
-# TODO(burdon): If we have control over this CLI then silent if OK (with --verbose option)
+View the logs:
 
 ```bash
-$ wnscli config chain-id wireline
-$ wnscli config output json
-$ wnscli config indent true
-$ wnscli config trust-node true
+$ ./scripts/server.sh log
 ```
 
-```bash
-$ wnsd gentx --name root --amount 10000000000000uwire
+Stop the node:
 
-$ wnsd collect-gentxs
-$ wnsd validate-genesis
+```bash
+$ ./scripts/server.sh stop
 ```
 
-### Starting the Node
 
-# TODO(burdon): Common terminology (node?)
-Start the server.
+## WNS CLI
 
-```bash
-$ wnsd start --gql-server --gql-playground
-```
+[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
 
-Check that WNS is up and running by querying the GQL endpoint in another terminal.
+Setup environment variables for the CLI to work with the local node:
 
 ```bash
-$ curl -s -X POST -H "Content-Type: application/json" \
-  -d '{ "query": "{ getStatus { version } }" }' http://localhost:9473/graphql | jq
+$ source ./scripts/env_localhost.sh
 ```
 
 
@@ -149,11 +94,6 @@ The GQL server is controlled using the following `wnsd` flags:
 * `--gql-port` - Port to run the GQL server on (default 9473).
 
 See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
-
-
-## WNS CLI
-
-[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
 
 
 ## Testnets
