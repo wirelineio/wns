@@ -6,7 +6,7 @@ Update `~/.wnsd/config/config.toml` with:
 persistent_peers="8b43cc4b801609e280e605fe7814bf90cc7101a2@192.168.0.15:26656"
 ```
 
-## Adding Seed Nodes
+## Adding Peers
 
 Get the Tendermint Node ID of the new peer:
 
