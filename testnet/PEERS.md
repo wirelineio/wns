@@ -1,9 +1,9 @@
-# Seed Peers
+# Peers
 
 Update `~/.wnsd/config/config.toml` with:
 
 ```text
-seeds="06c238cf0366a3a3b83d1f0905fa186d4abe6e32@192.168.0.15:26656"
+persistent_peers="8b43cc4b801609e280e605fe7814bf90cc7101a2@192.168.0.15:26656"
 ```
 
 ## Adding Seed Nodes

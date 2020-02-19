@@ -16,7 +16,6 @@ $ ./scripts/setup.sh
 
 Check-in the genesis transaction file created in `~/.wnsd/config/gentx` to the `wns/testnet/gentx` folder.
 
-
 Get the validator account address.
 
 ```bash
@@ -24,7 +23,7 @@ $ wnscli keys show root -a
 cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4
 ```
 
-Update SEED_ACCOUNTS.md with a new entry (validator address as above).
+Update SEED_ACCOUNTS.md with a new entry (validator address as above):
 
 ```text
 wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000000000uwire
@@ -59,8 +58,8 @@ $ cp ~/.wnsd/config/genesis.json testnet/genesis.json
 
 All validators should replace their `~/.wnsd/config/genesis.json` file with the one in the repo.
 
+## Peer Setup
 
-## Configure Seed Peers
+See PEERS.md to configure your node with peers. Once peers have been setup, the node can be started.
 
-See SEED_PEERS.md to configure your node with seed peers.
-
+The testnet will generate blocks once 2/3 of voting power is online.
