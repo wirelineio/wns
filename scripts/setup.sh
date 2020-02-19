@@ -14,13 +14,27 @@ NODE_NAME=WIRELINE
 CHAIN_ID=wireline
 DENOM=uwire
 
-MNEMONIC="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
-PASSPHRASE="12345678"
+DEFAULT_MNEMONIC="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
+DEFAULT_PASSPHRASE="12345678"
+
+function init_secrets ()
+{
+  if [[ -z "${MNEMONIC}" ]]; then
+    MNEMONIC="${DEFAULT_MNEMONIC}"
+  fi
+
+  if [[ -z "${PASSPHRASE}" ]]; then
+    PASSPHRASE="${DEFAULT_PASSPHRASE}"
+  fi
+}
 
 function save_secrets ()
 {
+  mkdir -p ~/.wireline
   echo "Root Account Mnemonic: ${MNEMONIC}" > ~/.wireline/secrets
   echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wireline/secrets
+  echo "\nWire CLI Keys:" >> ~/.wireline/secrets
+  wire keys generate --mnemonic="${MNEMONIC}" >> ~/.wireline/secrets
 }
 
 function reset ()
@@ -77,6 +91,8 @@ if [[ -d "${WNS_SERVER_CONFIG_DIR}" ]]; then
     esac
   done
 fi
+
+init_secrets
 
 init_config
 init_node
