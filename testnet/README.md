@@ -17,7 +17,7 @@ $ ./scripts/setup.sh
 Check-in the genesis transaction file created in `~/.wnsd/config/gentx` to the `wns/testnet/gentx` folder.
 
 
-Get the root account address.
+Get the validator account address.
 
 ```bash
 $ wnscli keys show root -a
@@ -35,7 +35,12 @@ wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000
 
 Run the above setup.
 
-Copy all the gentx files to `~/.wnsd/config/gentx`.
+Delete existing contents in `~/.wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wnsd/config/gentx`.
+
+```bash
+$ rm ~/.wnsd/config/gentx/*
+$ cp testnet/gentx/* ~/.wnsd/config/gentx
+```
 
 Add the genesis accounts from SEED_ACCOUNTS.md.
 
@@ -47,6 +52,10 @@ $ wnsd validate-genesis
 ```
 
 Check-in the updated `~/.wnsd/config/genesis.json` file to `wns/testnet/genesis.json`.
+
+```bash
+$ cp ~/.wnsd/config/genesis.json testnet/genesis.json
+```
 
 All validators should replace their `~/.wnsd/config/genesis.json` file with the one in the repo.
 
