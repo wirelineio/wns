@@ -6,6 +6,7 @@ package gql
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 
 	"github.com/Masterminds/semver"
@@ -76,7 +77,7 @@ func getReferences(ctx context.Context, resolver *queryResolver, r *nameservice.
 		switch value.(type) {
 		case interface{}:
 			if obj, ok := value.(map[string]interface{}); ok {
-				if obj["type"].(string) == WrnTypeReference {
+				if typeAttr, ok := obj["type"]; ok && typeAttr.(string) == WrnTypeReference {
 					ids = append(ids, obj["id"].(string))
 				}
 			}
@@ -136,10 +137,18 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 			kvPair.Value.Boolean = &val
 		case interface{}:
 			if obj, ok := value.(map[string]interface{}); ok {
-				if obj["type"].(string) == WrnTypeReference {
+				if valueType, ok := obj["type"]; ok && valueType.(string) == WrnTypeReference {
 					kvPair.Value.Reference = &Reference{
 						ID: obj["id"].(string),
 					}
+				} else {
+					bytes, err := json.Marshal(obj)
+					if err != nil {
+						return nil, err
+					}
+
+					jsonStr := string(bytes)
+					kvPair.Value.String = &jsonStr
 				}
 			}
 		}
