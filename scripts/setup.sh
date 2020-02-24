@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # Initial set-up.
@@ -27,6 +27,13 @@ function init_secrets ()
     PASSPHRASE="${DEFAULT_PASSPHRASE}"
   fi
 }
+
+SED_ARGS=""
+
+# On MacOS, sed needs `-i ''``. On Linux, just `-i`.
+if [ "$(uname)" == "Darwin" ]; then
+  SED_ARGS="''"
+fi
 
 function save_secrets ()
 {
@@ -59,10 +66,10 @@ function init_node ()
   wnsd init "${NODE_NAME}" --chain-id "${CHAIN_ID}"
 
   # Change the staking unit.
-  sed -i "s/stake/${DENOM}/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
+  sed -i $SED_ARGS "s/stake/${DENOM}/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
 
   # Change max bond amount from 10wire to 1000wire for easier local testing.
-  sed -i "s/10wire/10000wire/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
+  sed -i $SED_ARGS "s/10wire/10000wire/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
 }
 
 function init_root ()
