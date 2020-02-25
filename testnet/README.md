@@ -1,4 +1,4 @@
-# Testnet
+# Devnet
 
 ## Validator Account Setup
 
