@@ -150,6 +150,7 @@ func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenew
 	bondObj.Balance = updatedBalance
 	keeper.BondKeeper.SaveBond(ctx, bondObj)
 
+	record.CreateTime = ctx.BlockHeader().Time
 	record.ExpiryTime = ctx.BlockHeader().Time.Add(keeper.RecordExpiryTime(ctx))
 	record.Deleted = false
 
