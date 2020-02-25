@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # Initial set-up.
@@ -27,6 +27,13 @@ function init_secrets ()
     PASSPHRASE="${DEFAULT_PASSPHRASE}"
   fi
 }
+
+SED_ARGS=""
+
+# On MacOS, sed needs `-i ''``. On Linux, just `-i`.
+if [ "$(uname)" == "Darwin" ]; then
+  SED_ARGS="''"
+fi
 
 function save_secrets ()
 {
@@ -59,20 +66,20 @@ function init_node ()
   wnsd init "${NODE_NAME}" --chain-id "${CHAIN_ID}"
 
   # Change the staking unit.
-  sed -i '' "s/stake/${DENOM}/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
+  sed -i $SED_ARGS "s/stake/${DENOM}/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
 
   # Change max bond amount from 10wire to 1000wire for easier local testing.
-  sed -i '' "s/10wire/10000wire/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
+  sed -i $SED_ARGS "s/10wire/10000wire/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
 }
 
 function init_root ()
 {
   # Create a genesis validator account provisioned with 100 million WIRE.
-  echo "${PASSPHRASE}\n${MNEMONIC}" | wnscli keys add root --recover $WNS_CLI_EXTRA_ARGS
+  echo -e "${PASSPHRASE}\n${MNEMONIC}" | wnscli keys add root --recover $WNS_CLI_EXTRA_ARGS
   wnsd add-genesis-account $(wnscli keys show root -a $WNS_CLI_EXTRA_ARGS) 100000000000000uwire $WNS_SERVER_EXTRA_ARGS
 
   # Validator stake/bond => 10 million WIRE (out of total 100 million WIRE).
-  echo "${PASSPHRASE}" | wnsd gentx --name root --amount 10000000000000uwire $WNS_SERVER_EXTRA_ARGS --home-client $WNS_CLI_CONFIG_DIR
+  echo -e "${PASSPHRASE}" | wnsd gentx --name root --amount 10000000000000uwire $WNS_SERVER_EXTRA_ARGS --home-client $WNS_CLI_CONFIG_DIR
   wnsd collect-gentxs $WNS_SERVER_EXTRA_ARGS
   wnsd validate-genesis $WNS_SERVER_EXTRA_ARGS
 }

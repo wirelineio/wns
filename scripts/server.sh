@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 LOG=/tmp/wns.log
 API_ENDPOINT=http://localhost:9473/graphql
