@@ -14,7 +14,7 @@ Run the setup script (reset the node if required).
 $ ./scripts/setup.sh
 ```
 
-Check-in the genesis transaction file created in `~/.wnsd/config/gentx` to the `wns/testnet/gentx` folder.
+Check-in the genesis transaction file created in `~/.wireline/wnsd/config/gentx` to the `wns/testnet/gentx` folder.
 
 Get the validator account address.
 
@@ -34,11 +34,11 @@ wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000
 
 Run the above setup.
 
-Delete existing contents in `~/.wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wnsd/config/gentx`.
+Delete existing contents in `~/.wireline/wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wireline/wnsd/config/gentx`.
 
 ```bash
-$ rm ~/.wnsd/config/gentx/*
-$ cp testnet/gentx/* ~/.wnsd/config/gentx
+$ rm ~/.wireline/wnsd/config/gentx/*
+$ cp testnet/gentx/* ~/.wireline/wnsd/config/gentx
 ```
 
 Add the genesis accounts from SEED_ACCOUNTS.md.
@@ -50,13 +50,13 @@ $ wnsd collect-gentxs
 $ wnsd validate-genesis
 ```
 
-Check-in the updated `~/.wnsd/config/genesis.json` file to `wns/testnet/genesis.json`.
+Check-in the updated `~/.wireline/wnsd/config/genesis.json` file to `wns/testnet/genesis.json`.
 
 ```bash
-$ cp ~/.wnsd/config/genesis.json testnet/genesis.json
+$ cp ~/.wireline/wnsd/config/genesis.json testnet/genesis.json
 ```
 
-All validators should replace their `~/.wnsd/config/genesis.json` file with the one in the repo.
+All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo.
 
 ## Peer Setup
 
