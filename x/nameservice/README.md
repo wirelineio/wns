@@ -47,7 +47,7 @@ Also see https://github.com/cosmos/cosmos-sdk/blob/master/docs/building-modules/
 ## Import State
 
 * Reset the chain state using `wnsd unsafe-reset-all`.
-* Replace `~/.wnsd/config/genesis.json` with a previously exported state (e.g. `state.json`).
+* Replace `~/.wireline/wnsd/config/genesis.json` with a previously exported state (e.g. `state.json`).
 * Start the chain.
 
 ## Denominations/Units

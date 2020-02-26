@@ -4,8 +4,8 @@
 # Initial set-up.
 #
 
-WNS_CLI_CONFIG_DIR="${HOME}/.wnscli"
-WNS_SERVER_CONFIG_DIR="${HOME}/.wnsd"
+WNS_CLI_CONFIG_DIR="${HOME}/.wireline/wnscli"
+WNS_SERVER_CONFIG_DIR="${HOME}/.wireline/wnsd"
 
 WNS_CLI_EXTRA_ARGS="--home ${WNS_CLI_CONFIG_DIR}"
 WNS_SERVER_EXTRA_ARGS="--home ${WNS_SERVER_CONFIG_DIR}"

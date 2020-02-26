@@ -28,7 +28,7 @@ $ wire --version
 
 ```bash
 # Delete old folders.
-$ rm -rf ~/.wnsd ~/.wnscli
+$ rm -rf ~/.wireline/wnsd ~/.wireline/wnscli
 
 # Init the chain.
 $ wnsd init my-node --chain-id wireline
@@ -39,13 +39,13 @@ $ wnsd init my-node --chain-id wireline
 # Note: On Linux, use just `-i` instead of `-i ''`.
 
 # Change staking token to uwire.
-$ sed -i '' 's/stake/uwire/g' ~/.wnsd/config/genesis.json
+$ sed -i '' 's/stake/uwire/g' ~/.wireline/wnsd/config/genesis.json
 
 # Change gov proposal pass timeout to 5 mins.
-$ sed -i '' 's/172800000000000/300000000000/g' ~/.wnsd/config/genesis.json
+$ sed -i '' 's/172800000000000/300000000000/g' ~/.wireline/wnsd/config/genesis.json
 
 # Change max bond amount.
-$ sed -i '' 's/10wire/10000wire/g' ~/.wnsd/config/genesis.json
+$ sed -i '' 's/10wire/10000wire/g' ~/.wireline/wnsd/config/genesis.json
 ```
 
 ```bash

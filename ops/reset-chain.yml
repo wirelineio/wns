@@ -9,12 +9,12 @@
   tasks:
   - name: delete wnsd data and config
     file:
-      path: ~/.wnsd
+      path: ~/.wireline/wnsd
       state: absent
 
   - name: delete wnscli data config
     file:
-      path: ~/.wnscli
+      path: ~/.wireline/wnscli
       state: absent
 
   - name: init chain
@@ -22,12 +22,12 @@
 
   - name: change staking token to uwire
     shell:
-      cmd: sed -i 's/stake/uwire/g' ~/.wnsd/config/genesis.json
+      cmd: sed -i 's/stake/uwire/g' ~/.wireline/wnsd/config/genesis.json
       warn: no
 
   - name: change max bond amount
     shell:
-      cmd: sed -i 's/10wire/100000wire/g' ~/.wnsd/config/genesis.json
+      cmd: sed -i 's/10wire/100000wire/g' ~/.wireline/wnsd/config/genesis.json
       warn: no
 
   - name: create root account keys
