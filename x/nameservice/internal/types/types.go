@@ -7,12 +7,13 @@ package types
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	canonicalJson "github.com/gibson042/canonicaljson-go"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
-	"strings"
-	"time"
 )
 
 // ID for records.
@@ -22,6 +23,7 @@ type ID string
 type Record struct {
 	ID         ID                     `json:"id,omitempty"`
 	BondID     bond.ID                `json:"bondId,omitempty"`
+	CreateTime time.Time              `json:"createTime,omitempty"`
 	ExpiryTime time.Time              `json:"expiryTime,omitempty"`
 	Deleted    bool                   `json:"deleted,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
@@ -53,6 +55,11 @@ func (r Record) GetExpiryTime() string {
 	return string(sdk.FormatTimeBytes(r.ExpiryTime))
 }
 
+// GetCreateTime returns the create time of the Record.
+func (r Record) GetCreateTime() string {
+	return string(sdk.FormatTimeBytes(r.CreateTime))
+}
+
 // WRN returns the record `wrn`, e.g. `wrn:bot:wireline.io/chess#0.1.0`.
 func (r Record) WRN() string {
 	return strings.ToLower(fmt.Sprintf("%s#%s", r.BaseWRN(), r.Version()))
@@ -80,6 +87,7 @@ func (r *Record) ToRecordObj() RecordObj {
 
 	resourceObj.ID = r.ID
 	resourceObj.BondID = r.BondID
+	resourceObj.CreateTime = r.CreateTime
 	resourceObj.ExpiryTime = r.ExpiryTime
 	resourceObj.Deleted = r.Deleted
 	resourceObj.Owners = r.Owners
@@ -164,6 +172,7 @@ func (payloadObj PayloadObj) ToPayload() Payload {
 type RecordObj struct {
 	ID         ID        `json:"id,omitempty"`
 	BondID     bond.ID   `json:"bondId,omitempty"`
+	CreateTime time.Time `json:"createTime,omitempty"`
 	ExpiryTime time.Time `json:"expiryTime,omitempty"`
 	Deleted    bool      `json:"deleted,omitempty"`
 	Owners     []string  `json:"owners,omitempty"`
@@ -177,6 +186,7 @@ func (resourceObj *RecordObj) ToRecord() Record {
 
 	record.ID = resourceObj.ID
 	record.BondID = resourceObj.BondID
+	record.CreateTime = resourceObj.CreateTime
 	record.ExpiryTime = resourceObj.ExpiryTime
 	record.Deleted = resourceObj.Deleted
 	record.Owners = resourceObj.Owners

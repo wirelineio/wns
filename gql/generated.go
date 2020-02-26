@@ -102,6 +102,7 @@ type ComplexityRoot struct {
 		Name       func(childComplexity int) int
 		Version    func(childComplexity int) int
 		BondID     func(childComplexity int) int
+		CreateTime func(childComplexity int) int
 		ExpiryTime func(childComplexity int) int
 		Owners     func(childComplexity int) int
 		Attributes func(childComplexity int) int
@@ -418,6 +419,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Record.BondID(childComplexity), true
 
+	case "Record.CreateTime":
+		if e.complexity.Record.CreateTime == nil {
+			break
+		}
+
+		return e.complexity.Record.CreateTime(childComplexity), true
+
 	case "Record.ExpiryTime":
 		if e.complexity.Record.ExpiryTime == nil {
 			break
@@ -696,6 +704,7 @@ type Record {
   version:    String!         # Version (e.g. 0.1.0).
 
   bondId:     String!         # Associated bond ID.
+  createTime: String!         # Record create time.
   expiryTime: String!         # Record expiry time.
 
   owners:     [String]!       # Addresses of record owners.
@@ -1800,6 +1809,32 @@ func (ec *executionContext) _Record_bondId(ctx context.Context, field graphql.Co
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BondID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Record_createTime(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Record",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreateTime, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -3526,6 +3561,11 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "bondId":
 			out.Values[i] = ec._Record_bondId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "createTime":
+			out.Values[i] = ec._Record_createTime(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}

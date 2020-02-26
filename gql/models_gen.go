@@ -60,6 +60,7 @@ type Record struct {
 	Name       string      `json:"name"`
 	Version    string      `json:"version"`
 	BondID     string      `json:"bondId"`
+	CreateTime string      `json:"createTime"`
 	ExpiryTime string      `json:"expiryTime"`
 	Owners     []*string   `json:"owners"`
 	Attributes []*KeyValue `json:"attributes"`
