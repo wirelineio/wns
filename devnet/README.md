@@ -14,7 +14,7 @@ Run the setup script (reset the node if required).
 $ ./scripts/setup.sh
 ```
 
-Check-in the genesis transaction file created in `~/.wireline/wnsd/config/gentx` to the `wns/testnet/gentx` folder.
+Check-in the genesis transaction file created in `~/.wireline/wnsd/config/gentx` to the `wns/devnet/gentx` folder.
 
 Get the validator account address.
 
@@ -38,7 +38,7 @@ Delete existing contents in `~/.wireline/wnsd/config/gentx` folder and copy all 
 
 ```bash
 $ rm ~/.wireline/wnsd/config/gentx/*
-$ cp testnet/gentx/* ~/.wireline/wnsd/config/gentx
+$ cp devnet/gentx/* ~/.wireline/wnsd/config/gentx
 ```
 
 Add the genesis accounts from SEED_ACCOUNTS.md.
@@ -50,10 +50,10 @@ $ wnsd collect-gentxs
 $ wnsd validate-genesis
 ```
 
-Check-in the updated `~/.wireline/wnsd/config/genesis.json` file to `wns/testnet/genesis.json`.
+Check-in the updated `~/.wireline/wnsd/config/genesis.json` file to `wns/devnet/genesis.json`.
 
 ```bash
-$ cp ~/.wireline/wnsd/config/genesis.json testnet/genesis.json
+$ cp ~/.wireline/wnsd/config/genesis.json devnet/genesis.json
 ```
 
 All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo.
@@ -62,4 +62,4 @@ All validators should replace their `~/.wireline/wnsd/config/genesis.json` file 
 
 See PEERS.md to configure your node with peers. Once peers have been setup, the node can be started.
 
-The testnet will generate blocks once 2/3 of voting power is online.
+The devnet will generate blocks once 2/3 of voting power is online.
