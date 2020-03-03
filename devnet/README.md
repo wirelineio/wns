@@ -1,5 +1,11 @@
 # Devnet
 
+## Requirements
+
+* [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
+* Static public IP or [remote port forwarding](https://www.ssh.com/ssh/tunneling/example#remote-forwarding)
+  * Ports to forward: 26656 (e.g. `ssh -nNT -vvv -R 26656:localhost:26656 wns.example.org`)
+
 ## Validator Account Setup
 
 Set an ENV variable with the mnemonic to be used for generating the validator account keys. Use an existing one generated earlier or create a new one using `wire keys generate`.
