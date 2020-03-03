@@ -3,7 +3,7 @@
 Update `~/.wireline/wnsd/config/config.toml` with:
 
 ```text
-persistent_peers="8b43cc4b801609e280e605fe7814bf90cc7101a2@192.168.0.15:26656"
+persistent_peers="b39acbd2773e0217a308abe4bab1b065fc58f55f@192.168.0.15:26656,b6e02ace3f42316ad62b67f19692c3941e37824e@192.168.0.42:26656,eba419c642c53eb37378c5045ecaf04e316b505d@192.168.0.86:26656"
 ```
 
 ## Adding Peers

@@ -8,6 +8,8 @@
 
 ## Validator Account Setup
 
+Note: Run this step on every validator node.
+
 Set an ENV variable with the mnemonic to be used for generating the validator account keys. Use an existing one generated earlier or create a new one using `wire keys generate`.
 
 ```bash
@@ -32,15 +34,15 @@ cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4
 Update SEED_ACCOUNTS.md with a new entry (validator address as above):
 
 ```text
-wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000000000uwire
+$ wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000000000uwire
 ```
 
 
 ## Genesis JSON Generation
 
-Run the above setup.
+Note: Run this step on a single validator node, to generate the consolidated `genesis.json` file.
 
-Delete existing contents in `~/.wireline/wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wireline/wnsd/config/gentx`.
+Run the above setup. Delete existing contents in `~/.wireline/wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wireline/wnsd/config/gentx`.
 
 ```bash
 $ rm ~/.wireline/wnsd/config/gentx/*
@@ -63,6 +65,7 @@ $ cp ~/.wireline/wnsd/config/genesis.json devnet/genesis.json
 ```
 
 All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo.
+
 
 ## Peer Setup
 
