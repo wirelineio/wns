@@ -19,7 +19,7 @@ The mnemonic will be saved to `~/.wireline/secrets` by the setup process, but al
 $ export MNEMONIC="<MNEMONIC>"
 ```
 
-Run the setup script (reset the node if required).
+Run the setup script (reset the node if prompted).
 
 ```bash
 $ cd wns
@@ -32,13 +32,15 @@ Get the validator account address.
 
 ```bash
 $ wnscli keys show root -a
-cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4
+cosmos174hrcf4x9nhwzt82qwns65esa0a7u05425jftp
 ```
 
 Update SEED_ACCOUNTS.md with a new entry (validator address as above):
 
+Note: Do NOT run this command, only copy it to the above file.
+
 ```text
-$ wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000000000uwire
+wnsd add-genesis-account cosmos174hrcf4x9nhwzt82qwns65esa0a7u05425jftp 100000000000000uwire
 ```
 
 ## Genesis JSON Generation
@@ -73,11 +75,19 @@ Note: Run this step on every validator node.
 
 All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo, after the consolidated genesis.json has been generated.
 
+```bash
+$ cp devnet/genesis.json ~/.wireline/wnsd/config/genesis.json
+```
+
 ## Peer Setup
 
 Note: Run this step on every validator node.
 
 See [PEERS.md](./PEERS.md) to configure your node with peers. Once peers have been setup, the node can be started.
+
+```bash
+$ ./scripts/server.sh start
+```
 
 The devnet will generate blocks once 2/3 of voting power is online.
 
