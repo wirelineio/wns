@@ -5,6 +5,8 @@
 * [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
 * Static public IP or [remote port forwarding](https://www.ssh.com/ssh/tunneling/example#remote-forwarding)
   * Ports to forward: 26656 (e.g. `ssh -nNT -vvv -R 26656:localhost:26656 wns.example.org`)
+* Install WNS [binaries](https://github.com/wirelineio/wns#installation)
+* Install `wire` CLI (`yarn global add @wirelineio/cli @wirelineio/cli-peer @wirelineio/cli-bot @wirelineio/cli-pad`)
 
 ## Validator Account Setup
 
