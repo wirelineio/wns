@@ -5,14 +5,15 @@
 * [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
 * Static public IP or [remote port forwarding](https://www.ssh.com/ssh/tunneling/example#remote-forwarding)
   * Ports to forward: 26656 (e.g. `ssh -nNT -vvv -R 26656:localhost:26656 wns.example.org`)
-* Install WNS [binaries](https://github.com/wirelineio/wns#installation)
-* Install `yarn` and `wire` CLI (`yarn global add @wirelineio/cli @wirelineio/cli-peer @wirelineio/cli-bot @wirelineio/cli-pad`)
+* [Ubuntu server setup](./SERVER.md)
 
 ## Validator Account Setup
 
 Note: Run this step on every validator node.
 
 Set an ENV variable with the mnemonic to be used for generating the validator account keys. Use an existing one generated earlier or create a new one using `wire keys generate`.
+
+The mnemonic will be saved to `~/.wireline/secrets` by the setup process, but also save it to another safe location of your choice. There is no way to recover the account and associated funds if this mnemonic is lost.
 
 ```bash
 $ export MNEMONIC="<MNEMONIC>"
@@ -21,6 +22,7 @@ $ export MNEMONIC="<MNEMONIC>"
 Run the setup script (reset the node if required).
 
 ```bash
+$ cd wns
 $ ./scripts/setup.sh
 ```
 
