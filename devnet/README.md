@@ -41,10 +41,9 @@ Update SEED_ACCOUNTS.md with a new entry (validator address as above):
 $ wnsd add-genesis-account cosmos1hfz2f3wefu7pwrafdnu9pt5s7y0h924j66hld4 100000000000000uwire
 ```
 
-
 ## Genesis JSON Generation
 
-Note: Run this step on a single validator node, to generate the consolidated `genesis.json` file.
+Note: Run this step only on the initial validator node, to generate the consolidated `genesis.json` file.
 
 Run the above setup. Delete existing contents in `~/.wireline/wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wireline/wnsd/config/gentx`.
 
@@ -68,10 +67,15 @@ Check-in the updated `~/.wireline/wnsd/config/genesis.json` file to `wns/devnet/
 $ cp ~/.wireline/wnsd/config/genesis.json devnet/genesis.json
 ```
 
-All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo.
+## Update Genesis File
 
+Note: Run this step on every validator node.
+
+All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo, after the consolidated genesis.json has been generated.
 
 ## Peer Setup
+
+Note: Run this step on every validator node.
 
 See [PEERS.md](./PEERS.md) to configure your node with peers. Once peers have been setup, the node can be started.
 
