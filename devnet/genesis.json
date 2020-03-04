@@ -1,0 +1,326 @@
+{
+  "genesis_time": "2020-03-04T16:10:19.236409306Z",
+  "chain_id": "wireline",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age": "100000"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    }
+  },
+  "app_hash": "",
+  "app_state": {
+    "crisis": {
+      "constant_fee": {
+        "denom": "uwire",
+        "amount": "1000"
+      }
+    },
+    "bank": {
+      "send_enabled": true
+    },
+    "gov": {
+      "starting_proposal_id": "1",
+      "deposits": null,
+      "votes": null,
+      "proposals": null,
+      "deposit_params": {
+        "min_deposit": [
+          {
+            "denom": "uwire",
+            "amount": "10000000"
+          }
+        ],
+        "max_deposit_period": "172800000000000"
+      },
+      "voting_params": {
+        "voting_period": "172800000000000"
+      },
+      "tally_params": {
+        "quorum": "0.334000000000000000",
+        "threshold": "0.500000000000000000",
+        "veto": "0.334000000000000000"
+      }
+    },
+    "supply": {
+      "supply": []
+    },
+    "genutil": {
+      "gentxs": [
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "WIRELINE",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos174hrcf4x9nhwzt82qwns65esa0a7u05425jftp",
+                  "validator_address": "cosmosvaloper174hrcf4x9nhwzt82qwns65esa0a7u0540qxu8j",
+                  "pubkey": "cosmosvalconspub1zcjduepqt3vr20nhxs7ye6342elfjnxdy65wyrw0a2aytcmmgrfh059y2vyqrvw6xa",
+                  "value": {
+                    "denom": "uwire",
+                    "amount": "10000000000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "AzxBOwa/VEKlZYPS0gJwLtrBqSqKyXI60iQc3kr/MQLL"
+                },
+                "signature": "Zmc+5Ih16Yo5GJxuV0QR4AjFiAGecon9Zwj3IDsbQOIAvvZryJmldVq+pG6eB3UnVNfvUe/XVdPLlV+1FtPaEA=="
+              }
+            ],
+            "memo": "57706d1ce3f23d22da8eb958c7cd148544c1b8ae@192.168.0.86:26656"
+          }
+        },
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "WIRELINE",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos1j6363njndap3styyv7x48rhepl0tey3mt2ht6w",
+                  "validator_address": "cosmosvaloper1j6363njndap3styyv7x48rhepl0tey3mw7r7ka",
+                  "pubkey": "cosmosvalconspub1zcjduepq9u6gf4ep8n9mg6n0n2z2vkuwax7dp7pfmlut0zxm5q7m8e79hpsslgslss",
+                  "value": {
+                    "denom": "uwire",
+                    "amount": "10000000000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "Al/IeQHyFBrhlouYCcIK7c+n1+YwAKl3mYJ6DHzessta"
+                },
+                "signature": "AgIC38N4UBtEQmJiCFnxmh7iMvwsgxXILgLMDvMg74ko9OYSfVnWVacw5cuZYNggSg6J9gVZt1eeGCYa+l06hA=="
+              }
+            ],
+            "memo": "9380b3f500ae36d256a8e3f6b5a81ceb62768308@139.178.68.131:26656"
+          }
+        },
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "WIRELINE",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos1nkdwu38xrlx56ygr8g9xwap5dqecrhch3hfjvg",
+                  "validator_address": "cosmosvaloper1nkdwu38xrlx56ygr8g9xwap5dqecrhch5ra8qm",
+                  "pubkey": "cosmosvalconspub1zcjduepqvmkjehqnzh9jvgd4f7nxy6zf40ke42ra238xvfu4g574un5mkhzs09y6sj",
+                  "value": {
+                    "denom": "uwire",
+                    "amount": "10000000000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "An6AYyis6mBCccIEqLKTEYvhE/Fe4bP8JHyDJlHeSxN3"
+                },
+                "signature": "lup7CSkNcejtLC7T3GLYUvJpDkcjK1ck3Bk22rOETFJjVzBQa+DorpP8isrFtKvt2woqZiuOd3apb+mGXes75Q=="
+              }
+            ],
+            "memo": "cf258070947018977f8d6f8a16b6f9f0c1cd0fdb@139.178.68.130:26656"
+          }
+        }
+      ]
+    },
+    "bond": {
+      "params": {
+        "max_bond_amount": "10000wire"
+      },
+      "bonds": null
+    },
+    "params": null,
+    "staking": {
+      "params": {
+        "unbonding_time": "1814400000000000",
+        "max_validators": 100,
+        "max_entries": 7,
+        "bond_denom": "uwire"
+      },
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": null,
+      "delegations": null,
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
+    },
+    "nameservice": {
+      "params": {
+        "record_rent": "1wire",
+        "record_expiry_time": "31536000000000000"
+      },
+      "names": null,
+      "records": null
+    },
+    "slashing": {
+      "params": {
+        "max_evidence_age": "120000000000",
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600000000000",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      },
+      "signing_infos": {},
+      "missed_blocks": {}
+    },
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000"
+      }
+    },
+    "distribution": {
+      "fee_pool": {
+        "community_pool": []
+      },
+      "community_tax": "0.020000000000000000",
+      "base_proposer_reward": "0.010000000000000000",
+      "bonus_proposer_reward": "0.040000000000000000",
+      "withdraw_addr_enabled": true,
+      "delegator_withdraw_infos": [],
+      "previous_proposer": "",
+      "outstanding_rewards": [],
+      "validator_accumulated_commissions": [],
+      "validator_historical_rewards": [],
+      "validator_current_rewards": [],
+      "delegator_starting_infos": [],
+      "validator_slash_events": []
+    },
+    "accounts": [
+      {
+        "address": "cosmos174hrcf4x9nhwzt82qwns65esa0a7u05425jftp",
+        "coins": [
+          {
+            "denom": "uwire",
+            "amount": "100000000000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      },
+      {
+        "address": "cosmos1j6363njndap3styyv7x48rhepl0tey3mt2ht6w",
+        "coins": [
+          {
+            "denom": "uwire",
+            "amount": "100000000000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      },
+      {
+        "address": "cosmos1nkdwu38xrlx56ygr8g9xwap5dqecrhch3hfjvg",
+        "coins": [
+          {
+            "denom": "uwire",
+            "amount": "100000000000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      }
+    ]
+  }
+}
