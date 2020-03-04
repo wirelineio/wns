@@ -130,7 +130,7 @@ $ wire wns list-bonds --owner cosmos1np8f3zzu6xss0m2rh2k7ugawegw0x29gh9n2lq
 Update `~/.profile` with the bond ID.
 
 ```
-export WIRE_WNS_BOND_ID="36550248ce6bd1d391825bc9111956dd899ac3ca03c238a20f79be49c8a9f806"
+export WIRE_WNS_BOND_ID="<BOND ID>"
 ```
 
 Apply the changes to `~/.profile`.
