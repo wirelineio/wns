@@ -3,7 +3,7 @@
 Update `~/.wireline/wnsd/config/config.toml` with:
 
 ```text
-persistent_peers = "cf258070947018977f8d6f8a16b6f9f0c1cd0fdb@139.178.68.130:26656,9380b3f500ae36d256a8e3f6b5a81ceb62768308@139.178.68.131:26656"
+persistent_peers = "cf258070947018977f8d6f8a16b6f9f0c1cd0fdb@139.178.68.130:26656,9380b3f500ae36d256a8e3f6b5a81ceb62768308@139.178.68.131:26656,57706d1ce3f23d22da8eb958c7cd148544c1b8ae@wns1.deepstacksoft.com:26656"
 ```
 
 ## Adding Peers
