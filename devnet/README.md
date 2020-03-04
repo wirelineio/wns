@@ -53,7 +53,7 @@ $ rm ~/.wireline/wnsd/config/gentx/*
 $ cp devnet/gentx/* ~/.wireline/wnsd/config/gentx
 ```
 
-Add the genesis accounts from SEED_ACCOUNTS.md.
+Add the genesis accounts from [SEED_ACCOUNTS.md](./SEED_ACCOUNTS.md).
 
 Re-generate the genesis.json file.
 
@@ -73,7 +73,7 @@ All validators should replace their `~/.wireline/wnsd/config/genesis.json` file 
 
 ## Peer Setup
 
-See PEERS.md to configure your node with peers. Once peers have been setup, the node can be started.
+See [PEERS.md](./PEERS.md) to configure your node with peers. Once peers have been setup, the node can be started.
 
 The devnet will generate blocks once 2/3 of voting power is online.
 
