@@ -69,7 +69,7 @@ Check-in the updated `~/.wireline/wnsd/config/genesis.json` file to `wns/devnet/
 $ cp ~/.wireline/wnsd/config/genesis.json devnet/genesis.json
 ```
 
-## Update Genesis File
+## Genesis File Update
 
 Note: Run this step on every validator node.
 
