@@ -3,9 +3,9 @@
 ## Requirements
 
 * [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
+* [Ubuntu server](./SERVER.md)
 * Static public IP or [remote port forwarding](https://www.ssh.com/ssh/tunneling/example#remote-forwarding)
   * Ports to forward: 26656 (e.g. `ssh -nNT -vvv -R 26656:localhost:26656 wns.example.org`)
-* [Ubuntu server](./SERVER.md)
 
 ## Validator Account Setup
 
