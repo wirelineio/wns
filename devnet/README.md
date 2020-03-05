@@ -43,7 +43,7 @@ Note: Do NOT run this command, only copy it to the above file.
 wnsd add-genesis-account cosmos174hrcf4x9nhwzt82qwns65esa0a7u05425jftp 100000000000000uwire
 ```
 
-## Genesis JSON Generation
+## Genesis File Generation
 
 Note: Run this step only on the initial validator node, to generate the consolidated `genesis.json` file.
 
