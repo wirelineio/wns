@@ -22,7 +22,7 @@ $ sudo apt-get update && sudo apt-get upgrade -y
 Install essential development packages and utils.
 
 ```bash
-$ sudo apt-get install build-essential jq -y
+$ sudo apt-get install build-essential autossh jq -y
 ```
 
 Download and install golang binaries.
