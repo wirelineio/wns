@@ -39,7 +39,7 @@ function test ()
   curl -s -X POST -H "Content-Type: application/json" -d '{ "query": "{ getStatus { version } }" }' ${API_ENDPOINT} | jq
 }
 
-function command () 
+function command ()
 {
   case $1 in
     start ) start_server $2; exit;;
@@ -55,7 +55,7 @@ if [[ ! -z "$command" ]]; then
   exit
 fi
 
-select yn in "start" "stop" "log" "test"; do
-  command $yn
+select oper in "start" "stop" "log" "test"; do
+  command $oper
   exit
 done
