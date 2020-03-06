@@ -12,7 +12,9 @@ Setup a SSH tunnel (remote port forwarding) between your devnet node and a remot
 
 Note: See https://www.digitalocean.com/community/tutorials/how-to-configure-custom-connection-options-for-your-ssh-client for configuring SSH client.
 
-In the example below, `user@host` is the remote user and hostname/IP configured for public key based SSH login and which is reachable from other nodes.
+In the example below, `user@host` is the remote user and hostname/IP configured for public key based SSH login and which is reachable from other nodes. Prior to starting the tunnel, check that `ssh <user@host>` works, to verify `~/.ssh/config` settings.
+
+To start the tunnel.
 
 ```bash
 $ cd wns
