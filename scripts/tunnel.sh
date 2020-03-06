@@ -14,7 +14,7 @@ function start_tunnel ()
   rm -f ${LOG}
 
   # Start the tunnel (see https://www.everythingcli.org/ssh-tunnelling-for-fun-and-profit-autossh for details).
-  nohup autossh -M 0 -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" -vvv -nNT -R 30000:localhost:26656 "${1}" > ${LOG} 2>&1 &
+  nohup autossh -M 0 -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" -vvv -nNT -R 26656:localhost:26656 "${1}" > ${LOG} 2>&1 &
 
   if [[ $2 = "--tail" ]]; then
     log
