@@ -88,6 +88,12 @@ type ComplexityRoot struct {
 		Name func(childComplexity int) int
 	}
 
+	PeerInfo struct {
+		Node       func(childComplexity int) int
+		IsOutbound func(childComplexity int) int
+		RemoteIP   func(childComplexity int) int
+	}
+
 	Protocol struct {
 		Name func(childComplexity int) int
 	}
@@ -125,6 +131,8 @@ type ComplexityRoot struct {
 		Node      func(childComplexity int) int
 		Sync      func(childComplexity int) int
 		Validator func(childComplexity int) int
+		NumPeers  func(childComplexity int) int
+		Peers     func(childComplexity int) int
 	}
 
 	SyncInfo struct {
@@ -139,9 +147,8 @@ type ComplexityRoot struct {
 	}
 
 	ValidatorInfo struct {
-		Address       func(childComplexity int) int
-		PubKeyAddress func(childComplexity int) int
-		VotingPower   func(childComplexity int) int
+		Address     func(childComplexity int) int
+		VotingPower func(childComplexity int) int
 	}
 
 	Value struct {
@@ -341,6 +348,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Pad.Name(childComplexity), true
 
+	case "PeerInfo.Node":
+		if e.complexity.PeerInfo.Node == nil {
+			break
+		}
+
+		return e.complexity.PeerInfo.Node(childComplexity), true
+
+	case "PeerInfo.IsOutbound":
+		if e.complexity.PeerInfo.IsOutbound == nil {
+			break
+		}
+
+		return e.complexity.PeerInfo.IsOutbound(childComplexity), true
+
+	case "PeerInfo.RemoteIP":
+		if e.complexity.PeerInfo.RemoteIP == nil {
+			break
+		}
+
+		return e.complexity.PeerInfo.RemoteIP(childComplexity), true
+
 	case "Protocol.Name":
 		if e.complexity.Protocol.Name == nil {
 			break
@@ -539,6 +567,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.Validator(childComplexity), true
 
+	case "Status.NumPeers":
+		if e.complexity.Status.NumPeers == nil {
+			break
+		}
+
+		return e.complexity.Status.NumPeers(childComplexity), true
+
+	case "Status.Peers":
+		if e.complexity.Status.Peers == nil {
+			break
+		}
+
+		return e.complexity.Status.Peers(childComplexity), true
+
 	case "SyncInfo.LatestBlockHash":
 		if e.complexity.SyncInfo.LatestBlockHash == nil {
 			break
@@ -580,13 +622,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ValidatorInfo.Address(childComplexity), true
-
-	case "ValidatorInfo.PubKeyAddress":
-		if e.complexity.ValidatorInfo.PubKeyAddress == nil {
-			break
-		}
-
-		return e.complexity.ValidatorInfo.PubKeyAddress(childComplexity), true
 
 	case "ValidatorInfo.VotingPower":
 		if e.complexity.ValidatorInfo.VotingPower == nil {
@@ -811,7 +846,7 @@ interface Extension {
 
 # Record defines the basic properties of an entity in the graph database.
 type Record {
-  id:        String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
+  id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
   type:       String!         # wrn:<type>, e.g. wrn:bot, wrn:pad.
   name:       String!         # e.g. wireline.io/chess
   version:    String!         # Version (e.g. 0.1.0).
@@ -851,7 +886,7 @@ type Bond {
 }
 
 #
-# Information about a node (https://docs.tendermint.com/master/rpc/#/Info/status).
+# Status information about a node (https://docs.tendermint.com/master/rpc/#/Info/status).
 #
 
 type NodeInfo {
@@ -868,17 +903,24 @@ type SyncInfo {
 }
 
 type ValidatorInfo {
-  address:            String!
-  pub_key_address:    String!
-  voting_power:       String!
+  address:        String!
+  voting_power:   String!
+}
+
+type PeerInfo {
+  node:           NodeInfo!
+  is_outbound:    Boolean!
+  remote_ip:      String!
 }
 
 # WNS status.
 type Status {
   version:    String!
-  node:       NodeInfo
-  sync:       SyncInfo
+  node:       NodeInfo!
+  sync:       SyncInfo!
   validator:  ValidatorInfo
+  num_peers:  String!
+  peers:      [PeerInfo]
 }
 
 type Query {
@@ -1624,6 +1666,84 @@ func (ec *executionContext) _Pad_name(ctx context.Context, field graphql.Collect
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PeerInfo_node(ctx context.Context, field graphql.CollectedField, obj *PeerInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "PeerInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(NodeInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNNodeInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PeerInfo_is_outbound(ctx context.Context, field graphql.CollectedField, obj *PeerInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "PeerInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsOutbound, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PeerInfo_remote_ip(ctx context.Context, field graphql.CollectedField, obj *PeerInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "PeerInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RemoteIP, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Protocol_name(ctx context.Context, field graphql.CollectedField, obj *Protocol) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -2253,12 +2373,15 @@ func (ec *executionContext) _Status_node(ctx context.Context, field graphql.Coll
 		return obj.Node, nil
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*NodeInfo)
+	res := resTmp.(NodeInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalONodeInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx, field.Selections, res)
+	return ec.marshalNNodeInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Status_sync(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
@@ -2276,12 +2399,15 @@ func (ec *executionContext) _Status_sync(ctx context.Context, field graphql.Coll
 		return obj.Sync, nil
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*SyncInfo)
+	res := resTmp.(SyncInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOSyncInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx, field.Selections, res)
+	return ec.marshalNSyncInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Status_validator(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
@@ -2305,6 +2431,55 @@ func (ec *executionContext) _Status_validator(ctx context.Context, field graphql
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOValidatorInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_num_peers(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumPeers, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_peers(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Peers, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*PeerInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOPeerInfo2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SyncInfo_latest_block_hash(ctx context.Context, field graphql.CollectedField, obj *SyncInfo) graphql.Marshaler {
@@ -2450,32 +2625,6 @@ func (ec *executionContext) _ValidatorInfo_address(ctx context.Context, field gr
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Address, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _ValidatorInfo_pub_key_address(ctx context.Context, field graphql.CollectedField, obj *ValidatorInfo) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "ValidatorInfo",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PubKeyAddress, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -3896,6 +4045,43 @@ func (ec *executionContext) _Pad(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
+var peerInfoImplementors = []string{"PeerInfo"}
+
+func (ec *executionContext) _PeerInfo(ctx context.Context, sel ast.SelectionSet, obj *PeerInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, peerInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PeerInfo")
+		case "node":
+			out.Values[i] = ec._PeerInfo_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "is_outbound":
+			out.Values[i] = ec._PeerInfo_is_outbound(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "remote_ip":
+			out.Values[i] = ec._PeerInfo_remote_ip(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var protocolImplementors = []string{"Protocol", "Extension"}
 
 func (ec *executionContext) _Protocol(ctx context.Context, sel ast.SelectionSet, obj *Protocol) graphql.Marshaler {
@@ -4146,10 +4332,23 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "node":
 			out.Values[i] = ec._Status_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "sync":
 			out.Values[i] = ec._Status_sync(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "validator":
 			out.Values[i] = ec._Status_validator(ctx, field, obj)
+		case "num_peers":
+			out.Values[i] = ec._Status_num_peers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "peers":
+			out.Values[i] = ec._Status_peers(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4243,11 +4442,6 @@ func (ec *executionContext) _ValidatorInfo(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("ValidatorInfo")
 		case "address":
 			out.Values[i] = ec._ValidatorInfo_address(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "pub_key_address":
-			out.Values[i] = ec._ValidatorInfo_pub_key_address(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -4588,6 +4782,10 @@ func (ec *executionContext) unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelin
 	return res, nil
 }
 
+func (ec *executionContext) marshalNNodeInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx context.Context, sel ast.SelectionSet, v NodeInfo) graphql.Marshaler {
+	return ec._NodeInfo(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNStatus2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐStatus(ctx context.Context, sel ast.SelectionSet, v Status) graphql.Marshaler {
 	return ec._Status(ctx, sel, &v)
 }
@@ -4637,6 +4835,10 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNSyncInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx context.Context, sel ast.SelectionSet, v SyncInfo) graphql.Marshaler {
+	return ec._SyncInfo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {
@@ -5147,15 +5349,52 @@ func (ec *executionContext) unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineio
 	return &res, err
 }
 
-func (ec *executionContext) marshalONodeInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx context.Context, sel ast.SelectionSet, v NodeInfo) graphql.Marshaler {
-	return ec._NodeInfo(ctx, sel, &v)
+func (ec *executionContext) marshalOPeerInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx context.Context, sel ast.SelectionSet, v PeerInfo) graphql.Marshaler {
+	return ec._PeerInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalONodeInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx context.Context, sel ast.SelectionSet, v *NodeInfo) graphql.Marshaler {
+func (ec *executionContext) marshalOPeerInfo2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx context.Context, sel ast.SelectionSet, v []*PeerInfo) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPeerInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOPeerInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx context.Context, sel ast.SelectionSet, v *PeerInfo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._NodeInfo(ctx, sel, v)
+	return ec._PeerInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORecord2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v Record) graphql.Marshaler {
@@ -5279,17 +5518,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
-}
-
-func (ec *executionContext) marshalOSyncInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx context.Context, sel ast.SelectionSet, v SyncInfo) graphql.Marshaler {
-	return ec._SyncInfo(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOSyncInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx context.Context, sel ast.SelectionSet, v *SyncInfo) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SyncInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOValidatorInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx context.Context, sel ast.SelectionSet, v ValidatorInfo) graphql.Marshaler {

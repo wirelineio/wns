@@ -35,3 +35,26 @@ func getStatusInfo(ctx *rpctypes.Context) (*NodeInfo, *SyncInfo, *ValidatorInfo,
 			VotingPower: strconv.FormatInt(valInfo.VotingPower, 10),
 		}, nil
 }
+
+func getNetInfo(ctx *rpctypes.Context) (string, []*PeerInfo, error) {
+	res, err := core.NetInfo(ctx)
+	if err != nil {
+		return "", nil, err
+	}
+
+	peers := res.Peers
+	peersInfo := make([]*PeerInfo, len(peers))
+	for index, peer := range peers {
+		peersInfo[index] = &PeerInfo{
+			Node: NodeInfo{
+				ID:      string(peer.NodeInfo.ID()),
+				Moniker: peer.NodeInfo.Moniker,
+				Network: peer.NodeInfo.Network,
+			},
+			IsOutbound: peer.IsOutbound,
+			RemoteIP:   peer.RemoteIP,
+		}
+	}
+
+	return strconv.FormatInt(int64(res.NPeers), 10), peersInfo, nil
+}

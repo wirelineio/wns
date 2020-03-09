@@ -54,6 +54,12 @@ type Pad struct {
 
 func (Pad) IsExtension() {}
 
+type PeerInfo struct {
+	Node       NodeInfo `json:"node"`
+	IsOutbound bool     `json:"is_outbound"`
+	RemoteIP   string   `json:"remote_ip"`
+}
+
 type Protocol struct {
 	Name string `json:"name"`
 }
@@ -84,9 +90,11 @@ type ReferenceInput struct {
 
 type Status struct {
 	Version   string         `json:"version"`
-	Node      *NodeInfo      `json:"node"`
-	Sync      *SyncInfo      `json:"sync"`
+	Node      NodeInfo       `json:"node"`
+	Sync      SyncInfo       `json:"sync"`
 	Validator *ValidatorInfo `json:"validator"`
+	NumPeers  string         `json:"num_peers"`
+	Peers     []*PeerInfo    `json:"peers"`
 }
 
 type SyncInfo struct {
@@ -103,9 +111,8 @@ type UnknownExtension struct {
 func (UnknownExtension) IsExtension() {}
 
 type ValidatorInfo struct {
-	Address       string `json:"address"`
-	PubKeyAddress string `json:"pub_key_address"`
-	VotingPower   string `json:"voting_power"`
+	Address     string `json:"address"`
+	VotingPower string `json:"voting_power"`
 }
 
 type Value struct {

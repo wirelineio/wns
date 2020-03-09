@@ -172,11 +172,18 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		return nil, err
 	}
 
+	numPeers, peers, err := getNetInfo(rpcContext)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Status{
 		Version:   NamserviceVersion,
-		Node:      nodeInfo,
-		Sync:      syncInfo,
+		Node:      *nodeInfo,
+		Sync:      *syncInfo,
 		Validator: validatorInfo,
+		NumPeers:  numPeers,
+		Peers:     peers,
 	}, nil
 }
 

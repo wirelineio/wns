@@ -123,12 +123,20 @@ type ValidatorInfo {
   voting_power:   String!
 }
 
+type PeerInfo {
+  node:           NodeInfo!
+  is_outbound:    Boolean!
+  remote_ip:      String!
+}
+
 # WNS status.
 type Status {
   version:    String!
-  node:       NodeInfo
-  sync:       SyncInfo
+  node:       NodeInfo!
+  sync:       SyncInfo!
   validator:  ValidatorInfo
+  num_peers:  String!
+  peers:      [PeerInfo]
 }
 
 type Query {
