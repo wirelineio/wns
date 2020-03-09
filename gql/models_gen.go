@@ -42,6 +42,12 @@ type KeyValueInput struct {
 	Value ValueInput `json:"value"`
 }
 
+type NodeInfo struct {
+	ID      string `json:"id"`
+	Network string `json:"network"`
+	Moniker string `json:"moniker"`
+}
+
 type Pad struct {
 	Name string `json:"name"`
 }
@@ -77,7 +83,17 @@ type ReferenceInput struct {
 }
 
 type Status struct {
-	Version string `json:"version"`
+	Version   string         `json:"version"`
+	Node      *NodeInfo      `json:"node"`
+	Sync      *SyncInfo      `json:"sync"`
+	Validator *ValidatorInfo `json:"validator"`
+}
+
+type SyncInfo struct {
+	LatestBlockHash   string `json:"latest_block_hash"`
+	LatestBlockHeight string `json:"latest_block_height"`
+	LatestBlockTime   string `json:"latest_block_time"`
+	CatchingUp        bool   `json:"catching_up"`
 }
 
 type UnknownExtension struct {
@@ -85,6 +101,12 @@ type UnknownExtension struct {
 }
 
 func (UnknownExtension) IsExtension() {}
+
+type ValidatorInfo struct {
+	Address       string `json:"address"`
+	PubKeyAddress string `json:"pub_key_address"`
+	VotingPower   string `json:"voting_power"`
+}
 
 type Value struct {
 	Null      *bool      `json:"null"`

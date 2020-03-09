@@ -78,6 +78,12 @@ type ComplexityRoot struct {
 		Submit       func(childComplexity int, tx string) int
 	}
 
+	NodeInfo struct {
+		ID      func(childComplexity int) int
+		Network func(childComplexity int) int
+		Moniker func(childComplexity int) int
+	}
+
 	Pad struct {
 		Name func(childComplexity int) int
 	}
@@ -115,11 +121,27 @@ type ComplexityRoot struct {
 	}
 
 	Status struct {
-		Version func(childComplexity int) int
+		Version   func(childComplexity int) int
+		Node      func(childComplexity int) int
+		Sync      func(childComplexity int) int
+		Validator func(childComplexity int) int
+	}
+
+	SyncInfo struct {
+		LatestBlockHash   func(childComplexity int) int
+		LatestBlockHeight func(childComplexity int) int
+		LatestBlockTime   func(childComplexity int) int
+		CatchingUp        func(childComplexity int) int
 	}
 
 	UnknownExtension struct {
 		Name func(childComplexity int) int
+	}
+
+	ValidatorInfo struct {
+		Address       func(childComplexity int) int
+		PubKeyAddress func(childComplexity int) int
+		VotingPower   func(childComplexity int) int
 	}
 
 	Value struct {
@@ -290,6 +312,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Submit(childComplexity, args["tx"].(string)), true
+
+	case "NodeInfo.ID":
+		if e.complexity.NodeInfo.ID == nil {
+			break
+		}
+
+		return e.complexity.NodeInfo.ID(childComplexity), true
+
+	case "NodeInfo.Network":
+		if e.complexity.NodeInfo.Network == nil {
+			break
+		}
+
+		return e.complexity.NodeInfo.Network(childComplexity), true
+
+	case "NodeInfo.Moniker":
+		if e.complexity.NodeInfo.Moniker == nil {
+			break
+		}
+
+		return e.complexity.NodeInfo.Moniker(childComplexity), true
 
 	case "Pad.Name":
 		if e.complexity.Pad.Name == nil {
@@ -475,12 +518,82 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.Version(childComplexity), true
 
+	case "Status.Node":
+		if e.complexity.Status.Node == nil {
+			break
+		}
+
+		return e.complexity.Status.Node(childComplexity), true
+
+	case "Status.Sync":
+		if e.complexity.Status.Sync == nil {
+			break
+		}
+
+		return e.complexity.Status.Sync(childComplexity), true
+
+	case "Status.Validator":
+		if e.complexity.Status.Validator == nil {
+			break
+		}
+
+		return e.complexity.Status.Validator(childComplexity), true
+
+	case "SyncInfo.LatestBlockHash":
+		if e.complexity.SyncInfo.LatestBlockHash == nil {
+			break
+		}
+
+		return e.complexity.SyncInfo.LatestBlockHash(childComplexity), true
+
+	case "SyncInfo.LatestBlockHeight":
+		if e.complexity.SyncInfo.LatestBlockHeight == nil {
+			break
+		}
+
+		return e.complexity.SyncInfo.LatestBlockHeight(childComplexity), true
+
+	case "SyncInfo.LatestBlockTime":
+		if e.complexity.SyncInfo.LatestBlockTime == nil {
+			break
+		}
+
+		return e.complexity.SyncInfo.LatestBlockTime(childComplexity), true
+
+	case "SyncInfo.CatchingUp":
+		if e.complexity.SyncInfo.CatchingUp == nil {
+			break
+		}
+
+		return e.complexity.SyncInfo.CatchingUp(childComplexity), true
+
 	case "UnknownExtension.Name":
 		if e.complexity.UnknownExtension.Name == nil {
 			break
 		}
 
 		return e.complexity.UnknownExtension.Name(childComplexity), true
+
+	case "ValidatorInfo.Address":
+		if e.complexity.ValidatorInfo.Address == nil {
+			break
+		}
+
+		return e.complexity.ValidatorInfo.Address(childComplexity), true
+
+	case "ValidatorInfo.PubKeyAddress":
+		if e.complexity.ValidatorInfo.PubKeyAddress == nil {
+			break
+		}
+
+		return e.complexity.ValidatorInfo.PubKeyAddress(childComplexity), true
+
+	case "ValidatorInfo.VotingPower":
+		if e.complexity.ValidatorInfo.VotingPower == nil {
+			break
+		}
+
+		return e.complexity.ValidatorInfo.VotingPower(childComplexity), true
 
 	case "Value.Null":
 		if e.complexity.Value.Null == nil {
@@ -737,9 +850,35 @@ type Bond {
   balance:    [Coin!]         # Current balance for each coin type.
 }
 
+#
+# Information about a node (https://docs.tendermint.com/master/rpc/#/Info/status).
+#
+
+type NodeInfo {
+  id:         String!         # Tendermint Node ID.
+  network:    String!         # Name of the network/blockchain.
+  moniker:    String!         # Name of the node.
+}
+
+type SyncInfo {
+  latest_block_hash:    String!
+  latest_block_height:  String!
+  latest_block_time:    String!
+  catching_up:          Boolean!
+}
+
+type ValidatorInfo {
+  address:            String!
+  pub_key_address:    String!
+  voting_power:       String!
+}
+
 # WNS status.
 type Status {
-  version:  String!
+  version:    String!
+  node:       NodeInfo
+  sync:       SyncInfo
+  validator:  ValidatorInfo
 }
 
 type Query {
@@ -1379,6 +1518,84 @@ func (ec *executionContext) _Mutation_submit(ctx context.Context, field graphql.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodeInfo_id(ctx context.Context, field graphql.CollectedField, obj *NodeInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NodeInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodeInfo_network(ctx context.Context, field graphql.CollectedField, obj *NodeInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NodeInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Network, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NodeInfo_moniker(ctx context.Context, field graphql.CollectedField, obj *NodeInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NodeInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Moniker, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Pad_name(ctx context.Context, field graphql.CollectedField, obj *Pad) graphql.Marshaler {
@@ -2021,6 +2238,179 @@ func (ec *executionContext) _Status_version(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Status_node(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*NodeInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalONodeInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_sync(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sync, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*SyncInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOSyncInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_validator(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Validator, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ValidatorInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOValidatorInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SyncInfo_latest_block_hash(ctx context.Context, field graphql.CollectedField, obj *SyncInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "SyncInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LatestBlockHash, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SyncInfo_latest_block_height(ctx context.Context, field graphql.CollectedField, obj *SyncInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "SyncInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LatestBlockHeight, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SyncInfo_latest_block_time(ctx context.Context, field graphql.CollectedField, obj *SyncInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "SyncInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LatestBlockTime, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SyncInfo_catching_up(ctx context.Context, field graphql.CollectedField, obj *SyncInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "SyncInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CatchingUp, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _UnknownExtension_name(ctx context.Context, field graphql.CollectedField, obj *UnknownExtension) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -2034,6 +2424,84 @@ func (ec *executionContext) _UnknownExtension_name(ctx context.Context, field gr
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ValidatorInfo_address(ctx context.Context, field graphql.CollectedField, obj *ValidatorInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "ValidatorInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ValidatorInfo_pub_key_address(ctx context.Context, field graphql.CollectedField, obj *ValidatorInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "ValidatorInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PubKeyAddress, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ValidatorInfo_voting_power(ctx context.Context, field graphql.CollectedField, obj *ValidatorInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "ValidatorInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VotingPower, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -3364,6 +3832,43 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var nodeInfoImplementors = []string{"NodeInfo"}
+
+func (ec *executionContext) _NodeInfo(ctx context.Context, sel ast.SelectionSet, obj *NodeInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, nodeInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NodeInfo")
+		case "id":
+			out.Values[i] = ec._NodeInfo_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "network":
+			out.Values[i] = ec._NodeInfo_network(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "moniker":
+			out.Values[i] = ec._NodeInfo_moniker(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var padImplementors = []string{"Pad", "Extension"}
 
 func (ec *executionContext) _Pad(ctx context.Context, sel ast.SelectionSet, obj *Pad) graphql.Marshaler {
@@ -3639,6 +4144,54 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "node":
+			out.Values[i] = ec._Status_node(ctx, field, obj)
+		case "sync":
+			out.Values[i] = ec._Status_sync(ctx, field, obj)
+		case "validator":
+			out.Values[i] = ec._Status_validator(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var syncInfoImplementors = []string{"SyncInfo"}
+
+func (ec *executionContext) _SyncInfo(ctx context.Context, sel ast.SelectionSet, obj *SyncInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, syncInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SyncInfo")
+		case "latest_block_hash":
+			out.Values[i] = ec._SyncInfo_latest_block_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "latest_block_height":
+			out.Values[i] = ec._SyncInfo_latest_block_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "latest_block_time":
+			out.Values[i] = ec._SyncInfo_latest_block_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "catching_up":
+			out.Values[i] = ec._SyncInfo_catching_up(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3663,6 +4216,43 @@ func (ec *executionContext) _UnknownExtension(ctx context.Context, sel ast.Selec
 			out.Values[i] = graphql.MarshalString("UnknownExtension")
 		case "name":
 			out.Values[i] = ec._UnknownExtension_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var validatorInfoImplementors = []string{"ValidatorInfo"}
+
+func (ec *executionContext) _ValidatorInfo(ctx context.Context, sel ast.SelectionSet, obj *ValidatorInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, validatorInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ValidatorInfo")
+		case "address":
+			out.Values[i] = ec._ValidatorInfo_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "pub_key_address":
+			out.Values[i] = ec._ValidatorInfo_pub_key_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "voting_power":
+			out.Values[i] = ec._ValidatorInfo_voting_power(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -4557,6 +5147,17 @@ func (ec *executionContext) unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineio
 	return &res, err
 }
 
+func (ec *executionContext) marshalONodeInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx context.Context, sel ast.SelectionSet, v NodeInfo) graphql.Marshaler {
+	return ec._NodeInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalONodeInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx context.Context, sel ast.SelectionSet, v *NodeInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._NodeInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalORecord2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v Record) graphql.Marshaler {
 	return ec._Record(ctx, sel, &v)
 }
@@ -4678,6 +5279,28 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOSyncInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx context.Context, sel ast.SelectionSet, v SyncInfo) graphql.Marshaler {
+	return ec._SyncInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOSyncInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx context.Context, sel ast.SelectionSet, v *SyncInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SyncInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOValidatorInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx context.Context, sel ast.SelectionSet, v ValidatorInfo) graphql.Marshaler {
+	return ec._ValidatorInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOValidatorInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx context.Context, sel ast.SelectionSet, v *ValidatorInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ValidatorInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {
