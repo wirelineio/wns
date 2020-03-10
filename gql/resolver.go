@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
+	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 )
@@ -164,7 +165,39 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*R
 }
 
 func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
-	return &Status{Version: NamserviceVersion}, nil
+	rpcContext := &rpctypes.Context{}
+
+	nodeInfo, syncInfo, validatorInfo, err := getStatusInfo(rpcContext)
+	if err != nil {
+		return nil, err
+	}
+
+	numPeers, peers, err := getNetInfo(rpcContext)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHeight, _ := strconv.ParseInt(syncInfo.LatestBlockHeight, 10, 64)
+	validatorSet, err := getValidatorSet(rpcContext, blockHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	diskUsage, err := getDiskUsage()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Status{
+		Version:    NamserviceVersion,
+		Node:       *nodeInfo,
+		Sync:       *syncInfo,
+		Validator:  validatorInfo,
+		Validators: validatorSet,
+		NumPeers:   numPeers,
+		Peers:      peers,
+		DiskUsage:  diskUsage,
+	}, nil
 }
 
 func (r *queryResolver) GetAccounts(ctx context.Context, addresses []string) ([]*Account, error) {
