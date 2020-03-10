@@ -95,6 +95,7 @@ type Status struct {
 	Validator *ValidatorInfo `json:"validator"`
 	NumPeers  string         `json:"num_peers"`
 	Peers     []*PeerInfo    `json:"peers"`
+	DiskUsage string         `json:"disk_usage"`
 }
 
 type SyncInfo struct {

@@ -137,6 +137,7 @@ type Status {
   validator:  ValidatorInfo
   num_peers:  String!
   peers:      [PeerInfo]
+  disk_usage: String!
 }
 
 type Query {

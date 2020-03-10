@@ -177,6 +177,11 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		return nil, err
 	}
 
+	diskUsage, err := getDiskUsage()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Status{
 		Version:   NamserviceVersion,
 		Node:      *nodeInfo,
@@ -184,6 +189,7 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		Validator: validatorInfo,
 		NumPeers:  numPeers,
 		Peers:     peers,
+		DiskUsage: diskUsage,
 	}, nil
 }
 

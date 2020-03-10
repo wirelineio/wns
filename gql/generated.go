@@ -133,6 +133,7 @@ type ComplexityRoot struct {
 		Validator func(childComplexity int) int
 		NumPeers  func(childComplexity int) int
 		Peers     func(childComplexity int) int
+		DiskUsage func(childComplexity int) int
 	}
 
 	SyncInfo struct {
@@ -581,6 +582,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.Peers(childComplexity), true
 
+	case "Status.DiskUsage":
+		if e.complexity.Status.DiskUsage == nil {
+			break
+		}
+
+		return e.complexity.Status.DiskUsage(childComplexity), true
+
 	case "SyncInfo.LatestBlockHash":
 		if e.complexity.SyncInfo.LatestBlockHash == nil {
 			break
@@ -921,6 +929,7 @@ type Status {
   validator:  ValidatorInfo
   num_peers:  String!
   peers:      [PeerInfo]
+  disk_usage: String!
 }
 
 type Query {
@@ -2480,6 +2489,32 @@ func (ec *executionContext) _Status_peers(ctx context.Context, field graphql.Col
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOPeerInfo2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_disk_usage(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DiskUsage, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SyncInfo_latest_block_hash(ctx context.Context, field graphql.CollectedField, obj *SyncInfo) graphql.Marshaler {
@@ -4349,6 +4384,11 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "peers":
 			out.Values[i] = ec._Status_peers(ctx, field, obj)
+		case "disk_usage":
+			out.Values[i] = ec._Status_disk_usage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
