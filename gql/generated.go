@@ -127,13 +127,14 @@ type ComplexityRoot struct {
 	}
 
 	Status struct {
-		Version   func(childComplexity int) int
-		Node      func(childComplexity int) int
-		Sync      func(childComplexity int) int
-		Validator func(childComplexity int) int
-		NumPeers  func(childComplexity int) int
-		Peers     func(childComplexity int) int
-		DiskUsage func(childComplexity int) int
+		Version    func(childComplexity int) int
+		Node       func(childComplexity int) int
+		Sync       func(childComplexity int) int
+		Validator  func(childComplexity int) int
+		Validators func(childComplexity int) int
+		NumPeers   func(childComplexity int) int
+		Peers      func(childComplexity int) int
+		DiskUsage  func(childComplexity int) int
 	}
 
 	SyncInfo struct {
@@ -148,8 +149,9 @@ type ComplexityRoot struct {
 	}
 
 	ValidatorInfo struct {
-		Address     func(childComplexity int) int
-		VotingPower func(childComplexity int) int
+		Address          func(childComplexity int) int
+		VotingPower      func(childComplexity int) int
+		ProposerPriority func(childComplexity int) int
 	}
 
 	Value struct {
@@ -568,6 +570,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.Validator(childComplexity), true
 
+	case "Status.Validators":
+		if e.complexity.Status.Validators == nil {
+			break
+		}
+
+		return e.complexity.Status.Validators(childComplexity), true
+
 	case "Status.NumPeers":
 		if e.complexity.Status.NumPeers == nil {
 			break
@@ -637,6 +646,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ValidatorInfo.VotingPower(childComplexity), true
+
+	case "ValidatorInfo.ProposerPriority":
+		if e.complexity.ValidatorInfo.ProposerPriority == nil {
+			break
+		}
+
+		return e.complexity.ValidatorInfo.ProposerPriority(childComplexity), true
 
 	case "Value.Null":
 		if e.complexity.Value.Null == nil {
@@ -893,10 +909,7 @@ type Bond {
   balance:    [Coin!]         # Current balance for each coin type.
 }
 
-#
 # Status information about a node (https://docs.tendermint.com/master/rpc/#/Info/status).
-#
-
 type NodeInfo {
   id:         String!         # Tendermint Node ID.
   network:    String!         # Name of the network/blockchain.
@@ -910,11 +923,14 @@ type SyncInfo {
   catching_up:          Boolean!
 }
 
+# Validator set info (https://docs.tendermint.com/master/rpc/#/Info/validators).
 type ValidatorInfo {
-  address:        String!
-  voting_power:   String!
+  address:            String!
+  voting_power:       String!
+  proposer_priority:  String
 }
 
+# Network/peer info (https://docs.tendermint.com/master/rpc/#/Info/net_info).
 type PeerInfo {
   node:           NodeInfo!
   is_outbound:    Boolean!
@@ -927,6 +943,7 @@ type Status {
   node:       NodeInfo!
   sync:       SyncInfo!
   validator:  ValidatorInfo
+  validators: [ValidatorInfo]!
   num_peers:  String!
   peers:      [PeerInfo]
   disk_usage: String!
@@ -2442,6 +2459,32 @@ func (ec *executionContext) _Status_validator(ctx context.Context, field graphql
 	return ec.marshalOValidatorInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Status_validators(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Status",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Validators, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*ValidatorInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNValidatorInfo2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Status_num_peers(ctx context.Context, field graphql.CollectedField, obj *Status) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -2697,6 +2740,29 @@ func (ec *executionContext) _ValidatorInfo_voting_power(ctx context.Context, fie
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ValidatorInfo_proposer_priority(ctx context.Context, field graphql.CollectedField, obj *ValidatorInfo) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "ValidatorInfo",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProposerPriority, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Value_null(ctx context.Context, field graphql.CollectedField, obj *Value) graphql.Marshaler {
@@ -4377,6 +4443,11 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "validator":
 			out.Values[i] = ec._Status_validator(ctx, field, obj)
+		case "validators":
+			out.Values[i] = ec._Status_validators(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "num_peers":
 			out.Values[i] = ec._Status_num_peers(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4490,6 +4561,8 @@ func (ec *executionContext) _ValidatorInfo(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "proposer_priority":
+			out.Values[i] = ec._ValidatorInfo_proposer_priority(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4879,6 +4952,43 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 
 func (ec *executionContext) marshalNSyncInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐSyncInfo(ctx context.Context, sel ast.SelectionSet, v SyncInfo) graphql.Marshaler {
 	return ec._SyncInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNValidatorInfo2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx context.Context, sel ast.SelectionSet, v []*ValidatorInfo) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOValidatorInfo2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValidatorInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalNValue2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐValue(ctx context.Context, sel ast.SelectionSet, v Value) graphql.Marshaler {

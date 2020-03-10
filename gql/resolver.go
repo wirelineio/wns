@@ -177,19 +177,26 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		return nil, err
 	}
 
+	blockHeight, _ := strconv.ParseInt(syncInfo.LatestBlockHeight, 10, 64)
+	validatorSet, err := getValidatorSet(rpcContext, blockHeight)
+	if err != nil {
+		return nil, err
+	}
+
 	diskUsage, err := getDiskUsage()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Status{
-		Version:   NamserviceVersion,
-		Node:      *nodeInfo,
-		Sync:      *syncInfo,
-		Validator: validatorInfo,
-		NumPeers:  numPeers,
-		Peers:     peers,
-		DiskUsage: diskUsage,
+		Version:    NamserviceVersion,
+		Node:       *nodeInfo,
+		Sync:       *syncInfo,
+		Validator:  validatorInfo,
+		Validators: validatorSet,
+		NumPeers:   numPeers,
+		Peers:      peers,
+		DiskUsage:  diskUsage,
 	}, nil
 }
 

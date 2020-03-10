@@ -89,13 +89,14 @@ type ReferenceInput struct {
 }
 
 type Status struct {
-	Version   string         `json:"version"`
-	Node      NodeInfo       `json:"node"`
-	Sync      SyncInfo       `json:"sync"`
-	Validator *ValidatorInfo `json:"validator"`
-	NumPeers  string         `json:"num_peers"`
-	Peers     []*PeerInfo    `json:"peers"`
-	DiskUsage string         `json:"disk_usage"`
+	Version    string           `json:"version"`
+	Node       NodeInfo         `json:"node"`
+	Sync       SyncInfo         `json:"sync"`
+	Validator  *ValidatorInfo   `json:"validator"`
+	Validators []*ValidatorInfo `json:"validators"`
+	NumPeers   string           `json:"num_peers"`
+	Peers      []*PeerInfo      `json:"peers"`
+	DiskUsage  string           `json:"disk_usage"`
 }
 
 type SyncInfo struct {
@@ -112,8 +113,9 @@ type UnknownExtension struct {
 func (UnknownExtension) IsExtension() {}
 
 type ValidatorInfo struct {
-	Address     string `json:"address"`
-	VotingPower string `json:"voting_power"`
+	Address          string  `json:"address"`
+	VotingPower      string  `json:"voting_power"`
+	ProposerPriority *string `json:"proposer_priority"`
 }
 
 type Value struct {

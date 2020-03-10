@@ -73,3 +73,23 @@ func getDiskUsage() (string, error) {
 
 	return strings.Fields(string(out))[0], nil
 }
+
+func getValidatorSet(ctx *rpctypes.Context, height int64) ([]*ValidatorInfo, error) {
+	res, err := core.Validators(ctx, &height)
+
+	if err != nil {
+		return nil, err
+	}
+
+	validatorSet := make([]*ValidatorInfo, len(res.Validators))
+	for index, validator := range res.Validators {
+		proposerPriority := strconv.FormatInt(validator.ProposerPriority, 10)
+		validatorSet[index] = &ValidatorInfo{
+			Address:          validator.Address.String(),
+			VotingPower:      strconv.FormatInt(validator.VotingPower, 10),
+			ProposerPriority: &proposerPriority,
+		}
+	}
+
+	return validatorSet, nil
+}
