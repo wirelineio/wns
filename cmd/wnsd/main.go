@@ -6,17 +6,21 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	genaccscli "github.com/cosmos/cosmos-sdk/x/genaccounts/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 
+	baseApp "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -24,6 +28,10 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	app "github.com/wirelineio/wns"
 )
+
+const pruningStrategySyncable = "syncable"
+const pruningStrategyNothing = "nothing"
+const pruningStrategyEverything = "everything"
 
 var invCheckPeriod uint
 
@@ -77,7 +85,10 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewNameServiceApp(logger, db, invCheckPeriod)
+	opts := []func(*baseApp.BaseApp){}
+	opts = append(opts, getPruningStrategy(logger))
+
+	return app.NewNameServiceApp(logger, db, invCheckPeriod, opts...)
 }
 
 func exportAppStateAndTMValidators(
@@ -96,4 +107,20 @@ func exportAppStateAndTMValidators(
 	nsApp := app.NewNameServiceApp(logger, db, uint(1))
 
 	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+}
+
+func getPruningStrategy(logger log.Logger) func(*baseApp.BaseApp) {
+	pruningStrategy := viper.GetString("pruning")
+	logger.Info(fmt.Sprintf("Pruning strategy: %s", pruningStrategy))
+
+	switch pruningStrategy {
+	case pruningStrategySyncable:
+		return baseApp.SetPruning(types.PruneSyncable)
+	case pruningStrategyNothing:
+		return baseApp.SetPruning(types.PruneNothing)
+	case pruningStrategyEverything:
+		return baseApp.SetPruning(types.PruneEverything)
+	default:
+		panic(fmt.Sprintf("Invalid pruning strategy: %s", pruningStrategy))
+	}
 }
