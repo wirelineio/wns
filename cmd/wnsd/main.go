@@ -92,7 +92,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 	opts = append(opts, getPruningStrategyOption(logger))
 	opts = append(opts, getHaltHeightOption(logger))
 
-	return app.NewNameServiceApp(logger, db, invCheckPeriod, opts...)
+	return app.NewNameServiceApp(logger, db, invCheckPeriod, true, opts...)
 }
 
 func exportAppStateAndTMValidators(
@@ -100,7 +100,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		nsApp := app.NewNameServiceApp(logger, db, uint(1))
+		nsApp := app.NewNameServiceApp(logger, db, uint(1), false)
 		err := nsApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
@@ -108,7 +108,7 @@ func exportAppStateAndTMValidators(
 		return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	nsApp := app.NewNameServiceApp(logger, db, uint(1))
+	nsApp := app.NewNameServiceApp(logger, db, uint(1), true)
 
 	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
