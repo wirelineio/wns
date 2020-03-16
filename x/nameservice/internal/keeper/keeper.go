@@ -6,6 +6,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/binary"
 	"strings"
 	"time"
 
@@ -26,12 +27,11 @@ var PrefixCIDToRecordIndex = []byte{0x00}
 // PrefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index.
 var PrefixWRNToNameRecordIndex = []byte{0x01}
 
-// PrefixBaseWRNToNameRecordIndex is the prefix for the Base WRN -> NamingRecord index.
-// Note: BaseWRL => WRN minus `version`, i.e. latest version.
-var PrefixBaseWRNToNameRecordIndex = []byte{0x02}
-
 // PrefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
 var PrefixBondIDToRecordsIndex = []byte{0x03}
+
+// PrefixBlockChangesetIndex is the prefix for the block changeset index.
+var PrefixBlockChangesetIndex = []byte{0x04}
 
 // PrefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
 var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
@@ -76,7 +76,8 @@ func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
 // PutRecord - saves a record to the store and updates ID -> Record index.
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(append(PrefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	store.Set(getRecordIndexKey(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	k.updateBlockChangesetForRecord(ctx, record.ID)
 }
 
 // Generates Bond ID -> Bond index key.
@@ -105,6 +106,7 @@ func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id
 func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(append(PrefixWRNToNameRecordIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
+	k.updateBlockChangesetForName(ctx, wrn)
 }
 
 // HasRecord - checks if a record by the given ID exists.
@@ -476,6 +478,53 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	record.Deleted = false
 	k.PutRecord(ctx, record)
 	k.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
+}
+
+func int64ToBytes(num int64) []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.BigEndian, num)
+	return buf.Bytes()
+}
+
+func getBlockChangesetIndexKey(height int64) []byte {
+	return append(PrefixBlockChangesetIndex, int64ToBytes(height)...)
+}
+
+func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.BlockChangeset {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(getBlockChangesetIndexKey(height))
+
+	if bz != nil {
+		var changeset types.BlockChangeset
+		k.cdc.MustUnmarshalBinaryBare(bz, &changeset)
+
+		return &changeset
+	}
+
+	return &types.BlockChangeset{
+		Height:  height,
+		Records: []types.ID{},
+		Names:   []string{},
+	}
+}
+
+// SetRecordExpiryQueueTimeSlice sets a specific record expiry queue timeslice.
+func (k Keeper) saveBlockChangeset(ctx sdk.Context, changeset *types.BlockChangeset) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryBare(*changeset)
+	store.Set(getBlockChangesetIndexKey(changeset.Height), bz)
+}
+
+func (k Keeper) updateBlockChangesetForRecord(ctx sdk.Context, id types.ID) {
+	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
+	changeset.Records = append(changeset.Records, id)
+	k.saveBlockChangeset(ctx, changeset)
+}
+
+func (k Keeper) updateBlockChangesetForName(ctx sdk.Context, wrn string) {
+	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
+	changeset.Names = append(changeset.Names, wrn)
+	k.saveBlockChangeset(ctx, changeset)
 }
 
 // ClearRecords - Deletes all records and indexes.
