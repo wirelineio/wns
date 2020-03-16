@@ -29,6 +29,9 @@ import (
 	app "github.com/wirelineio/wns"
 )
 
+const pruningStrategyFlag = "pruning"
+const haltHeightFlag = "halt-height"
+
 const pruningStrategySyncable = "syncable"
 const pruningStrategyNothing = "nothing"
 const pruningStrategyEverything = "everything"
@@ -86,7 +89,8 @@ func main() {
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
 	opts := []func(*baseApp.BaseApp){}
-	opts = append(opts, getPruningStrategy(logger))
+	opts = append(opts, getPruningStrategyOption(logger))
+	opts = append(opts, getHaltHeightOption(logger))
 
 	return app.NewNameServiceApp(logger, db, invCheckPeriod, opts...)
 }
@@ -109,8 +113,8 @@ func exportAppStateAndTMValidators(
 	return nsApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
 
-func getPruningStrategy(logger log.Logger) func(*baseApp.BaseApp) {
-	pruningStrategy := viper.GetString("pruning")
+func getPruningStrategyOption(logger log.Logger) func(*baseApp.BaseApp) {
+	pruningStrategy := viper.GetString(pruningStrategyFlag)
 	logger.Info(fmt.Sprintf("Pruning strategy: %s", pruningStrategy))
 
 	switch pruningStrategy {
@@ -123,4 +127,11 @@ func getPruningStrategy(logger log.Logger) func(*baseApp.BaseApp) {
 	default:
 		panic(fmt.Sprintf("Invalid pruning strategy: %s", pruningStrategy))
 	}
+}
+
+func getHaltHeightOption(logger log.Logger) func(*baseApp.BaseApp) {
+	haltHeight := viper.GetInt64(haltHeightFlag)
+	logger.Info(fmt.Sprintf("Halt height: %d", haltHeight))
+
+	return baseApp.SetHaltHeight(uint64(haltHeight))
 }
