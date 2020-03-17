@@ -220,7 +220,7 @@ type NameRecord struct {
 
 // BlockChangeset is a changeset corresponding to a block.
 type BlockChangeset struct {
-	Height  int64
+	Height  int64    `json:"height"`
 	Records []ID     `json:"records"`
 	Names   []string `json:"names"`
 }

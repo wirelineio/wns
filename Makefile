@@ -18,6 +18,7 @@ all: lint install
 install: go.sum
 		go install -mod=readonly $(BUILD_FLAGS) ./cmd/wnsd
 		go install -mod=readonly $(BUILD_FLAGS) ./cmd/wnscli
+		go install -mod=readonly $(BUILD_FLAGS) ./cmd/wnsd-lite
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
