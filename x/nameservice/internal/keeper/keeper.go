@@ -76,13 +76,18 @@ func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
 // PutRecord - saves a record to the store and updates ID -> Record index.
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(getRecordIndexKey(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	store.Set(GetRecordIndexKey(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
 	k.updateBlockChangesetForRecord(ctx, record.ID)
 }
 
 // Generates Bond ID -> Bond index key.
-func getRecordIndexKey(id types.ID) []byte {
+func GetRecordIndexKey(id types.ID) []byte {
 	return append(PrefixCIDToRecordIndex, []byte(id)...)
+}
+
+// Generates WRN -> NameRecord index key.
+func GetNameRecordIndexKey(wrn string) []byte {
+	return append(PrefixWRNToNameRecordIndex, []byte(wrn)...)
 }
 
 // Generates Bond ID -> Records index key.
@@ -105,27 +110,27 @@ func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id
 // SetNameRecord - sets a name record.
 func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(append(PrefixWRNToNameRecordIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
+	store.Set(GetNameRecordIndexKey(wrn), k.cdc.MustMarshalBinaryBare(nameRecord))
 	k.updateBlockChangesetForName(ctx, wrn)
 }
 
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(getRecordIndexKey(id))
+	return store.Has(GetRecordIndexKey(id))
 }
 
 // HasNameRecord - checks if a name record exists.
 func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(append(PrefixWRNToNameRecordIndex, []byte(wrn)...))
+	return store.Has(GetNameRecordIndexKey(wrn))
 }
 
 // GetRecord - gets a record from the store.
 func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(getRecordIndexKey(id))
+	bz := store.Get(GetRecordIndexKey(id))
 	var obj types.RecordObj
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
@@ -136,7 +141,7 @@ func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) types.NameRecord {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(append(PrefixWRNToNameRecordIndex, []byte(wrn)...))
+	bz := store.Get(GetNameRecordIndexKey(wrn))
 	var obj types.NameRecord
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
@@ -200,7 +205,7 @@ func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
 // Note: Version part of the WRN MUST NOT have a semver range.
 func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
 	store := ctx.KVStore(k.storeKey)
-	nameKey := append(PrefixWRNToNameRecordIndex, []byte(wrn)...)
+	nameKey := GetNameRecordIndexKey(wrn)
 
 	if store.Has(nameKey) {
 		bz := store.Get(nameKey)
@@ -224,7 +229,7 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 
 	store := ctx.KVStore(k.storeKey)
 
-	baseNameKey := append(PrefixWRNToNameRecordIndex, []byte(baseWRN)...)
+	baseNameKey := GetNameRecordIndexKey(baseWRN)
 	if !store.Has(baseNameKey) {
 		return nil
 	}
@@ -232,8 +237,7 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 	var highestSemver, _ = semver.NewVersion("0.0.0")
 	var highestNameRecord types.NameRecord = types.NameRecord{}
 
-	baseWRNPrefix := append(PrefixWRNToNameRecordIndex, []byte(baseWRN)...)
-	itr := sdk.KVStorePrefixIterator(store, baseWRNPrefix)
+	itr := sdk.KVStorePrefixIterator(store, baseNameKey)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -486,13 +490,13 @@ func int64ToBytes(num int64) []byte {
 	return buf.Bytes()
 }
 
-func getBlockChangesetIndexKey(height int64) []byte {
+func GetBlockChangesetIndexKey(height int64) []byte {
 	return append(PrefixBlockChangesetIndex, int64ToBytes(height)...)
 }
 
 func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.BlockChangeset {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(getBlockChangesetIndexKey(height))
+	bz := store.Get(GetBlockChangesetIndexKey(height))
 
 	if bz != nil {
 		var changeset types.BlockChangeset
@@ -512,7 +516,7 @@ func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.
 func (k Keeper) saveBlockChangeset(ctx sdk.Context, changeset *types.BlockChangeset) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(*changeset)
-	store.Set(getBlockChangesetIndexKey(changeset.Height), bz)
+	store.Set(GetBlockChangesetIndexKey(changeset.Height), bz)
 }
 
 func (k Keeper) updateBlockChangesetForRecord(ctx sdk.Context, id types.ID) {
