@@ -14,11 +14,21 @@ import (
 	nameservice "github.com/wirelineio/wns/x/nameservice"
 )
 
+// AggressiveSyncIntervalInMillis is the interval for aggressive sync, to catch up quickly to the current height.
+const AggressiveSyncIntervalInMillis = 250
+
+// SyncIntervalInMillis is the interval for initiating incremental sync, when already caught up to current height.
+const SyncIntervalInMillis = 5 * 1000
+
+// ErrorWaitDurationMillis is the wait duration in case of errors.
+const ErrorWaitDurationMillis = 5 * 1000
+
 // Config represents config for sync functionality.
 type Config struct {
-	NodeAddress string
-	Client      *rpcclient.HTTP
-	Codec       *amino.Codec
+	NodeAddress      string
+	Client           *rpcclient.HTTP
+	Codec            *amino.Codec
+	LastSyncedHeight int64
 }
 
 // GetCurrentHeight gets the current WNS block height.
@@ -31,9 +41,54 @@ func GetCurrentHeight(config *Config) (int64, error) {
 	return status.SyncInfo.LatestBlockHeight, nil
 }
 
-// Synchronize runs a sync cycle.
-func Synchronize(config *Config, height int64, syncTime time.Time) error {
-	fmt.Println("Syncing at height", height, "time", syncTime.UTC())
+// Start initiates the sync process.
+func Start(config *Config) {
+	lastSyncedHeight := config.LastSyncedHeight
+
+	for {
+		chainCurrentHeight, err := GetCurrentHeight(config)
+		if err != nil {
+			logErrorAndWait(err)
+			continue
+		}
+
+		if lastSyncedHeight > chainCurrentHeight {
+			panic("Last synced height cannot be greater than current chain height")
+		}
+
+		err = syncAtHeight(config, lastSyncedHeight)
+		if err != nil {
+			logErrorAndWait(err)
+			continue
+		}
+
+		// TODO(ashwin): Saved last synced height in db.
+		lastSyncedHeight = lastSyncedHeight + 1
+
+		waitAfterSync(chainCurrentHeight, lastSyncedHeight)
+	}
+}
+
+func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
+	if chainCurrentHeight == lastSyncedHeight {
+		// Caught up to current chain height, don't have to poll aggressively now.
+		time.Sleep(SyncIntervalInMillis * time.Millisecond)
+	} else {
+		// Still catching up to current height, poll more aggressively.
+		time.Sleep(AggressiveSyncIntervalInMillis * time.Millisecond)
+	}
+}
+
+func logErrorAndWait(err error) {
+	fmt.Println("Error", err)
+
+	// TODO(ashwin): Exponential backoff logic.
+	time.Sleep(ErrorWaitDurationMillis & time.Millisecond)
+}
+
+// syncAtHeight runs a sync cycle for the given height.
+func syncAtHeight(config *Config, height int64) error {
+	fmt.Println("Syncing at height", height, time.Now().UTC())
 
 	cdc := config.Codec
 
