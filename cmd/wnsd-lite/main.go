@@ -22,6 +22,8 @@ func main() {
 		Short: "WNS Lite",
 	}
 
+	rootCmd.PersistentFlags().String("chain-id", "wireline", "Chain identifier")
+
 	rootCmd.AddCommand(versionCmd, initCmd, startCmd)
 
 	executor := cli.PrepareBaseCmd(rootCmd, "NSL", DefaultLightNodeHome)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tendermint/go-amino"
+	tmlite "github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	nameservice "github.com/wirelineio/wns/x/nameservice"
 )
@@ -26,12 +27,15 @@ const ErrorWaitDurationMillis = 5 * 1000
 // Config represents config for sync functionality.
 type Config struct {
 	NodeAddress string
+	ChainID     string
+	Home        string
 }
 
 // Context contains sync context info.
 type Context struct {
 	Config           *Config
 	Client           *rpcclient.HTTP
+	Verifier         tmlite.Verifier
 	Codec            *amino.Codec
 	LastSyncedHeight int64
 }
@@ -147,12 +151,27 @@ func getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
 		Prove:  true,
 	}
 
-	res, err := ctx.Client.ABCIQueryWithOptions("/store/nameservice/key", key, opts)
+	path := "/store/nameservice/key"
+	res, err := ctx.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO(ashwin): Verify proof.
+	if res.Response.Height == 0 && res.Response.Value != nil {
+		panic("Invalid response height/value.")
+	}
+
+	if res.Response.Height > 0 && res.Response.Height != height {
+		panic(fmt.Sprintf("Invalid response height: %d", res.Response.Height))
+	}
+
+	if res.Response.Height > 0 {
+		// Note: Fails with `panic: runtime error: invalid memory address or nil pointer dereference` if called with empty response.
+		err = VerifyProof(ctx, path, res.Response)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return res.Response.Value, nil
 }
