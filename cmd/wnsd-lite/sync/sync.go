@@ -5,10 +5,10 @@
 package sync
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/tendermint/go-amino"
 	tmlite "github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
@@ -34,14 +34,15 @@ type Config struct {
 // Context contains sync context info.
 type Context struct {
 	Config           *Config
+	Codec            *amino.Codec
 	Client           *rpcclient.HTTP
 	Verifier         tmlite.Verifier
-	Codec            *amino.Codec
+	Store            *cachekv.Store
 	LastSyncedHeight int64
 }
 
 // GetCurrentHeight gets the current WNS block height.
-func GetCurrentHeight(ctx *Context) (int64, error) {
+func (ctx *Context) GetCurrentHeight() (int64, error) {
 	status, err := ctx.Client.Status()
 	if err != nil {
 		return 0, err
@@ -55,7 +56,7 @@ func Start(ctx *Context) {
 	lastSyncedHeight := ctx.LastSyncedHeight
 
 	for {
-		chainCurrentHeight, err := GetCurrentHeight(ctx)
+		chainCurrentHeight, err := ctx.GetCurrentHeight()
 		if err != nil {
 			logErrorAndWait(err)
 			continue
@@ -65,7 +66,7 @@ func Start(ctx *Context) {
 			panic("Last synced height cannot be greater than current chain height")
 		}
 
-		err = syncAtHeight(ctx, lastSyncedHeight)
+		err = ctx.syncAtHeight(lastSyncedHeight)
 		if err != nil {
 			logErrorAndWait(err)
 			continue
@@ -78,74 +79,79 @@ func Start(ctx *Context) {
 	}
 }
 
-func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
-	if chainCurrentHeight == lastSyncedHeight {
-		// Caught up to current chain height, don't have to poll aggressively now.
-		time.Sleep(SyncIntervalInMillis * time.Millisecond)
-	} else {
-		// Still catching up to current height, poll more aggressively.
-		time.Sleep(AggressiveSyncIntervalInMillis * time.Millisecond)
-	}
-}
-
-func logErrorAndWait(err error) {
-	fmt.Println("Error", err)
-
-	// TODO(ashwin): Exponential backoff logic.
-	time.Sleep(ErrorWaitDurationMillis * time.Millisecond)
-}
-
 // syncAtHeight runs a sync cycle for the given height.
-func syncAtHeight(ctx *Context, height int64) error {
+func (ctx *Context) syncAtHeight(height int64) error {
 	fmt.Println("Syncing at height", height, time.Now().UTC())
 
-	cdc := ctx.Codec
-
-	value, err := getStoreValue(ctx, nameservice.GetBlockChangesetIndexKey(height), height)
+	changeset, err := ctx.getBlockChangeset(height)
 	if err != nil {
 		return err
 	}
-
-	var changeset nameservice.BlockChangeset
-	cdc.MustUnmarshalBinaryBare(value, &changeset)
 
 	if changeset.Height <= 0 {
 		// No changeset for this block, ignore.
 		return nil
 	}
 
-	fmt.Println(string(cdc.MustMarshalJSON(changeset)))
-
-	for _, id := range changeset.Records {
-		value, err := getStoreValue(ctx, nameservice.GetRecordIndexKey(id), height)
-		if err != nil {
-			return err
-		}
-
-		var record nameservice.RecordObj
-		cdc.MustUnmarshalBinaryBare(value, &record)
-
-		jsonBytes, _ := json.MarshalIndent(record.ToRecord(), "", "  ")
-		fmt.Println(string(jsonBytes))
+	// Sync records.
+	err = ctx.syncRecords(height, changeset.Records)
+	if err != nil {
+		return err
 	}
 
-	for _, name := range changeset.Names {
-		value, err := getStoreValue(ctx, nameservice.GetNameRecordIndexKey(name), height)
+	// Sync name records.
+	err = ctx.syncNameRecords(height, changeset.Names)
+	if err != nil {
+		return err
+	}
+
+	// Flush cache changes to underlying store.
+	ctx.Store.Write()
+
+	return nil
+}
+
+func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset, error) {
+	value, err := ctx.getStoreValue(nameservice.GetBlockChangesetIndexKey(height), height)
+	if err != nil {
+		return nil, err
+	}
+
+	var changeset nameservice.BlockChangeset
+	ctx.Codec.MustUnmarshalBinaryBare(value, &changeset)
+
+	return &changeset, nil
+}
+
+func (ctx *Context) syncRecords(height int64, records []nameservice.ID) error {
+	for _, id := range records {
+		recordKey := nameservice.GetRecordIndexKey(id)
+		value, err := ctx.getStoreValue(recordKey, height)
 		if err != nil {
 			return err
 		}
 
-		var nameRecord nameservice.NameRecord
-		cdc.MustUnmarshalBinaryBare(value, &nameRecord)
-
-		jsonBytes, _ := json.MarshalIndent(nameRecord, "", "  ")
-		fmt.Println(name, string(jsonBytes))
+		ctx.Store.Set(recordKey, value)
 	}
 
 	return nil
 }
 
-func getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
+func (ctx *Context) syncNameRecords(height int64, names []string) error {
+	for _, name := range names {
+		nameRecordKey := nameservice.GetNameRecordIndexKey(name)
+		value, err := ctx.getStoreValue(nameRecordKey, height)
+		if err != nil {
+			return err
+		}
+
+		ctx.Store.Set(nameRecordKey, value)
+	}
+
+	return nil
+}
+
+func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
 		Prove:  true,
@@ -174,4 +180,21 @@ func getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
 	}
 
 	return res.Response.Value, nil
+}
+
+func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
+	if chainCurrentHeight == lastSyncedHeight {
+		// Caught up to current chain height, don't have to poll aggressively now.
+		time.Sleep(SyncIntervalInMillis * time.Millisecond)
+	} else {
+		// Still catching up to current height, poll more aggressively.
+		time.Sleep(AggressiveSyncIntervalInMillis * time.Millisecond)
+	}
+}
+
+func logErrorAndWait(err error) {
+	fmt.Println("Error", err)
+
+	// TODO(ashwin): Exponential backoff logic.
+	time.Sleep(ErrorWaitDurationMillis * time.Millisecond)
 }
