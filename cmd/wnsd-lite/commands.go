@@ -7,8 +7,11 @@ package main
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/cachekv"
+	"github.com/cosmos/cosmos-sdk/store/dbadapter"
 	"github.com/spf13/cobra"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	dbm "github.com/tendermint/tm-db"
 	app "github.com/wirelineio/wns"
 	sync "github.com/wirelineio/wns/cmd/wnsd-lite/sync"
 )
@@ -47,12 +50,17 @@ var startCmd = &cobra.Command{
 			Home:        home,
 		}
 
+		// TODO(ashwin): Switch from in-mem store to persistent leveldb store.
+		mem := dbadapter.Store{DB: dbm.NewMemDB()}
+		store := cachekv.NewStore(mem)
+
 		ctx := sync.Context{
 			Config:           &config,
 			LastSyncedHeight: height,
 			Client:           rpcclient.NewHTTP(nodeAddress, "/websocket"),
 			Verifier:         sync.CreateVerifier(&config),
 			Codec:            app.MakeCodec(),
+			Store:            store,
 		}
 
 		sync.Start(&ctx)
