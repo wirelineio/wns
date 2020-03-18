@@ -21,8 +21,18 @@ type Config struct {
 	Codec       *amino.Codec
 }
 
+// GetCurrentHeight gets the current WNS block height.
+func GetCurrentHeight(config *Config) (int64, error) {
+	status, err := config.Client.Status()
+	if err != nil {
+		return 0, err
+	}
+
+	return status.SyncInfo.LatestBlockHeight, nil
+}
+
 // Synchronize runs a sync cycle.
-func Synchronize(config Config, height int64, syncTime time.Time) error {
+func Synchronize(config *Config, height int64, syncTime time.Time) error {
 	fmt.Println("Syncing at height", height, "time", syncTime.UTC())
 
 	cdc := config.Codec
