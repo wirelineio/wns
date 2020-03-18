@@ -83,7 +83,7 @@ func logErrorAndWait(err error) {
 	fmt.Println("Error", err)
 
 	// TODO(ashwin): Exponential backoff logic.
-	time.Sleep(ErrorWaitDurationMillis & time.Millisecond)
+	time.Sleep(ErrorWaitDurationMillis * time.Millisecond)
 }
 
 // syncAtHeight runs a sync cycle for the given height.
@@ -92,57 +92,62 @@ func syncAtHeight(config *Config, height int64) error {
 
 	cdc := config.Codec
 
+	value, err := getStoreValue(config, nameservice.GetBlockChangesetIndexKey(height), height)
+	if err != nil {
+		return err
+	}
+
+	var changeset nameservice.BlockChangeset
+	cdc.MustUnmarshalBinaryBare(value, &changeset)
+
+	if changeset.Height <= 0 {
+		// No changeset for this block, ignore.
+		return nil
+	}
+
+	fmt.Println(string(cdc.MustMarshalJSON(changeset)))
+
+	for _, id := range changeset.Records {
+		value, err := getStoreValue(config, nameservice.GetRecordIndexKey(id), height)
+		if err != nil {
+			return err
+		}
+
+		var record nameservice.RecordObj
+		cdc.MustUnmarshalBinaryBare(value, &record)
+
+		jsonBytes, _ := json.MarshalIndent(record.ToRecord(), "", "  ")
+		fmt.Println(string(jsonBytes))
+	}
+
+	for _, name := range changeset.Names {
+		value, err := getStoreValue(config, nameservice.GetNameRecordIndexKey(name), height)
+		if err != nil {
+			return err
+		}
+
+		var nameRecord nameservice.NameRecord
+		cdc.MustUnmarshalBinaryBare(value, &nameRecord)
+
+		jsonBytes, _ := json.MarshalIndent(nameRecord, "", "  ")
+		fmt.Println(name, string(jsonBytes))
+	}
+
+	return nil
+}
+
+func getStoreValue(config *Config, key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
 		Prove:  true,
 	}
 
-	blockHeightKey := nameservice.GetBlockChangesetIndexKey(height)
-	res, err := config.Client.ABCIQueryWithOptions("/store/nameservice/key", blockHeightKey, opts)
+	res, err := config.Client.ABCIQueryWithOptions("/store/nameservice/key", key, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// TODO(ashwin): Verify proof.
 
-	var changeset nameservice.BlockChangeset
-	cdc.MustUnmarshalBinaryBare(res.Response.Value, &changeset)
-
-	if changeset.Height > 0 {
-		fmt.Println(string(cdc.MustMarshalJSON(changeset)))
-
-		for _, id := range changeset.Records {
-			recordKey := nameservice.GetRecordIndexKey(id)
-			res, err := config.Client.ABCIQueryWithOptions("/store/nameservice/key", recordKey, opts)
-			if err != nil {
-				return err
-			}
-
-			// TODO(ashwin): Verify proof.
-
-			var record nameservice.RecordObj
-			cdc.MustUnmarshalBinaryBare(res.Response.Value, &record)
-
-			jsonBytes, _ := json.MarshalIndent(record.ToRecord(), "", "  ")
-			fmt.Println(string(jsonBytes))
-		}
-
-		for _, name := range changeset.Names {
-			nameRecordKey := nameservice.GetNameRecordIndexKey(name)
-			res, err := config.Client.ABCIQueryWithOptions("/store/nameservice/key", nameRecordKey, opts)
-			if err != nil {
-				return err
-			}
-
-			// TODO(ashwin): Verify proof.
-
-			var nameRecord nameservice.NameRecord
-			cdc.MustUnmarshalBinaryBare(res.Response.Value, &nameRecord)
-
-			jsonBytes, _ := json.MarshalIndent(nameRecord, "", "  ")
-			fmt.Println(name, string(jsonBytes))
-		}
-	}
-
-	return nil
+	return res.Response.Value, nil
 }
