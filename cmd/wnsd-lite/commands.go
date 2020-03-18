@@ -16,12 +16,6 @@ import (
 // Version => WNS Lite node version.
 const Version = "0.1.0"
 
-// nodeAddress is the Tendermint RPC address of the upstream WNS node.
-var nodeAddress string
-
-// height to start sync at. To start at the last saved height, use -1 (the default).
-var height int64
-
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the node version",
@@ -42,14 +36,22 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the WNS lite node",
 	Run: func(cmd *cobra.Command, args []string) {
+		nodeAddress, _ := cmd.Flags().GetString("node")
+		height, _ := cmd.Flags().GetInt64("height")
+		chainID, _ := cmd.Flags().GetString("chain-id")
+		home, _ := cmd.Flags().GetString("home")
+
 		config := sync.Config{
 			NodeAddress: nodeAddress,
+			ChainID:     chainID,
+			Home:        home,
 		}
 
 		ctx := sync.Context{
 			Config:           &config,
 			LastSyncedHeight: height,
 			Client:           rpcclient.NewHTTP(nodeAddress, "/websocket"),
+			Verifier:         sync.CreateVerifier(&config),
 			Codec:            app.MakeCodec(),
 		}
 
@@ -58,8 +60,8 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
-	startCmd.Flags().StringVarP(&nodeAddress, "node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
+	startCmd.Flags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
 
 	// TODO(ashwin): Remove this flag after we start saving height in db.
-	startCmd.Flags().Int64Var(&height, "height", 1, "Height to start synchronizing at")
+	startCmd.Flags().Int64("height", 1, "Height to start synchronizing at")
 }
