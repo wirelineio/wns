@@ -54,7 +54,7 @@ var startCmd = &cobra.Command{
 
 		ticker := time.NewTicker(SyncIntervalInSeconds * time.Second)
 		for now := range ticker.C {
-			err := sync.Synchronize(config, height, now)
+			err := sync.Synchronize(&config, height, now)
 			if err != nil {
 				fmt.Println("Error", err)
 
