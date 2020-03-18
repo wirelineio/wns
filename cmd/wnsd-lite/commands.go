@@ -43,13 +43,17 @@ var startCmd = &cobra.Command{
 	Short: "Start the WNS lite node",
 	Run: func(cmd *cobra.Command, args []string) {
 		config := sync.Config{
-			NodeAddress:      nodeAddress,
+			NodeAddress: nodeAddress,
+		}
+
+		ctx := sync.Context{
+			Config:           &config,
 			LastSyncedHeight: height,
 			Client:           rpcclient.NewHTTP(nodeAddress, "/websocket"),
 			Codec:            app.MakeCodec(),
 		}
 
-		sync.Start(&config)
+		sync.Start(&ctx)
 	},
 }
 

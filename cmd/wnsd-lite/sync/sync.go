@@ -25,15 +25,20 @@ const ErrorWaitDurationMillis = 5 * 1000
 
 // Config represents config for sync functionality.
 type Config struct {
-	NodeAddress      string
+	NodeAddress string
+}
+
+// Context contains sync context info.
+type Context struct {
+	Config           *Config
 	Client           *rpcclient.HTTP
 	Codec            *amino.Codec
 	LastSyncedHeight int64
 }
 
 // GetCurrentHeight gets the current WNS block height.
-func GetCurrentHeight(config *Config) (int64, error) {
-	status, err := config.Client.Status()
+func GetCurrentHeight(ctx *Context) (int64, error) {
+	status, err := ctx.Client.Status()
 	if err != nil {
 		return 0, err
 	}
@@ -42,11 +47,11 @@ func GetCurrentHeight(config *Config) (int64, error) {
 }
 
 // Start initiates the sync process.
-func Start(config *Config) {
-	lastSyncedHeight := config.LastSyncedHeight
+func Start(ctx *Context) {
+	lastSyncedHeight := ctx.LastSyncedHeight
 
 	for {
-		chainCurrentHeight, err := GetCurrentHeight(config)
+		chainCurrentHeight, err := GetCurrentHeight(ctx)
 		if err != nil {
 			logErrorAndWait(err)
 			continue
@@ -56,7 +61,7 @@ func Start(config *Config) {
 			panic("Last synced height cannot be greater than current chain height")
 		}
 
-		err = syncAtHeight(config, lastSyncedHeight)
+		err = syncAtHeight(ctx, lastSyncedHeight)
 		if err != nil {
 			logErrorAndWait(err)
 			continue
@@ -87,12 +92,12 @@ func logErrorAndWait(err error) {
 }
 
 // syncAtHeight runs a sync cycle for the given height.
-func syncAtHeight(config *Config, height int64) error {
+func syncAtHeight(ctx *Context, height int64) error {
 	fmt.Println("Syncing at height", height, time.Now().UTC())
 
-	cdc := config.Codec
+	cdc := ctx.Codec
 
-	value, err := getStoreValue(config, nameservice.GetBlockChangesetIndexKey(height), height)
+	value, err := getStoreValue(ctx, nameservice.GetBlockChangesetIndexKey(height), height)
 	if err != nil {
 		return err
 	}
@@ -108,7 +113,7 @@ func syncAtHeight(config *Config, height int64) error {
 	fmt.Println(string(cdc.MustMarshalJSON(changeset)))
 
 	for _, id := range changeset.Records {
-		value, err := getStoreValue(config, nameservice.GetRecordIndexKey(id), height)
+		value, err := getStoreValue(ctx, nameservice.GetRecordIndexKey(id), height)
 		if err != nil {
 			return err
 		}
@@ -121,7 +126,7 @@ func syncAtHeight(config *Config, height int64) error {
 	}
 
 	for _, name := range changeset.Names {
-		value, err := getStoreValue(config, nameservice.GetNameRecordIndexKey(name), height)
+		value, err := getStoreValue(ctx, nameservice.GetNameRecordIndexKey(name), height)
 		if err != nil {
 			return err
 		}
@@ -136,13 +141,13 @@ func syncAtHeight(config *Config, height int64) error {
 	return nil
 }
 
-func getStoreValue(config *Config, key []byte, height int64) ([]byte, error) {
+func getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
 		Prove:  true,
 	}
 
-	res, err := config.Client.ABCIQueryWithOptions("/store/nameservice/key", key, opts)
+	res, err := ctx.Client.ABCIQueryWithOptions("/store/nameservice/key", key, opts)
 	if err != nil {
 		return nil, err
 	}
