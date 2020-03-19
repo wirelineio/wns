@@ -10,6 +10,9 @@ import (
 	"strconv"
 )
 
+// BigUInt represents a 64-bit unsigned integer.
+type BigUInt uint64
+
 type accountResolver struct{ *Resolver }
 
 type coinResolver struct{ *Resolver }

@@ -13,6 +13,7 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	dbm "github.com/tendermint/tm-db"
 	app "github.com/wirelineio/wns"
+	"github.com/wirelineio/wns/cmd/wnsd-lite/gql"
 	sync "github.com/wirelineio/wns/cmd/wnsd-lite/sync"
 )
 
@@ -63,6 +64,8 @@ var startCmd = &cobra.Command{
 			Store:            store,
 		}
 
+		go gql.Server(&ctx)
+
 		sync.Start(&ctx)
 	},
 }
@@ -72,4 +75,9 @@ func init() {
 
 	// TODO(ashwin): Remove this flag after we start saving height in db.
 	startCmd.Flags().Int64("height", 1, "Height to start synchronizing at")
+
+	// Add flags for GQL server.
+	startCmd.Flags().Bool("gql-server", false, "Start GQL server.")
+	startCmd.Flags().Bool("gql-playground", false, "Enable GQL playground.")
+	startCmd.Flags().String("gql-port", "9473", "Port to use for the GQL server.")
 }
