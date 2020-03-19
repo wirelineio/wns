@@ -40,26 +40,11 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*b
 
 // QueryRecords filters records by K=V conditions.
 func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.KeyValueInput) ([]*baseGql.Record, error) {
-	gqlResponse := []*baseGql.Record{}
-
 	var records = r.Keeper.MatchRecords(func(record *nameservice.Record) bool {
 		return baseGql.MatchOnAttributes(record, attributes)
 	})
 
-	if baseGql.RequestedLatestVersionsOnly(attributes) {
-		records = baseGql.GetLatestVersions(records)
-	}
-
-	for _, record := range records {
-		gqlRecord, err := baseGql.GetGQLRecord(ctx, r, record)
-		if err != nil {
-			return nil, err
-		}
-
-		gqlResponse = append(gqlResponse, gqlRecord)
-	}
-
-	return gqlResponse, nil
+	return baseGql.QueryRecords(ctx, r, records, attributes)
 }
 
 // ResolveRecords resolves records by ref/WRN, with semver range support.
