@@ -14,36 +14,44 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/rs/cors"
+
+	baseGql "github.com/wirelineio/wns/gql"
 )
 
 const defaultPort = "9473"
 
 // Server configures and starts the GQL server.
 func Server(ctx *sync.Context) {
-	if viper.GetBool("gql-server") {
-		port := viper.GetString("gql-port")
-		if port == "" {
-			port = defaultPort
-		}
+	if !viper.GetBool("gql-server") {
+		return
+	}
 
-		router := chi.NewRouter()
+	port := viper.GetString("gql-port")
+	if port == "" {
+		port = defaultPort
+	}
 
-		// Add CORS middleware around every request
-		// See https://github.com/rs/cors for full option listing
-		router.Use(cors.New(cors.Options{
-			AllowedOrigins: []string{"*"},
-			Debug:          true,
-		}).Handler)
+	router := chi.NewRouter()
 
-		if viper.GetBool("gql-playground") {
-			router.Handle("/console", handler.Playground("WNS Lite", "/graphql"))
-		}
+	// Add CORS middleware around every request
+	// See https://github.com/rs/cors for full option listing
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		Debug:          true,
+	}).Handler)
 
-		router.Handle("/graphql", handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{}})))
+	router.Handle("/graphql", handler.GraphQL(baseGql.NewExecutableSchema(baseGql.Config{Resolvers: &Resolver{
+		Keeper: &sync.Keeper{
+			Context: ctx,
+		},
+	}})))
 
-		err := http.ListenAndServe(":"+port, router)
-		if err != nil {
-			panic(err)
-		}
+	if viper.GetBool("gql-playground") {
+		router.Handle("/console", handler.Playground("WNS Lite", "/graphql"))
+	}
+
+	err := http.ListenAndServe(":"+port, router)
+	if err != nil {
+		panic(err)
 	}
 }

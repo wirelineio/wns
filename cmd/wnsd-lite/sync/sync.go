@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
+	"github.com/cosmos/cosmos-sdk/store/dbadapter"
 	"github.com/tendermint/go-amino"
 	tmlite "github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
@@ -37,6 +38,7 @@ type Context struct {
 	Codec            *amino.Codec
 	Client           *rpcclient.HTTP
 	Verifier         tmlite.Verifier
+	DBStore          *dbadapter.Store
 	Store            *cachekv.Store
 	LastSyncedHeight int64
 }
