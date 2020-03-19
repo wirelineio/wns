@@ -61,6 +61,7 @@ var startCmd = &cobra.Command{
 			Client:           rpcclient.NewHTTP(nodeAddress, "/websocket"),
 			Verifier:         sync.CreateVerifier(&config),
 			Codec:            app.MakeCodec(),
+			DBStore:          &mem,
 			Store:            store,
 		}
 

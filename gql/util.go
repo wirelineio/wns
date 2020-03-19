@@ -35,7 +35,7 @@ const BondIDAttributeName = "bondId"
 // ExpiryTimeAttributeName denotes the record expiry time.
 const ExpiryTimeAttributeName = "expiryTime"
 
-func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameservice.Record) (*Record, error) {
+func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservice.Record) (*Record, error) {
 	// Nil record.
 	if record == nil || record.Deleted {
 		return nil, nil
@@ -71,7 +71,7 @@ func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameserv
 	}, nil
 }
 
-func getReferences(ctx context.Context, resolver *queryResolver, r *nameservice.Record) ([]*Record, error) {
+func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.Record) ([]*Record, error) {
 	var ids []string
 
 	for _, value := range r.Attributes {

@@ -6,20 +6,26 @@ package gql
 
 import (
 	"context"
+
+	"github.com/wirelineio/wns/cmd/wnsd-lite/sync"
+	baseGql "github.com/wirelineio/wns/gql"
+	"github.com/wirelineio/wns/x/nameservice"
 )
 
 // Resolver is the GQL query resolver.
-type Resolver struct{}
+type Resolver struct {
+	Keeper *sync.Keeper
+}
 
 type queryResolver struct{ *Resolver }
 
 // Query is the entry point to query execution.
-func (r *Resolver) Query() QueryResolver {
+func (r *Resolver) Query() baseGql.QueryResolver {
 	return &queryResolver{r}
 }
 
-func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*Record, error) {
-	records := make([]*Record, len(ids))
+func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*baseGql.Record, error) {
+	records := make([]*baseGql.Record, len(ids))
 	for index, id := range ids {
 		record, err := r.GetRecord(ctx, id)
 		if err != nil {
@@ -33,22 +39,29 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 }
 
 // QueryRecords filters records by K=V conditions.
-func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
+func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.KeyValueInput) ([]*baseGql.Record, error) {
 
 	return nil, nil
 }
 
 // ResolveRecords resolves records by ref/WRN, with semver range support.
-func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*Record, error) {
+func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*baseGql.Record, error) {
 
 	return nil, nil
 }
 
-func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
-	return &Status{}, nil
+func (r *queryResolver) GetStatus(ctx context.Context) (*baseGql.Status, error) {
+	return &baseGql.Status{}, nil
 }
 
-func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, error) {
+func (r *queryResolver) GetRecord(ctx context.Context, id string) (*baseGql.Record, error) {
+	dbID := nameservice.ID(id)
+	if r.Keeper.HasRecord(dbID) {
+		record := r.Keeper.GetRecord(dbID)
+		if !record.Deleted {
+			return baseGql.GetGQLRecord(ctx, r, &record)
+		}
+	}
 
 	return nil, nil
 }
