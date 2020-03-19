@@ -4,7 +4,9 @@
 
 package sync
 
-import ns "github.com/wirelineio/wns/x/nameservice"
+import (
+	ns "github.com/wirelineio/wns/x/nameservice"
+)
 
 // Keeper is an impl. of an interface similar to the nameservice Keeper.
 type Keeper struct {
@@ -13,12 +15,16 @@ type Keeper struct {
 
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(id ns.ID) bool {
-	store := k.Context.DBStore
-	return ns.HasRecord(store, id)
+	return ns.HasRecord(k.Context.DBStore, id)
 }
 
 // GetRecord - gets a record from the store.
 func (k Keeper) GetRecord(id ns.ID) ns.Record {
-	store := k.Context.DBStore
-	return ns.GetRecord(store, k.Context.Codec, id)
+	return ns.GetRecord(k.Context.DBStore, k.Context.Codec, id)
+}
+
+// ResolveWRN resolves a WRN to a record.
+// Note: Version part of the WRN might have a semver range.
+func (k Keeper) ResolveWRN(wrn string) *ns.Record {
+	return ns.ResolveWRN(k.Context.DBStore, k.Context.Codec, wrn)
 }

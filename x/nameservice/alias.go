@@ -29,8 +29,9 @@ var (
 	GetRecordIndexKey         = keeper.GetRecordIndexKey
 	GetNameRecordIndexKey     = keeper.GetNameRecordIndexKey
 
-	HasRecord = keeper.HasRecord
-	GetRecord = keeper.GetRecord
+	HasRecord  = keeper.HasRecord
+	GetRecord  = keeper.GetRecord
+	ResolveWRN = keeper.ResolveWRN
 )
 
 type (
