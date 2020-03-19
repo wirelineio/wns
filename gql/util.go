@@ -195,7 +195,7 @@ func matchOnRecordField(record *nameservice.Record, attr *KeyValueInput) (fieldF
 	return
 }
 
-func matchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
+func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
 	// Filter deleted records.
 	if record.Deleted {
 		return false
@@ -294,7 +294,7 @@ func matchOnVersionAttribute(querySemverStr string, recordVersionStr string) boo
 	return querySemverConstraint.Check(recordVersion)
 }
 
-func requestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
+func RequestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
 	for _, attr := range attributes {
 		if attr.Key == VersionAttributeName && attr.Value.String != nil {
 			if *attr.Value.String == VersionMatchAll {
@@ -317,7 +317,7 @@ type bestMatch struct {
 }
 
 // Only return the latest version of each record.
-func getLatestVersions(records []*nameservice.Record) []*nameservice.Record {
+func GetLatestVersions(records []*nameservice.Record) []*nameservice.Record {
 	baseWrnBestMatch := make(map[string]bestMatch)
 	for _, record := range records {
 		baseWrn := record.BaseWRN()

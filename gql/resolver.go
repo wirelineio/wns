@@ -127,11 +127,11 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 	gqlResponse := []*Record{}
 
 	var records = r.keeper.MatchRecords(sdkContext, func(record *nameservice.Record) bool {
-		return matchOnAttributes(record, attributes)
+		return MatchOnAttributes(record, attributes)
 	})
 
-	if requestedLatestVersionsOnly(attributes) {
-		records = getLatestVersions(records)
+	if RequestedLatestVersionsOnly(attributes) {
+		records = GetLatestVersions(records)
 	}
 
 	for _, record := range records {
