@@ -4,7 +4,7 @@
 
 package sync
 
-import "github.com/wirelineio/wns/x/nameservice"
+import ns "github.com/wirelineio/wns/x/nameservice"
 
 // Keeper is an impl. of an interface similar to the nameservice Keeper.
 type Keeper struct {
@@ -12,18 +12,13 @@ type Keeper struct {
 }
 
 // HasRecord - checks if a record by the given ID exists.
-func (k Keeper) HasRecord(id nameservice.ID) bool {
+func (k Keeper) HasRecord(id ns.ID) bool {
 	store := k.Context.DBStore
-	return store.Has(nameservice.GetRecordIndexKey(id))
+	return ns.HasRecord(store, id)
 }
 
 // GetRecord - gets a record from the store.
-func (k Keeper) GetRecord(id nameservice.ID) nameservice.Record {
+func (k Keeper) GetRecord(id ns.ID) ns.Record {
 	store := k.Context.DBStore
-
-	bz := store.Get(nameservice.GetRecordIndexKey(id))
-	var obj nameservice.RecordObj
-	k.Context.Codec.MustUnmarshalBinaryBare(bz, &obj)
-
-	return obj.ToRecord()
+	return ns.GetRecord(store, k.Context.Codec, id)
 }

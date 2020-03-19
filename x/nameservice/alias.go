@@ -28,11 +28,15 @@ var (
 	GetBlockChangesetIndexKey = keeper.GetBlockChangesetIndexKey
 	GetRecordIndexKey         = keeper.GetRecordIndexKey
 	GetNameRecordIndexKey     = keeper.GetNameRecordIndexKey
+
+	HasRecord = keeper.HasRecord
+	GetRecord = keeper.GetRecord
 )
 
 type (
 	Keeper       = keeper.Keeper
 	RecordKeeper = keeper.RecordKeeper
+
 	MsgSetRecord = types.MsgSetRecord
 
 	ID         = types.ID

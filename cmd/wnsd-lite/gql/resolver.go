@@ -46,6 +46,19 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.
 
 // ResolveRecords resolves records by ref/WRN, with semver range support.
 func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*baseGql.Record, error) {
+	// gqlResponse := []*baseGql.Record{}
+
+	// for _, ref := range refs {
+	// 	record := r.keeper.ResolveWRN(ref)
+	// 	gqlRecord, err := baseGql.GetGQLRecord(ctx, r, record)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	gqlResponse = append(gqlResponse, gqlRecord)
+	// }
+
+	// return gqlResponse, nil
 
 	return nil, nil
 }

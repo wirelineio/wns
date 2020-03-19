@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
@@ -116,7 +117,11 @@ func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.Name
 
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
-	store := ctx.KVStore(k.storeKey)
+	return HasRecord(ctx.KVStore(k.storeKey), id)
+}
+
+// HasRecord - checks if a record by the given ID exists.
+func HasRecord(store sdk.KVStore, id types.ID) bool {
 	return store.Has(GetRecordIndexKey(id))
 }
 
@@ -128,11 +133,14 @@ func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
 
 // GetRecord - gets a record from the store.
 func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
-	store := ctx.KVStore(k.storeKey)
+	return GetRecord(ctx.KVStore(k.storeKey), k.cdc, id)
+}
 
+// GetRecord - gets a record from the store.
+func GetRecord(store sdk.KVStore, codec *amino.Codec, id types.ID) types.Record {
 	bz := store.Get(GetRecordIndexKey(id))
 	var obj types.RecordObj
-	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+	codec.MustUnmarshalBinaryBare(bz, &obj)
 
 	return obj.ToRecord()
 }

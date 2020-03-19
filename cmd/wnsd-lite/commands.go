@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/cosmos/cosmos-sdk/store/dbadapter"
 	"github.com/spf13/cobra"
@@ -52,7 +53,7 @@ var startCmd = &cobra.Command{
 		}
 
 		// TODO(ashwin): Switch from in-mem store to persistent leveldb store.
-		mem := dbadapter.Store{DB: dbm.NewMemDB()}
+		var mem store.KVStore = dbadapter.Store{DB: dbm.NewMemDB()}
 		store := cachekv.NewStore(mem)
 
 		ctx := sync.Context{
@@ -61,7 +62,7 @@ var startCmd = &cobra.Command{
 			Client:           rpcclient.NewHTTP(nodeAddress, "/websocket"),
 			Verifier:         sync.CreateVerifier(&config),
 			Codec:            app.MakeCodec(),
-			DBStore:          &mem,
+			DBStore:          mem,
 			Store:            store,
 		}
 
@@ -78,7 +79,7 @@ func init() {
 	startCmd.Flags().Int64("height", 1, "Height to start synchronizing at")
 
 	// Add flags for GQL server.
-	startCmd.Flags().Bool("gql-server", false, "Start GQL server.")
-	startCmd.Flags().Bool("gql-playground", false, "Enable GQL playground.")
-	startCmd.Flags().String("gql-port", "9473", "Port to use for the GQL server.")
+	startCmd.Flags().Bool("gql-server", true, "Start GQL server.")
+	startCmd.Flags().Bool("gql-playground", true, "Enable GQL playground.")
+	startCmd.Flags().String("gql-port", "9475", "Port to use for the GQL server.")
 }
