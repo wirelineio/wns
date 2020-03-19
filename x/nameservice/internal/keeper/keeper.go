@@ -285,16 +285,20 @@ func ResolveBaseWRN(store sdk.KVStore, codec *amino.Codec, baseWRN string, semve
 
 // MatchRecords - get all matching records.
 func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) []*types.Record {
+	return MatchRecords(ctx.KVStore(k.storeKey), k.cdc, matchFn)
+}
+
+// MatchRecords - get all matching records.
+func MatchRecords(store sdk.KVStore, codec *amino.Codec, matchFn func(*types.Record) bool) []*types.Record {
 	var records []*types.Record
 
-	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, PrefixCIDToRecordIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
 		if bz != nil {
 			var obj types.RecordObj
-			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			codec.MustUnmarshalBinaryBare(bz, &obj)
 			record := obj.ToRecord()
 			if matchFn(&record) {
 				records = append(records, &record)

@@ -28,3 +28,8 @@ func (k Keeper) GetRecord(id ns.ID) ns.Record {
 func (k Keeper) ResolveWRN(wrn string) *ns.Record {
 	return ns.ResolveWRN(k.Context.DBStore, k.Context.Codec, wrn)
 }
+
+// MatchRecords - get all matching records.
+func (k Keeper) MatchRecords(matchFn func(*ns.Record) bool) []*ns.Record {
+	return ns.MatchRecords(k.Context.DBStore, k.Context.Codec, matchFn)
+}
