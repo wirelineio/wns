@@ -7,6 +7,7 @@ package sync
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/tendermint/go-amino"
+	"github.com/wirelineio/wns/x/nameservice"
 	ns "github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -54,6 +55,16 @@ func (k Keeper) HasRecord(id ns.ID) bool {
 // GetRecord - gets a record from the store.
 func (k Keeper) GetRecord(id ns.ID) ns.Record {
 	return ns.GetRecord(k.Store, k.Codec, id)
+}
+
+// PutRecord - saves a record to the store and updates ID -> Record index.
+func (k Keeper) PutRecord(record nameservice.RecordObj) {
+	k.Store.Set(nameservice.GetRecordIndexKey(record.ID), k.Codec.MustMarshalBinaryBare(record))
+}
+
+// SetNameRecord - sets a name record.
+func (k Keeper) SetNameRecord(wrn string, nameRecord nameservice.NameRecord) {
+	k.Store.Set(nameservice.GetNameRecordIndexKey(wrn), k.Codec.MustMarshalBinaryBare(nameRecord))
 }
 
 // ResolveWRN resolves a WRN to a record.
