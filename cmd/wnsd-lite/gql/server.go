@@ -41,9 +41,7 @@ func Server(ctx *sync.Context) {
 	}).Handler)
 
 	router.Handle("/graphql", handler.GraphQL(baseGql.NewExecutableSchema(baseGql.Config{Resolvers: &Resolver{
-		Keeper: &sync.Keeper{
-			Context: ctx,
-		},
+		sync.NewKeeper(ctx.Codec, ctx.DBStore),
 	}})))
 
 	if viper.GetBool("gql-playground") {
