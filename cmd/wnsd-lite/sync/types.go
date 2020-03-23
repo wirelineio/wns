@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/cosmos/cosmos-sdk/store/dbadapter"
+	"github.com/sirupsen/logrus"
 	"github.com/tendermint/go-amino"
 	tmlite "github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
@@ -44,10 +45,16 @@ type Context struct {
 	DBStore  store.KVStore
 	Store    *cachekv.Store
 	Keeper   *Keeper
+	Log      *logrus.Logger
 }
 
 // NewContext creates a context object.
 func NewContext(config *Config) *Context {
+	log := logrus.New()
+
+	// TODO(ashwin): Configure using CLI flag.
+	log.SetLevel(logrus.DebugLevel)
+
 	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, path.Join(config.Home, "data"))
 	var dbStore store.KVStore = dbadapter.Store{DB: db}
 	store := cachekv.NewStore(dbStore)
@@ -62,6 +69,7 @@ func NewContext(config *Config) *Context {
 		DBStore: dbStore,
 		Store:   store,
 		Keeper:  NewKeeper(codec, dbStore),
+		Log:     log,
 	}
 
 	if nodeAddress != "" {
