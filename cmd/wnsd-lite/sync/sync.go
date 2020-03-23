@@ -12,14 +12,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/cachekv"
-	"github.com/cosmos/cosmos-sdk/store/dbadapter"
-	"github.com/tendermint/go-amino"
-	tmlite "github.com/tendermint/tendermint/lite"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	dbm "github.com/tendermint/tm-db"
-	app "github.com/wirelineio/wns"
 	nameservice "github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -31,70 +23,6 @@ const SyncIntervalInMillis = 5 * 1000
 
 // ErrorWaitDurationMillis is the wait duration in case of errors.
 const ErrorWaitDurationMillis = 5 * 1000
-
-// Config represents config for sync functionality.
-type Config struct {
-	NodeAddress string
-	ChainID     string
-	Home        string
-}
-
-// Context contains sync context info.
-type Context struct {
-	Config   *Config
-	Codec    *amino.Codec
-	Client   *rpcclient.HTTP
-	Verifier tmlite.Verifier
-	DBStore  store.KVStore
-	Store    *cachekv.Store
-	Keeper   *Keeper
-}
-
-// AppState is used to import initial app state (records, names) into the db.
-type AppState struct {
-	Nameservice nameservice.GenesisState `json:"nameservice" yaml:"nameservice"`
-}
-
-// GenesisState is used to import initial state into the db.
-type GenesisState struct {
-	AppState AppState `json:"app_state" yaml:"app_state"`
-}
-
-// NewContext creates a context object.
-func NewContext(config *Config) *Context {
-	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, path.Join(config.Home, "data"))
-	var dbStore store.KVStore = dbadapter.Store{DB: db}
-	store := cachekv.NewStore(dbStore)
-
-	codec := app.MakeCodec()
-
-	nodeAddress := config.NodeAddress
-
-	ctx := Context{
-		Config:  config,
-		Codec:   codec,
-		DBStore: dbStore,
-		Store:   store,
-		Keeper:  NewKeeper(codec, dbStore),
-	}
-
-	if nodeAddress != "" {
-		ctx.Client = rpcclient.NewHTTP(nodeAddress, "/websocket")
-		ctx.Verifier = CreateVerifier(config)
-	}
-
-	return &ctx
-}
-
-// GetCurrentHeight gets the current WNS block height.
-func (ctx *Context) GetCurrentHeight() (int64, error) {
-	status, err := ctx.Client.Status()
-	if err != nil {
-		return 0, err
-	}
-
-	return status.SyncInfo.LatestBlockHeight, nil
-}
 
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
@@ -146,7 +74,7 @@ func Start(ctx *Context) {
 	lastSyncedHeight := syncStatus.LastSyncedHeight
 
 	for {
-		chainCurrentHeight, err := ctx.GetCurrentHeight()
+		chainCurrentHeight, err := ctx.getCurrentHeight()
 		if err != nil {
 			logErrorAndWait(err)
 			continue
@@ -202,18 +130,6 @@ func (ctx *Context) syncAtHeight(height int64) error {
 	return nil
 }
 
-func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset, error) {
-	value, err := ctx.getStoreValue(nameservice.GetBlockChangesetIndexKey(height), height)
-	if err != nil {
-		return nil, err
-	}
-
-	var changeset nameservice.BlockChangeset
-	ctx.Codec.MustUnmarshalBinaryBare(value, &changeset)
-
-	return &changeset, nil
-}
-
 func (ctx *Context) syncRecords(height int64, records []nameservice.ID) error {
 	for _, id := range records {
 		recordKey := nameservice.GetRecordIndexKey(id)
@@ -240,37 +156,6 @@ func (ctx *Context) syncNameRecords(height int64, names []string) error {
 	}
 
 	return nil
-}
-
-func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
-	opts := rpcclient.ABCIQueryOptions{
-		Height: height,
-		Prove:  true,
-	}
-
-	path := "/store/nameservice/key"
-	res, err := ctx.Client.ABCIQueryWithOptions(path, key, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.Response.Height == 0 && res.Response.Value != nil {
-		panic("Invalid response height/value.")
-	}
-
-	if res.Response.Height > 0 && res.Response.Height != height {
-		panic(fmt.Sprintf("Invalid response height: %d", res.Response.Height))
-	}
-
-	if res.Response.Height > 0 {
-		// Note: Fails with `panic: runtime error: invalid memory address or nil pointer dereference` if called with empty response.
-		err = VerifyProof(ctx, path, res.Response)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return res.Response.Value, nil
 }
 
 func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
