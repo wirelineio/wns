@@ -32,9 +32,9 @@ var initCmd = &cobra.Command{
 		height, _ := cmd.Flags().GetInt64("height")
 
 		config := sync.Config{ChainID: chainID, Home: home}
-		ctx := sync.NewContext(&config, height)
+		ctx := sync.NewContext(&config)
 
-		sync.Init(ctx)
+		sync.Init(ctx, height)
 	},
 }
 
@@ -42,18 +42,17 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the WNS lite node",
 	Run: func(cmd *cobra.Command, args []string) {
-		nodeAddress, _ := cmd.Flags().GetString("node")
-		height, _ := cmd.Flags().GetInt64("height")
 		chainID, _ := cmd.Flags().GetString("chain-id")
 		home, _ := cmd.Flags().GetString("home")
+		nodeAddress, _ := cmd.Flags().GetString("node")
 
 		config := sync.Config{
-			NodeAddress: nodeAddress,
 			ChainID:     chainID,
 			Home:        home,
+			NodeAddress: nodeAddress,
 		}
 
-		ctx := sync.NewContext(&config, height)
+		ctx := sync.NewContext(&config)
 
 		go gql.Server(ctx)
 
@@ -62,14 +61,11 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
+	// Init command flags.
 	initCmd.Flags().Int64("height", 1, "Initial height (corresponding to genesis.json, if present)")
 
+	// Start command flags.
 	startCmd.Flags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
-
-	// TODO(ashwin): Remove this flag after we start saving height in db.
-	startCmd.Flags().Int64("height", 1, "Height to start synchronizing at")
-
-	// Add flags for GQL server.
 	startCmd.Flags().Bool("gql-server", true, "Start GQL server.")
 	startCmd.Flags().Bool("gql-playground", true, "Enable GQL playground.")
 	startCmd.Flags().String("gql-port", "9475", "Port to use for the GQL server.")
