@@ -31,6 +31,7 @@ type GenesisState struct {
 
 // Config represents config for sync functionality.
 type Config struct {
+	LogLevel    string
 	NodeAddress string
 	ChainID     string
 	Home        string
@@ -52,8 +53,12 @@ type Context struct {
 func NewContext(config *Config) *Context {
 	log := logrus.New()
 
-	// TODO(ashwin): Configure using CLI flag.
-	log.SetLevel(logrus.DebugLevel)
+	logLevel, err := logrus.ParseLevel(config.LogLevel)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.SetLevel(logLevel)
 
 	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, path.Join(config.Home, "data"))
 	var dbStore store.KVStore = dbadapter.Store{DB: db}

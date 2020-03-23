@@ -23,6 +23,7 @@ func main() {
 	}
 
 	rootCmd.PersistentFlags().String("chain-id", "wireline", "Chain identifier")
+	rootCmd.PersistentFlags().String("log-level", "debug", "Log level")
 
 	rootCmd.AddCommand(versionCmd, initCmd, startCmd)
 
