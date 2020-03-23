@@ -27,11 +27,12 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize the WNS lite node",
 	Run: func(cmd *cobra.Command, args []string) {
+		logLevel, _ := cmd.Flags().GetString("log-level")
 		chainID, _ := cmd.Flags().GetString("chain-id")
 		home, _ := cmd.Flags().GetString("home")
 		height, _ := cmd.Flags().GetInt64("height")
 
-		config := sync.Config{ChainID: chainID, Home: home}
+		config := sync.Config{LogLevel: logLevel, ChainID: chainID, Home: home}
 		ctx := sync.NewContext(&config)
 
 		sync.Init(ctx, height)
@@ -42,11 +43,13 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the WNS lite node",
 	Run: func(cmd *cobra.Command, args []string) {
+		logLevel, _ := cmd.Flags().GetString("log-level")
 		chainID, _ := cmd.Flags().GetString("chain-id")
 		home, _ := cmd.Flags().GetString("home")
 		nodeAddress, _ := cmd.Flags().GetString("node")
 
 		config := sync.Config{
+			LogLevel:    logLevel,
 			ChainID:     chainID,
 			Home:        home,
 			NodeAddress: nodeAddress,
