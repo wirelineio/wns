@@ -5,8 +5,6 @@
 package sync
 
 import (
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -28,7 +26,7 @@ const ErrorWaitDurationMillis = 5 * 1000
 func Init(ctx *Context, height int64) {
 	// If sync record exists, abort with error.
 	if ctx.Keeper.HasStatusRecord() {
-		logErrorAndExit(errors.New("node already initialized, aborting"), 1)
+		ctx.Log.Fatalln("Node already initialized, aborting.")
 	}
 
 	// TODO(ashwin): Create <home>/config and <home>data directories.
@@ -40,12 +38,12 @@ func Init(ctx *Context, height int64) {
 		geneisState := GenesisState{}
 		bytes, err := ioutil.ReadFile(genesisJSONPath)
 		if err != nil {
-			logErrorAndExit(err, 1)
+			ctx.Log.Fatalln(err)
 		}
 
 		err = ctx.Codec.UnmarshalJSON(bytes, &geneisState)
 		if err != nil {
-			logErrorAndExit(err, 1)
+			ctx.Log.Fatalln(err)
 		}
 
 		names := geneisState.AppState.Nameservice.Names
@@ -67,7 +65,7 @@ func Init(ctx *Context, height int64) {
 func Start(ctx *Context) {
 	// Fail if node has no sync status record.
 	if !ctx.Keeper.HasStatusRecord() {
-		logErrorAndExit(errors.New("node not initialized, aborting"), 1)
+		ctx.Log.Fatalln("Node not initialized, aborting.")
 	}
 
 	syncStatus := ctx.Keeper.GetStatusRecord()
@@ -76,17 +74,17 @@ func Start(ctx *Context) {
 	for {
 		chainCurrentHeight, err := ctx.getCurrentHeight()
 		if err != nil {
-			logErrorAndWait(err)
+			logErrorAndWait(ctx, err)
 			continue
 		}
 
 		if lastSyncedHeight > chainCurrentHeight {
-			panic("Last synced height cannot be greater than current chain height")
+			ctx.Log.Panicln("Last synced height cannot be greater than current chain height.")
 		}
 
 		err = ctx.syncAtHeight(lastSyncedHeight)
 		if err != nil {
-			logErrorAndWait(err)
+			logErrorAndWait(ctx, err)
 			continue
 		}
 
@@ -100,7 +98,7 @@ func Start(ctx *Context) {
 
 // syncAtHeight runs a sync cycle for the given height.
 func (ctx *Context) syncAtHeight(height int64) error {
-	fmt.Println("Syncing at height", height, time.Now().UTC())
+	ctx.Log.Infoln("Syncing at height:", height, time.Now().UTC())
 
 	changeset, err := ctx.getBlockChangeset(height)
 	if err != nil {
@@ -111,6 +109,8 @@ func (ctx *Context) syncAtHeight(height int64) error {
 		// No changeset for this block, ignore.
 		return nil
 	}
+
+	ctx.Log.Debugln("Syncing changeset:", changeset)
 
 	// Sync records.
 	err = ctx.syncRecords(height, changeset.Records)
@@ -168,14 +168,9 @@ func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
 	}
 }
 
-func logErrorAndWait(err error) {
-	fmt.Println("Error:", err)
+func logErrorAndWait(ctx *Context, err error) {
+	ctx.Log.Errorln(err)
 
 	// TODO(ashwin): Exponential backoff logic.
 	time.Sleep(ErrorWaitDurationMillis * time.Millisecond)
-}
-
-func logErrorAndExit(err error, exitStatus int) {
-	fmt.Println("Error:", err)
-	os.Exit(exitStatus)
 }
