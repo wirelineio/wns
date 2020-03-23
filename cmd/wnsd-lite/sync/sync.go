@@ -62,10 +62,9 @@ type GenesisState struct {
 
 // NewContext creates a context object.
 func NewContext(config *Config) *Context {
-
-	// TODO(ashwin): Switch from in-mem store to persistent leveldb store.
-	var mem store.KVStore = dbadapter.Store{DB: dbm.NewMemDB()}
-	store := cachekv.NewStore(mem)
+	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, path.Join(config.Home, "data"))
+	var dbStore store.KVStore = dbadapter.Store{DB: db}
+	store := cachekv.NewStore(dbStore)
 
 	codec := app.MakeCodec()
 
@@ -74,9 +73,9 @@ func NewContext(config *Config) *Context {
 	ctx := Context{
 		Config:  config,
 		Codec:   codec,
-		DBStore: mem,
+		DBStore: dbStore,
 		Store:   store,
-		Keeper:  NewKeeper(codec, mem),
+		Keeper:  NewKeeper(codec, dbStore),
 	}
 
 	if nodeAddress != "" {
