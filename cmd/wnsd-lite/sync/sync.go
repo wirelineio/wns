@@ -6,6 +6,7 @@ package sync
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -37,18 +38,17 @@ type Config struct {
 
 // Context contains sync context info.
 type Context struct {
-	Config           *Config
-	Codec            *amino.Codec
-	Client           *rpcclient.HTTP
-	Verifier         tmlite.Verifier
-	DBStore          store.KVStore
-	Store            *cachekv.Store
-	Keeper           *Keeper
-	LastSyncedHeight int64
+	Config   *Config
+	Codec    *amino.Codec
+	Client   *rpcclient.HTTP
+	Verifier tmlite.Verifier
+	DBStore  store.KVStore
+	Store    *cachekv.Store
+	Keeper   *Keeper
 }
 
 // NewContext creates a context object.
-func NewContext(config *Config, height int64) *Context {
+func NewContext(config *Config) *Context {
 
 	// TODO(ashwin): Switch from in-mem store to persistent leveldb store.
 	var mem store.KVStore = dbadapter.Store{DB: dbm.NewMemDB()}
@@ -59,12 +59,11 @@ func NewContext(config *Config, height int64) *Context {
 	nodeAddress := config.NodeAddress
 
 	ctx := Context{
-		Config:           config,
-		LastSyncedHeight: height,
-		Codec:            codec,
-		DBStore:          mem,
-		Store:            store,
-		Keeper:           NewKeeper(codec, mem),
+		Config:  config,
+		Codec:   codec,
+		DBStore: mem,
+		Store:   store,
+		Keeper:  NewKeeper(codec, mem),
 	}
 
 	if nodeAddress != "" {
@@ -86,17 +85,30 @@ func (ctx *Context) GetCurrentHeight() (int64, error) {
 }
 
 // Init sets up the lite node.
-func Init(ctx *Context) {
-	// TODO(ashwin): If sync record exists, abort with error (hint at reset).
-	// TODO(ashwin): Create sync status record.
+func Init(ctx *Context, height int64) {
+	// If sync record exists, abort with error.
+	if ctx.Keeper.HasStatusRecord() {
+		fmt.Println("Node already initialized, aborting.")
+		os.Exit(1)
+	}
+
+	// Create sync status record.
+	ctx.Keeper.SaveStatus(Status{LastSyncedHeight: height})
+
 	// TODO(ashwin): Import genesis.json, if present.
 	// https://tutorialedge.net/golang/parsing-json-with-golang/#parsing-with-structs
 }
 
 // Start initiates the sync process.
 func Start(ctx *Context) {
-	// TODO(ashwin): Fail if node has no sync status record.
-	lastSyncedHeight := ctx.LastSyncedHeight
+	// Fail if node has no sync status record.
+	if !ctx.Keeper.HasStatusRecord() {
+		fmt.Println("Node not initialized, aborting.")
+		os.Exit(1)
+	}
+
+	syncStatus := ctx.Keeper.GetStatusRecord()
+	lastSyncedHeight := syncStatus.LastSyncedHeight
 
 	for {
 		chainCurrentHeight, err := ctx.GetCurrentHeight()
@@ -115,8 +127,9 @@ func Start(ctx *Context) {
 			continue
 		}
 
-		// TODO(ashwin): Saved last synced height in db.
+		// Saved last synced height in db.
 		lastSyncedHeight = lastSyncedHeight + 1
+		ctx.Keeper.SaveStatus(Status{LastSyncedHeight: lastSyncedHeight})
 
 		waitAfterSync(chainCurrentHeight, lastSyncedHeight)
 	}

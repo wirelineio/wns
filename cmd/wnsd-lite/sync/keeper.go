@@ -31,6 +31,21 @@ func (k Keeper) HasStatusRecord() bool {
 	return k.Store.Has(ns.KeySyncStatus)
 }
 
+// GetStatusRecord gets the sync status record.
+func (k Keeper) GetStatusRecord() Status {
+	bz := k.Store.Get(ns.KeySyncStatus)
+	var status Status
+	k.Codec.MustUnmarshalBinaryBare(bz, &status)
+
+	return status
+}
+
+// SaveStatus saves the sync status record.
+func (k Keeper) SaveStatus(status Status) {
+	bz := k.Codec.MustMarshalBinaryBare(status)
+	k.Store.Set(ns.KeySyncStatus, bz)
+}
+
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(id ns.ID) bool {
 	return ns.HasRecord(k.Store, id)
