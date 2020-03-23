@@ -45,6 +45,10 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 		return nil, err
 	}
 
+	if res.Response.IsErr() {
+		ctx.Log.Panicln(res.Response)
+	}
+
 	if res.Response.Height == 0 && res.Response.Value != nil {
 		ctx.Log.Panicln("Invalid response height/value.")
 	}
