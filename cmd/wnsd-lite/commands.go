@@ -7,13 +7,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/cachekv"
-	"github.com/cosmos/cosmos-sdk/store/dbadapter"
 	"github.com/spf13/cobra"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	dbm "github.com/tendermint/tm-db"
-	app "github.com/wirelineio/wns"
 	"github.com/wirelineio/wns/cmd/wnsd-lite/gql"
 	sync "github.com/wirelineio/wns/cmd/wnsd-lite/sync"
 )
@@ -33,7 +27,14 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize the WNS lite node",
 	Run: func(cmd *cobra.Command, args []string) {
+		chainID, _ := cmd.Flags().GetString("chain-id")
+		home, _ := cmd.Flags().GetString("home")
+		height, _ := cmd.Flags().GetInt64("height")
 
+		config := sync.Config{ChainID: chainID, Home: home}
+		ctx := sync.NewContext(&config, height)
+
+		sync.Init(ctx)
 	},
 }
 
@@ -52,27 +53,17 @@ var startCmd = &cobra.Command{
 			Home:        home,
 		}
 
-		// TODO(ashwin): Switch from in-mem store to persistent leveldb store.
-		var mem store.KVStore = dbadapter.Store{DB: dbm.NewMemDB()}
-		store := cachekv.NewStore(mem)
+		ctx := sync.NewContext(&config, height)
 
-		ctx := sync.Context{
-			Config:           &config,
-			LastSyncedHeight: height,
-			Client:           rpcclient.NewHTTP(nodeAddress, "/websocket"),
-			Verifier:         sync.CreateVerifier(&config),
-			Codec:            app.MakeCodec(),
-			DBStore:          mem,
-			Store:            store,
-		}
+		go gql.Server(ctx)
 
-		go gql.Server(&ctx)
-
-		sync.Start(&ctx)
+		sync.Start(ctx)
 	},
 }
 
 func init() {
+	initCmd.Flags().Int64("height", 1, "Initial height (corresponding to genesis.json, if present)")
+
 	startCmd.Flags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
 
 	// TODO(ashwin): Remove this flag after we start saving height in db.

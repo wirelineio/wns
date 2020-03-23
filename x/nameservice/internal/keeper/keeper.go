@@ -37,6 +37,10 @@ var PrefixBlockChangesetIndex = []byte{0x04}
 // PrefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
 var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
 
+// KeySyncStatus is the key for the sync status record.
+// Only used by WNS lite but defined here to prevent conflicts with existing prefixes.
+var KeySyncStatus = []byte{0xff}
+
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	RecordKeeper RecordKeeper

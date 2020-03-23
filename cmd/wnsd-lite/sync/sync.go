@@ -10,9 +10,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
+	"github.com/cosmos/cosmos-sdk/store/dbadapter"
 	"github.com/tendermint/go-amino"
 	tmlite "github.com/tendermint/tendermint/lite"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	dbm "github.com/tendermint/tm-db"
+	app "github.com/wirelineio/wns"
 	nameservice "github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -40,7 +43,36 @@ type Context struct {
 	Verifier         tmlite.Verifier
 	DBStore          store.KVStore
 	Store            *cachekv.Store
+	Keeper           *Keeper
 	LastSyncedHeight int64
+}
+
+// NewContext creates a context object.
+func NewContext(config *Config, height int64) *Context {
+
+	// TODO(ashwin): Switch from in-mem store to persistent leveldb store.
+	var mem store.KVStore = dbadapter.Store{DB: dbm.NewMemDB()}
+	store := cachekv.NewStore(mem)
+
+	codec := app.MakeCodec()
+
+	nodeAddress := config.NodeAddress
+
+	ctx := Context{
+		Config:           config,
+		LastSyncedHeight: height,
+		Codec:            codec,
+		DBStore:          mem,
+		Store:            store,
+		Keeper:           NewKeeper(codec, mem),
+	}
+
+	if nodeAddress != "" {
+		ctx.Client = rpcclient.NewHTTP(nodeAddress, "/websocket")
+		ctx.Verifier = CreateVerifier(config)
+	}
+
+	return &ctx
 }
 
 // GetCurrentHeight gets the current WNS block height.
@@ -53,8 +85,17 @@ func (ctx *Context) GetCurrentHeight() (int64, error) {
 	return status.SyncInfo.LatestBlockHeight, nil
 }
 
+// Init sets up the lite node.
+func Init(ctx *Context) {
+	// TODO(ashwin): If sync record exists, abort with error (hint at reset).
+	// TODO(ashwin): Create sync status record.
+	// TODO(ashwin): Import genesis.json, if present.
+	// https://tutorialedge.net/golang/parsing-json-with-golang/#parsing-with-structs
+}
+
 // Start initiates the sync process.
 func Start(ctx *Context) {
+	// TODO(ashwin): Fail if node has no sync status record.
 	lastSyncedHeight := ctx.LastSyncedHeight
 
 	for {
