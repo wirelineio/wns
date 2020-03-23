@@ -5,8 +5,11 @@
 package sync
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -45,6 +48,16 @@ type Context struct {
 	DBStore  store.KVStore
 	Store    *cachekv.Store
 	Keeper   *Keeper
+}
+
+// AppState is used to import initial app state (records, names) into the db.
+type AppState struct {
+	Nameservice nameservice.GenesisState `json:"nameservice" yaml:"nameservice"`
+}
+
+// GenesisState is used to import initial state into the db.
+type GenesisState struct {
+	AppState AppState `json:"app_state" yaml:"app_state"`
 }
 
 // NewContext creates a context object.
@@ -88,23 +101,46 @@ func (ctx *Context) GetCurrentHeight() (int64, error) {
 func Init(ctx *Context, height int64) {
 	// If sync record exists, abort with error.
 	if ctx.Keeper.HasStatusRecord() {
-		fmt.Println("Node already initialized, aborting.")
-		os.Exit(1)
+		logErrorAndExit(errors.New("node already initialized, aborting"), 1)
+	}
+
+	// TODO(ashwin): Create <home>/config and <home>data directories.
+	// TODO(ashwin): Create db in data directory.
+
+	// Import genesis.json, if present.
+	genesisJSONPath := path.Join(ctx.Config.Home, "config", "genesis.json")
+	if _, err := os.Stat(genesisJSONPath); err == nil {
+		geneisState := GenesisState{}
+		bytes, err := ioutil.ReadFile(genesisJSONPath)
+		if err != nil {
+			logErrorAndExit(err, 1)
+		}
+
+		err = ctx.Codec.UnmarshalJSON(bytes, &geneisState)
+		if err != nil {
+			logErrorAndExit(err, 1)
+		}
+
+		names := geneisState.AppState.Nameservice.Names
+		for _, nameEntry := range names {
+			ctx.Keeper.SetNameRecord(nameEntry.Name, nameEntry.Entry)
+		}
+
+		records := geneisState.AppState.Nameservice.Records
+		for _, record := range records {
+			ctx.Keeper.PutRecord(record)
+		}
 	}
 
 	// Create sync status record.
 	ctx.Keeper.SaveStatus(Status{LastSyncedHeight: height})
-
-	// TODO(ashwin): Import genesis.json, if present.
-	// https://tutorialedge.net/golang/parsing-json-with-golang/#parsing-with-structs
 }
 
 // Start initiates the sync process.
 func Start(ctx *Context) {
 	// Fail if node has no sync status record.
 	if !ctx.Keeper.HasStatusRecord() {
-		fmt.Println("Node not initialized, aborting.")
-		os.Exit(1)
+		logErrorAndExit(errors.New("node not initialized, aborting"), 1)
 	}
 
 	syncStatus := ctx.Keeper.GetStatusRecord()
@@ -249,8 +285,13 @@ func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
 }
 
 func logErrorAndWait(err error) {
-	fmt.Println("Error", err)
+	fmt.Println("Error:", err)
 
 	// TODO(ashwin): Exponential backoff logic.
 	time.Sleep(ErrorWaitDurationMillis * time.Millisecond)
+}
+
+func logErrorAndExit(err error, exitStatus int) {
+	fmt.Println("Error:", err)
+	os.Exit(exitStatus)
 }
