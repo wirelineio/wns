@@ -39,9 +39,9 @@ type Config struct {
 
 // Context contains sync context info.
 type Context struct {
-	Config   *Config
-	Codec    *amino.Codec
-	Client   *rpcclient.HTTP
+	config   *Config
+	codec    *amino.Codec
+	client   *rpcclient.HTTP
 	log      *logrus.Logger
 	verifier tmlite.Verifier
 	store    store.KVStore
@@ -69,8 +69,8 @@ func NewContext(config *Config) *Context {
 	nodeAddress := config.NodeAddress
 
 	ctx := Context{
-		Config: config,
-		Codec:  codec,
+		config: config,
+		codec:  codec,
 		store:  dbStore,
 		cache:  cacheStore,
 		log:    log,
@@ -79,7 +79,7 @@ func NewContext(config *Config) *Context {
 	ctx.keeper = NewKeeper(&ctx)
 
 	if nodeAddress != "" {
-		ctx.Client = rpcclient.NewHTTP(nodeAddress, "/websocket")
+		ctx.client = rpcclient.NewHTTP(nodeAddress, "/websocket")
 		ctx.verifier = CreateVerifier(config)
 	}
 
