@@ -43,10 +43,10 @@ type Context struct {
 	Codec    *amino.Codec
 	Client   *rpcclient.HTTP
 	Verifier tmlite.Verifier
-	DBStore  store.KVStore
+	Log      *logrus.Logger
+	store    store.KVStore
 	Store    *cachekv.Store
 	keeper   *Keeper
-	Log      *logrus.Logger
 }
 
 // NewContext creates a context object.
@@ -69,13 +69,14 @@ func NewContext(config *Config) *Context {
 	nodeAddress := config.NodeAddress
 
 	ctx := Context{
-		Config:  config,
-		Codec:   codec,
-		DBStore: dbStore,
-		Store:   store,
-		keeper:  NewKeeper(codec, dbStore),
-		Log:     log,
+		Config: config,
+		Codec:  codec,
+		store:  dbStore,
+		Store:  store,
+		Log:    log,
 	}
+
+	ctx.keeper = NewKeeper(&ctx)
 
 	if nodeAddress != "" {
 		ctx.Client = rpcclient.NewHTTP(nodeAddress, "/websocket")

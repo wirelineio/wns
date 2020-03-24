@@ -18,8 +18,8 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new keeper.
-func NewKeeper(codec *amino.Codec, store store.KVStore) *Keeper {
-	return &Keeper{codec: codec, store: store}
+func NewKeeper(ctx *Context) *Keeper {
+	return &Keeper{codec: ctx.Codec, store: ctx.store}
 }
 
 // Status represents the sync status of the node.
