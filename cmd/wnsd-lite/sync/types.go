@@ -42,8 +42,8 @@ type Context struct {
 	Config   *Config
 	Codec    *amino.Codec
 	Client   *rpcclient.HTTP
-	Verifier tmlite.Verifier
 	Log      *logrus.Logger
+	verifier tmlite.Verifier
 	store    store.KVStore
 	cache    *cachekv.Store
 	keeper   *Keeper
@@ -80,7 +80,7 @@ func NewContext(config *Config) *Context {
 
 	if nodeAddress != "" {
 		ctx.Client = rpcclient.NewHTTP(nodeAddress, "/websocket")
-		ctx.Verifier = CreateVerifier(config)
+		ctx.verifier = CreateVerifier(config)
 	}
 
 	return &ctx
