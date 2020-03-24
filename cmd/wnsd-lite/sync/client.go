@@ -13,7 +13,7 @@ import (
 
 // getCurrentHeight gets the current WNS block height.
 func (ctx *Context) getCurrentHeight() (int64, error) {
-	status, err := ctx.Client.Status()
+	status, err := ctx.client.Status()
 	if err != nil {
 		return 0, err
 	}
@@ -28,7 +28,7 @@ func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset
 	}
 
 	var changeset nameservice.BlockChangeset
-	ctx.Codec.MustUnmarshalBinaryBare(value, &changeset)
+	ctx.codec.MustUnmarshalBinaryBare(value, &changeset)
 
 	return &changeset, nil
 }
@@ -40,7 +40,7 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	}
 
 	path := "/store/nameservice/key"
-	res, err := ctx.Client.ABCIQueryWithOptions(path, key, opts)
+	res, err := ctx.client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
 		return nil, err
 	}

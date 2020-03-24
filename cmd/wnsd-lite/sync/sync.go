@@ -33,7 +33,7 @@ func Init(ctx *Context, height int64) {
 	// TODO(ashwin): Create db in data directory.
 
 	// Import genesis.json, if present.
-	genesisJSONPath := path.Join(ctx.Config.Home, "config", "genesis.json")
+	genesisJSONPath := path.Join(ctx.config.Home, "config", "genesis.json")
 	if _, err := os.Stat(genesisJSONPath); err == nil {
 		geneisState := GenesisState{}
 		bytes, err := ioutil.ReadFile(genesisJSONPath)
@@ -41,7 +41,7 @@ func Init(ctx *Context, height int64) {
 			ctx.log.Fatalln(err)
 		}
 
-		err = ctx.Codec.UnmarshalJSON(bytes, &geneisState)
+		err = ctx.codec.UnmarshalJSON(bytes, &geneisState)
 		if err != nil {
 			ctx.log.Fatalln(err)
 		}
