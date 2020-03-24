@@ -125,7 +125,7 @@ func (ctx *Context) syncAtHeight(height int64) error {
 	}
 
 	// Flush cache changes to underlying store.
-	ctx.Store.Write()
+	ctx.cache.Write()
 
 	return nil
 }
@@ -138,7 +138,7 @@ func (ctx *Context) syncRecords(height int64, records []nameservice.ID) error {
 			return err
 		}
 
-		ctx.Store.Set(recordKey, value)
+		ctx.cache.Set(recordKey, value)
 	}
 
 	return nil
@@ -152,7 +152,7 @@ func (ctx *Context) syncNameRecords(height int64, names []string) error {
 			return err
 		}
 
-		ctx.Store.Set(nameRecordKey, value)
+		ctx.cache.Set(nameRecordKey, value)
 	}
 
 	return nil
