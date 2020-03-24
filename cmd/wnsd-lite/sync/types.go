@@ -26,6 +26,7 @@ type AppState struct {
 
 // GenesisState is used to import initial state into the db.
 type GenesisState struct {
+	ChainID  string   `json:"chain_id" yaml:"chain_id"`
 	AppState AppState `json:"app_state" yaml:"app_state"`
 }
 
