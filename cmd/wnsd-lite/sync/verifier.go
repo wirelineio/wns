@@ -35,7 +35,7 @@ func CreateVerifier(config *Config) tmlite.Verifier {
 
 	node := rpcclient.NewHTTP(nodeAddress, "/websocket")
 	verifier, err := tmliteProxy.NewVerifier(
-		chainID, filepath.Join(home, ".lite_verifier"),
+		chainID, filepath.Join(home, "data", ".lite_verifier"),
 		node, log.NewNopLogger(), cacheSize,
 	)
 

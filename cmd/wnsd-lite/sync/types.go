@@ -5,7 +5,7 @@
 package sync
 
 import (
-	"path"
+	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
@@ -60,7 +60,7 @@ func NewContext(config *Config) *Context {
 
 	log.SetLevel(logLevel)
 
-	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, path.Join(config.Home, "data"))
+	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, filepath.Join(config.Home, "data"))
 	var dbStore store.KVStore = dbadapter.Store{DB: db}
 	store := cachekv.NewStore(dbStore)
 
