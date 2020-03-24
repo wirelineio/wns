@@ -119,10 +119,13 @@ func getPruningStrategyOption(logger log.Logger) func(*baseApp.BaseApp) {
 
 	switch pruningStrategy {
 	case pruningStrategySyncable:
+		// PruneSyncable means only those states not needed for state syncing will be deleted (keeps last 100 + every 10000th).
 		return baseApp.SetPruning(types.PruneSyncable)
 	case pruningStrategyNothing:
+		// PruneNothing means all historic states will be saved, nothing will be deleted.
 		return baseApp.SetPruning(types.PruneNothing)
 	case pruningStrategyEverything:
+		// PruneEverything means all saved states will be deleted, storing only the current state.
 		return baseApp.SetPruning(types.PruneEverything)
 	default:
 		panic(fmt.Sprintf("Invalid pruning strategy: %s", pruningStrategy))
