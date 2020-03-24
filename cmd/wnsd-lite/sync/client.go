@@ -46,15 +46,15 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	}
 
 	if res.Response.IsErr() {
-		ctx.Log.Panicln(res.Response)
+		ctx.log.Panicln(res.Response)
 	}
 
 	if res.Response.Height == 0 && res.Response.Value != nil {
-		ctx.Log.Panicln("Invalid response height/value.")
+		ctx.log.Panicln("Invalid response height/value.")
 	}
 
 	if res.Response.Height > 0 && res.Response.Height != height {
-		ctx.Log.Panicln(fmt.Sprintf("Invalid response height: %d", res.Response.Height))
+		ctx.log.Panicln(fmt.Sprintf("Invalid response height: %d", res.Response.Height))
 	}
 
 	if res.Response.Height > 0 {
