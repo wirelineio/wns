@@ -50,7 +50,7 @@ func CreateVerifier(config *Config) tmlite.Verifier {
 
 // Verify verifies the consensus proof at given height.
 func Verify(ctx *Context, height int64) (tmtypes.SignedHeader, error) {
-	check, err := tmliteProxy.GetCertifiedCommit(height, ctx.Client, ctx.Verifier)
+	check, err := tmliteProxy.GetCertifiedCommit(height, ctx.Client, ctx.verifier)
 	switch {
 	case tmliteErr.IsErrCommitNotFound(err):
 		return tmtypes.SignedHeader{}, ErrVerifyCommit(height)
@@ -63,7 +63,7 @@ func Verify(ctx *Context, height int64) (tmtypes.SignedHeader, error) {
 
 // VerifyProof verifies the ABCI response.
 func VerifyProof(ctx *Context, queryPath string, resp abci.ResponseQuery) error {
-	if ctx.Verifier == nil {
+	if ctx.verifier == nil {
 		return fmt.Errorf("missing valid certifier to verify data from distrusted node")
 	}
 
