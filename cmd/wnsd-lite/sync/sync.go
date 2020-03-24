@@ -82,14 +82,15 @@ func Start(ctx *Context) {
 			ctx.log.Panicln("Last synced height cannot be greater than current chain height.")
 		}
 
-		err = ctx.syncAtHeight(lastSyncedHeight)
+		newSyncHeight := lastSyncedHeight + 1
+		err = ctx.syncAtHeight(newSyncHeight)
 		if err != nil {
 			logErrorAndWait(ctx, err)
 			continue
 		}
 
 		// Saved last synced height in db.
-		lastSyncedHeight = lastSyncedHeight + 1
+		lastSyncedHeight = newSyncHeight
 		ctx.keeper.SaveStatus(Status{LastSyncedHeight: lastSyncedHeight})
 
 		waitAfterSync(chainCurrentHeight, lastSyncedHeight)
