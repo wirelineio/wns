@@ -45,7 +45,7 @@ type Context struct {
 	Verifier tmlite.Verifier
 	Log      *logrus.Logger
 	store    store.KVStore
-	Store    *cachekv.Store
+	cache    *cachekv.Store
 	keeper   *Keeper
 }
 
@@ -62,7 +62,7 @@ func NewContext(config *Config) *Context {
 
 	db := dbm.NewDB("graph", dbm.GoLevelDBBackend, filepath.Join(config.Home, "data"))
 	var dbStore store.KVStore = dbadapter.Store{DB: db}
-	store := cachekv.NewStore(dbStore)
+	cacheStore := cachekv.NewStore(dbStore)
 
 	codec := app.MakeCodec()
 
@@ -72,7 +72,7 @@ func NewContext(config *Config) *Context {
 		Config: config,
 		Codec:  codec,
 		store:  dbStore,
-		Store:  store,
+		cache:  cacheStore,
 		Log:    log,
 	}
 
