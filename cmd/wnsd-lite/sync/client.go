@@ -6,10 +6,14 @@ package sync
 
 import (
 	"fmt"
+	"strings"
 
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"github.com/wirelineio/wns/x/nameservice"
 )
+
+// Special check for errors due to state pruning.
+const statePrunedError = "proof is unexpectedly empty; ensure height has not been pruned"
 
 // getCurrentHeight gets the current WNS block height.
 func (ctx *Context) getCurrentHeight() (int64, error) {
@@ -46,6 +50,11 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	}
 
 	if res.Response.IsErr() {
+		// Check if state has been pruned.
+		if strings.Contains(res.Response.GetLog(), statePrunedError) {
+			ctx.log.Errorln("Error fetching pruned state. Re-init sync with a recent genesis.json OR connect to a node that doesn't prune state.")
+		}
+
 		ctx.log.Panicln(res.Response)
 	}
 
