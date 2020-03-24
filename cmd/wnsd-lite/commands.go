@@ -71,5 +71,5 @@ func init() {
 	startCmd.Flags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
 	startCmd.Flags().Bool("gql-server", true, "Start GQL server.")
 	startCmd.Flags().Bool("gql-playground", true, "Enable GQL playground.")
-	startCmd.Flags().String("gql-port", "9475", "Port to use for the GQL server.")
+	startCmd.Flags().String("gql-port", "9473", "Port to use for the GQL server.")
 }
