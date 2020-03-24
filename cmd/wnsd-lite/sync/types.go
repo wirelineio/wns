@@ -45,7 +45,7 @@ type Context struct {
 	Verifier tmlite.Verifier
 	DBStore  store.KVStore
 	Store    *cachekv.Store
-	Keeper   *Keeper
+	keeper   *Keeper
 	Log      *logrus.Logger
 }
 
@@ -73,7 +73,7 @@ func NewContext(config *Config) *Context {
 		Codec:   codec,
 		DBStore: dbStore,
 		Store:   store,
-		Keeper:  NewKeeper(codec, dbStore),
+		keeper:  NewKeeper(codec, dbStore),
 		Log:     log,
 	}
 

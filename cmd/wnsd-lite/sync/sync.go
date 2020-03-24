@@ -25,7 +25,7 @@ const ErrorWaitDurationMillis = 5 * 1000
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
 	// If sync record exists, abort with error.
-	if ctx.Keeper.HasStatusRecord() {
+	if ctx.keeper.HasStatusRecord() {
 		ctx.Log.Fatalln("Node already initialized, aborting.")
 	}
 
@@ -48,27 +48,27 @@ func Init(ctx *Context, height int64) {
 
 		names := geneisState.AppState.Nameservice.Names
 		for _, nameEntry := range names {
-			ctx.Keeper.SetNameRecord(nameEntry.Name, nameEntry.Entry)
+			ctx.keeper.SetNameRecord(nameEntry.Name, nameEntry.Entry)
 		}
 
 		records := geneisState.AppState.Nameservice.Records
 		for _, record := range records {
-			ctx.Keeper.PutRecord(record)
+			ctx.keeper.PutRecord(record)
 		}
 	}
 
 	// Create sync status record.
-	ctx.Keeper.SaveStatus(Status{LastSyncedHeight: height})
+	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
 }
 
 // Start initiates the sync process.
 func Start(ctx *Context) {
 	// Fail if node has no sync status record.
-	if !ctx.Keeper.HasStatusRecord() {
+	if !ctx.keeper.HasStatusRecord() {
 		ctx.Log.Fatalln("Node not initialized, aborting.")
 	}
 
-	syncStatus := ctx.Keeper.GetStatusRecord()
+	syncStatus := ctx.keeper.GetStatusRecord()
 	lastSyncedHeight := syncStatus.LastSyncedHeight
 
 	for {
@@ -90,7 +90,7 @@ func Start(ctx *Context) {
 
 		// Saved last synced height in db.
 		lastSyncedHeight = lastSyncedHeight + 1
-		ctx.Keeper.SaveStatus(Status{LastSyncedHeight: lastSyncedHeight})
+		ctx.keeper.SaveStatus(Status{LastSyncedHeight: lastSyncedHeight})
 
 		waitAfterSync(chainCurrentHeight, lastSyncedHeight)
 	}
