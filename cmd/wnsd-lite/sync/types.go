@@ -42,7 +42,7 @@ type Context struct {
 	Config   *Config
 	Codec    *amino.Codec
 	Client   *rpcclient.HTTP
-	Log      *logrus.Logger
+	log      *logrus.Logger
 	verifier tmlite.Verifier
 	store    store.KVStore
 	cache    *cachekv.Store
@@ -73,7 +73,7 @@ func NewContext(config *Config) *Context {
 		Codec:  codec,
 		store:  dbStore,
 		cache:  cacheStore,
-		Log:    log,
+		log:    log,
 	}
 
 	ctx.keeper = NewKeeper(&ctx)
