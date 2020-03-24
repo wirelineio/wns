@@ -18,17 +18,10 @@ import (
 	baseGql "github.com/wirelineio/wns/gql"
 )
 
-const defaultPort = "9473"
-
 // Server configures and starts the GQL server.
 func Server(ctx *sync.Context) {
 	if !viper.GetBool("gql-server") {
 		return
-	}
-
-	port := viper.GetString("gql-port")
-	if port == "" {
-		port = defaultPort
 	}
 
 	router := chi.NewRouter()
@@ -48,7 +41,7 @@ func Server(ctx *sync.Context) {
 		router.Handle("/console", handler.Playground("WNS Lite", "/graphql"))
 	}
 
-	err := http.ListenAndServe(":"+port, router)
+	err := http.ListenAndServe(":"+viper.GetString("gql-port"), router)
 	if err != nil {
 		panic(err)
 	}
