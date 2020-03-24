@@ -7,7 +7,7 @@ package sync
 import (
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	nameservice "github.com/wirelineio/wns/x/nameservice"
@@ -29,11 +29,12 @@ func Init(ctx *Context, height int64) {
 		ctx.log.Fatalln("Node already initialized, aborting.")
 	}
 
-	// TODO(ashwin): Create <home>/config and <home>data directories.
-	// TODO(ashwin): Create db in data directory.
+	// Create <home>/config directory if it doesn't exist.
+	configDirPath := filepath.Join(ctx.config.Home, "config")
+	os.Mkdir(configDirPath, 0755)
 
 	// Import genesis.json, if present.
-	genesisJSONPath := path.Join(ctx.config.Home, "config", "genesis.json")
+	genesisJSONPath := filepath.Join(configDirPath, "genesis.json")
 	if _, err := os.Stat(genesisJSONPath); err == nil {
 		geneisState := GenesisState{}
 		bytes, err := ioutil.ReadFile(genesisJSONPath)
@@ -44,6 +45,11 @@ func Init(ctx *Context, height int64) {
 		err = ctx.codec.UnmarshalJSON(bytes, &geneisState)
 		if err != nil {
 			ctx.log.Fatalln(err)
+		}
+
+		// Check that chain-id matches.
+		if geneisState.ChainID != ctx.config.ChainID {
+			ctx.log.Fatalln("Chain ID mismatch:", genesisJSONPath)
 		}
 
 		names := geneisState.AppState.Nameservice.Names
