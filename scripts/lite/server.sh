@@ -3,6 +3,7 @@
 LOG=/tmp/wns-lite.log
 GQL_SERVER_PORT=9475
 API_ENDPOINT="http://localhost:${GQL_SERVER_PORT}/graphql"
+WNS_NODE_ADDRESS=localhost
 
 function start_server ()
 {
@@ -11,12 +12,14 @@ function start_server ()
 
   rm -f ${LOG}
 
-  # Start the server.
-  nohup wnsd-lite start --gql-port ${GQL_SERVER_PORT} > ${LOG} 2>&1 &
-
-  if [[ $1 = "--tail" ]]; then
-    log
+  if [[ ! -z "$1" ]]; then
+    WNS_NODE_ADDRESS="$1"
   fi
+
+  echo $WNS_NODE_ADDRESS
+
+  # Start the server.
+  nohup wnsd-lite start --gql-port ${GQL_SERVER_PORT} --node "tcp://${WNS_NODE_ADDRESS}:26657" > ${LOG} 2>&1 &
 }
 
 function stop_server ()
