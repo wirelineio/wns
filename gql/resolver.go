@@ -189,7 +189,7 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		return nil, err
 	}
 
-	diskUsage, err := getDiskUsage()
+	diskUsage, err := GetDiskUsage(NodeDataPath)
 	if err != nil {
 		return nil, err
 	}

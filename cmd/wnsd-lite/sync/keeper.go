@@ -13,18 +13,25 @@ import (
 
 // Keeper is an impl. of an interface similar to the nameservice Keeper.
 type Keeper struct {
-	codec *amino.Codec
-	store store.KVStore
+	config *Config
+	codec  *amino.Codec
+	store  store.KVStore
 }
 
 // NewKeeper creates a new keeper.
 func NewKeeper(ctx *Context) *Keeper {
-	return &Keeper{codec: ctx.codec, store: ctx.store}
+	return &Keeper{config: ctx.config, codec: ctx.codec, store: ctx.store}
 }
 
 // Status represents the sync status of the node.
 type Status struct {
 	LastSyncedHeight int64
+	CatchingUp       bool
+}
+
+// GetChainID gets the chain ID.
+func (k Keeper) GetChainID() string {
+	return k.config.ChainID
 }
 
 // HasStatusRecord checks if the store has a status record.
