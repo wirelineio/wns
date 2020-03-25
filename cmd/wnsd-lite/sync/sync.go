@@ -22,6 +22,9 @@ const SyncIntervalInMillis = 5 * 1000
 // ErrorWaitDurationMillis is the wait duration in case of errors.
 const ErrorWaitDurationMillis = 5 * 1000
 
+// SyncLaggingMinHeightDiff is the min. difference in height to consider a lite node as lagging the full node.
+const SyncLaggingMinHeightDiff = 5
+
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
 	// If sync record exists, abort with error.
@@ -97,7 +100,12 @@ func Start(ctx *Context) {
 
 		// Saved last synced height in db.
 		lastSyncedHeight = newSyncHeight
-		ctx.keeper.SaveStatus(Status{LastSyncedHeight: lastSyncedHeight})
+		catchingUp := (chainCurrentHeight - lastSyncedHeight) > SyncLaggingMinHeightDiff
+
+		ctx.keeper.SaveStatus(Status{
+			LastSyncedHeight: lastSyncedHeight,
+			CatchingUp:       catchingUp,
+		})
 
 		waitAfterSync(chainCurrentHeight, lastSyncedHeight)
 	}

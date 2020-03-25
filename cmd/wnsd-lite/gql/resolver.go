@@ -6,11 +6,16 @@ package gql
 
 import (
 	"context"
+	"os"
+	"strconv"
 
 	"github.com/wirelineio/wns/cmd/wnsd-lite/sync"
 	baseGql "github.com/wirelineio/wns/gql"
 	"github.com/wirelineio/wns/x/nameservice"
 )
+
+// LiteNodeDataPath is the path to the lite node data folder.
+var LiteNodeDataPath = os.ExpandEnv("$HOME/.wireline/wnsd-lite/data")
 
 // Resolver is the GQL query resolver.
 type Resolver struct {
@@ -65,7 +70,22 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*b
 }
 
 func (r *queryResolver) GetStatus(ctx context.Context) (*baseGql.Status, error) {
-	return &baseGql.Status{}, nil
+	statusRecord := r.Keeper.GetStatusRecord()
+
+	diskUsage, err := baseGql.GetDiskUsage(LiteNodeDataPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &baseGql.Status{
+		Version: baseGql.NamserviceVersion,
+		Node:    baseGql.NodeInfo{Network: r.Keeper.GetChainID()},
+		Sync: baseGql.SyncInfo{
+			LatestBlockHeight: strconv.FormatInt(statusRecord.LastSyncedHeight, 10),
+			CatchingUp:        statusRecord.CatchingUp,
+		},
+		DiskUsage: diskUsage,
+	}, nil
 }
 
 func (r *queryResolver) GetRecord(ctx context.Context, id string) (*baseGql.Record, error) {
