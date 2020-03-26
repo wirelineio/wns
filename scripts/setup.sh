@@ -40,7 +40,9 @@ function save_secrets ()
   mkdir -p ~/.wireline
   echo "Root Account Mnemonic: ${MNEMONIC}" > ~/.wireline/secrets
   echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wireline/secrets
-  echo "\nWire CLI Keys:" >> ~/.wireline/secrets
+  echo "" >> ~/.wireline/secrets
+  echo "Wire CLI Keys:" >> ~/.wireline/secrets
+  source ./scripts/env_localhost.sh --skip-bond-id
   wire keys generate --mnemonic="${MNEMONIC}" >> ~/.wireline/secrets
 }
 
