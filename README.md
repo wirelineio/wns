@@ -1,6 +1,6 @@
 # Wireline Naming Service
 
-Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
+The Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
 ## Getting Started
 
