@@ -14,3 +14,9 @@ Hard reset development testnet (Warning: Wipes all data on the testnet):
 $ cd ~/wirelineio/wns/ops
 $ ansible-playbook -i env/development reset-full.yml
 ```
+
+Post full reset, create a bond.
+
+```bash
+$ ansible-playbook -i env/development ./create-bond.yml
+```
