@@ -15,7 +15,7 @@ import (
 )
 
 // NodeDataPath is the path to the wnsd data folder.
-var NodeDataPath = os.ExpandEnv("$HOME/.wireline/wnsd/data")
+var NodeDataPath = os.ExpandEnv("$HOME/.wire/wnsd/data")
 
 func getStatusInfo(ctx *rpctypes.Context) (*NodeInfo, *SyncInfo, *ValidatorInfo, error) {
 	res, err := core.Status(ctx)
