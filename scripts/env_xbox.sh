@@ -15,3 +15,10 @@ export WIRE_WNS_BOND_ID=$(wire wns bond list | jq -r ".[0].id")
 echo WIRE_WNS_ENDPOINT=${WIRE_WNS_ENDPOINT}
 echo WIRE_WNS_USER_KEY=${WIRE_WNS_USER_KEY}
 echo WIRE_WNS_BOND_ID=${WIRE_WNS_BOND_ID}
+
+# TODO(ashwin): Remove once CLI config switching is in place.
+export WIRE_IPFS_SERVER='http://xbox.local:5001'
+export WIRE_IPFS_GATEWAY='http://xbox.local:8888/ipfs'
+
+echo WIRE_IPFS_SERVER=${WIRE_IPFS_SERVER}
+echo WIRE_IPFS_GATEWAY=${WIRE_IPFS_GATEWAY}
