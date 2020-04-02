@@ -124,18 +124,24 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 // QueryRecords filters records by K=V conditions.
 func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
-	gqlResponse := []*Record{}
 
 	var records = r.keeper.MatchRecords(sdkContext, func(record *nameservice.Record) bool {
-		return matchOnAttributes(record, attributes)
+		return MatchOnAttributes(record, attributes)
 	})
 
-	if requestedLatestVersionsOnly(attributes) {
-		records = getLatestVersions(records)
+	return QueryRecords(ctx, r, records, attributes)
+}
+
+// QueryRecords filters records by K=V conditions.
+func QueryRecords(ctx context.Context, resolver QueryResolver, records []*nameservice.Record, attributes []*KeyValueInput) ([]*Record, error) {
+	gqlResponse := []*Record{}
+
+	if RequestedLatestVersionsOnly(attributes) {
+		records = GetLatestVersions(records)
 	}
 
 	for _, record := range records {
-		gqlRecord, err := getGQLRecord(ctx, r, record)
+		gqlRecord, err := GetGQLRecord(ctx, resolver, record)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +159,7 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*R
 
 	for _, ref := range refs {
 		record := r.keeper.ResolveWRN(sdkContext, ref)
-		gqlRecord, err := getGQLRecord(ctx, r, record)
+		gqlRecord, err := GetGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +189,7 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		return nil, err
 	}
 
-	diskUsage, err := getDiskUsage()
+	diskUsage, err := GetDiskUsage(NodeDataPath)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +258,7 @@ func (r *queryResolver) GetRecord(ctx context.Context, id string) (*Record, erro
 	if r.keeper.HasRecord(sdkContext, dbID) {
 		record := r.keeper.GetRecord(sdkContext, dbID)
 		if !record.Deleted {
-			return getGQLRecord(ctx, r, &record)
+			return GetGQLRecord(ctx, r, &record)
 		}
 	}
 

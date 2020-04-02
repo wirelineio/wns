@@ -78,7 +78,7 @@ $ ./scripts/server.sh stop
 
 ## WNS CLI
 
-[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
+`wire` CLI provides commands for publishing and querying WNS records.
 
 Setup environment variables for the CLI to work with the local node:
 

@@ -40,7 +40,8 @@ function save_secrets ()
   mkdir -p ~/.wire
   echo "Root Account Mnemonic: ${MNEMONIC}" > ~/.wire/secrets
   echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wire/secrets
-  echo "\nWire CLI Keys:" >> ~/.wire/secrets
+  echo "Wire CLI Keys:" >> ~/.wire/secrets
+  source ./scripts/env_localhost.sh --skip-bond-id
   wire keys generate --mnemonic="${MNEMONIC}" >> ~/.wire/secrets
 }
 

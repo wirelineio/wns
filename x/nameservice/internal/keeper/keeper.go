@@ -6,6 +6,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/binary"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
@@ -26,15 +28,18 @@ var PrefixCIDToRecordIndex = []byte{0x00}
 // PrefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index.
 var PrefixWRNToNameRecordIndex = []byte{0x01}
 
-// PrefixBaseWRNToNameRecordIndex is the prefix for the Base WRN -> NamingRecord index.
-// Note: BaseWRL => WRN minus `version`, i.e. latest version.
-var PrefixBaseWRNToNameRecordIndex = []byte{0x02}
-
 // PrefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
 var PrefixBondIDToRecordsIndex = []byte{0x03}
 
+// PrefixBlockChangesetIndex is the prefix for the block changeset index.
+var PrefixBlockChangesetIndex = []byte{0x04}
+
 // PrefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
 var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
+
+// KeySyncStatus is the key for the sync status record.
+// Only used by WNS lite but defined here to prevent conflicts with existing prefixes.
+var KeySyncStatus = []byte{0xff}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -76,12 +81,18 @@ func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
 // PutRecord - saves a record to the store and updates ID -> Record index.
 func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(append(PrefixCIDToRecordIndex, []byte(record.ID)...), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	store.Set(GetRecordIndexKey(record.ID), k.cdc.MustMarshalBinaryBare(record.ToRecordObj()))
+	k.updateBlockChangesetForRecord(ctx, record.ID)
 }
 
 // Generates Bond ID -> Bond index key.
-func getRecordIndexKey(id types.ID) []byte {
+func GetRecordIndexKey(id types.ID) []byte {
 	return append(PrefixCIDToRecordIndex, []byte(id)...)
+}
+
+// Generates WRN -> NameRecord index key.
+func GetNameRecordIndexKey(wrn string) []byte {
+	return append(PrefixWRNToNameRecordIndex, []byte(wrn)...)
 }
 
 // Generates Bond ID -> Records index key.
@@ -104,28 +115,36 @@ func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id
 // SetNameRecord - sets a name record.
 func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(append(PrefixWRNToNameRecordIndex, []byte(wrn)...), k.cdc.MustMarshalBinaryBare(nameRecord))
+	store.Set(GetNameRecordIndexKey(wrn), k.cdc.MustMarshalBinaryBare(nameRecord))
+	k.updateBlockChangesetForName(ctx, wrn)
 }
 
 // HasRecord - checks if a record by the given ID exists.
 func (k Keeper) HasRecord(ctx sdk.Context, id types.ID) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(getRecordIndexKey(id))
+	return HasRecord(ctx.KVStore(k.storeKey), id)
+}
+
+// HasRecord - checks if a record by the given ID exists.
+func HasRecord(store sdk.KVStore, id types.ID) bool {
+	return store.Has(GetRecordIndexKey(id))
 }
 
 // HasNameRecord - checks if a name record exists.
 func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(append(PrefixWRNToNameRecordIndex, []byte(wrn)...))
+	return store.Has(GetNameRecordIndexKey(wrn))
 }
 
 // GetRecord - gets a record from the store.
 func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
-	store := ctx.KVStore(k.storeKey)
+	return GetRecord(ctx.KVStore(k.storeKey), k.cdc, id)
+}
 
-	bz := store.Get(getRecordIndexKey(id))
+// GetRecord - gets a record from the store.
+func GetRecord(store sdk.KVStore, codec *amino.Codec, id types.ID) types.Record {
+	bz := store.Get(GetRecordIndexKey(id))
 	var obj types.RecordObj
-	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+	codec.MustUnmarshalBinaryBare(bz, &obj)
 
 	return obj.ToRecord()
 }
@@ -134,7 +153,7 @@ func (k Keeper) GetRecord(ctx sdk.Context, id types.ID) types.Record {
 func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) types.NameRecord {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(append(PrefixWRNToNameRecordIndex, []byte(wrn)...))
+	bz := store.Get(GetNameRecordIndexKey(wrn))
 	var obj types.NameRecord
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
@@ -182,30 +201,41 @@ func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
 // ResolveWRN resolves a WRN to a record.
 // Note: Version part of the WRN might have a semver range.
 func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
+	return ResolveWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
+}
+
+// ResolveWRN resolves a WRN to a record.
+// Note: Version part of the WRN might have a semver range.
+func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
 	segments := strings.Split(wrn, "#")
 	if len(segments) == 2 {
 		baseWRN, semver := segments[0], segments[1]
 		if strings.ContainsAny(semver, "^~<>=!") {
 			// Handle semver range.
-			return k.ResolveBaseWRN(ctx, baseWRN, semver)
+			return ResolveBaseWRN(store, codec, baseWRN, semver)
 		}
 	}
 
-	return k.ResolveFullWRN(ctx, wrn)
+	return ResolveFullWRN(store, codec, wrn)
 }
 
 // ResolveFullWRN resolves a WRN (full path) to a record.
 // Note: Version part of the WRN MUST NOT have a semver range.
 func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
-	store := ctx.KVStore(k.storeKey)
-	nameKey := append(PrefixWRNToNameRecordIndex, []byte(wrn)...)
+	return ResolveFullWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
+}
+
+// ResolveFullWRN resolves a WRN (full path) to a record.
+// Note: Version part of the WRN MUST NOT have a semver range.
+func ResolveFullWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
+	nameKey := GetNameRecordIndexKey(wrn)
 
 	if store.Has(nameKey) {
 		bz := store.Get(nameKey)
 		var obj types.NameRecord
-		k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+		codec.MustUnmarshalBinaryBare(bz, &obj)
 
-		record := k.GetRecord(ctx, obj.ID)
+		record := GetRecord(store, codec, obj.ID)
 		return &record
 	}
 
@@ -214,15 +244,18 @@ func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
 
 // ResolveBaseWRN resolves a BaseWRN + semver range to a record (picks the highest matching version).
 func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange string) *types.Record {
+	return ResolveBaseWRN(ctx.KVStore(k.storeKey), k.cdc, baseWRN, semverRange)
+}
+
+// ResolveBaseWRN resolves a BaseWRN + semver range to a record (picks the highest matching version).
+func ResolveBaseWRN(store sdk.KVStore, codec *amino.Codec, baseWRN string, semverRange string) *types.Record {
 	semverConstraint, err := semver.NewConstraint(semverRange)
 	if err != nil {
 		// Handle constraint not being parsable.
 		return nil
 	}
 
-	store := ctx.KVStore(k.storeKey)
-
-	baseNameKey := append(PrefixWRNToNameRecordIndex, []byte(baseWRN)...)
+	baseNameKey := GetNameRecordIndexKey(baseWRN)
 	if !store.Has(baseNameKey) {
 		return nil
 	}
@@ -230,14 +263,13 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 	var highestSemver, _ = semver.NewVersion("0.0.0")
 	var highestNameRecord types.NameRecord = types.NameRecord{}
 
-	baseWRNPrefix := append(PrefixWRNToNameRecordIndex, []byte(baseWRN)...)
-	itr := sdk.KVStorePrefixIterator(store, baseWRNPrefix)
+	itr := sdk.KVStorePrefixIterator(store, baseNameKey)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
 		if bz != nil {
 			var record types.NameRecord
-			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+			codec.MustUnmarshalBinaryBare(bz, &record)
 
 			semver, err := semver.NewVersion(record.Version)
 			if err == nil && semverConstraint.Check(semver) && semver.GreaterThan(highestSemver) {
@@ -248,7 +280,7 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 	}
 
 	if highestNameRecord.ID != "" {
-		record := k.GetRecord(ctx, highestNameRecord.ID)
+		record := GetRecord(store, codec, highestNameRecord.ID)
 		return &record
 	}
 
@@ -257,16 +289,20 @@ func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange stri
 
 // MatchRecords - get all matching records.
 func (k Keeper) MatchRecords(ctx sdk.Context, matchFn func(*types.Record) bool) []*types.Record {
+	return MatchRecords(ctx.KVStore(k.storeKey), k.cdc, matchFn)
+}
+
+// MatchRecords - get all matching records.
+func MatchRecords(store sdk.KVStore, codec *amino.Codec, matchFn func(*types.Record) bool) []*types.Record {
 	var records []*types.Record
 
-	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, PrefixCIDToRecordIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
 		if bz != nil {
 			var obj types.RecordObj
-			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			codec.MustUnmarshalBinaryBare(bz, &obj)
 			record := obj.ToRecord()
 			if matchFn(&record) {
 				records = append(records, &record)
@@ -476,6 +512,53 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	record.Deleted = false
 	k.PutRecord(ctx, record)
 	k.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
+}
+
+func int64ToBytes(num int64) []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.BigEndian, num)
+	return buf.Bytes()
+}
+
+func GetBlockChangesetIndexKey(height int64) []byte {
+	return append(PrefixBlockChangesetIndex, int64ToBytes(height)...)
+}
+
+func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.BlockChangeset {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(GetBlockChangesetIndexKey(height))
+
+	if bz != nil {
+		var changeset types.BlockChangeset
+		k.cdc.MustUnmarshalBinaryBare(bz, &changeset)
+
+		return &changeset
+	}
+
+	return &types.BlockChangeset{
+		Height:  height,
+		Records: []types.ID{},
+		Names:   []string{},
+	}
+}
+
+// SetRecordExpiryQueueTimeSlice sets a specific record expiry queue timeslice.
+func (k Keeper) saveBlockChangeset(ctx sdk.Context, changeset *types.BlockChangeset) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryBare(*changeset)
+	store.Set(GetBlockChangesetIndexKey(changeset.Height), bz)
+}
+
+func (k Keeper) updateBlockChangesetForRecord(ctx sdk.Context, id types.ID) {
+	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
+	changeset.Records = append(changeset.Records, id)
+	k.saveBlockChangeset(ctx, changeset)
+}
+
+func (k Keeper) updateBlockChangesetForName(ctx sdk.Context, wrn string) {
+	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
+	changeset.Names = append(changeset.Names, wrn)
+	k.saveBlockChangeset(ctx, changeset)
 }
 
 // ClearRecords - Deletes all records and indexes.
