@@ -20,7 +20,7 @@ Export the current state from a WNS node and note the height at which the state 
 $ wnsd export > ./genesis.json
 ```
 
-Init the lite node with the genesis.json file and the corresponding height.
+Initialize the lite node with the genesis.json file and the corresponding height.
 
 ```bash
 $ ./scripts/lite/setup.sh ./genesis.json <height>
