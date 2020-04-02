@@ -6,13 +6,15 @@
 * [Ubuntu server](./SERVER.md)
 * [Network](./NETWORK.md)
 
+Note: These are instructions for setting up a validator node from genesis. To run a full node connected to the already running devnet, see the full node [setup](./FULL-NODE.md) doc.
+
 ## Validator Account Setup
 
 Note: Run this step on every validator node.
 
 Set an ENV variable with the mnemonic to be used for generating the validator account keys. Use an existing one generated earlier or create a new one using `wire keys generate`.
 
-The mnemonic will be saved to `~/.wireline/secrets` by the setup process, but also save it to another safe location of your choice. There is no way to recover the account and associated funds if this mnemonic is lost.
+The mnemonic will be saved to `~/.wireline/secrets` by the setup process, but also copy it to another safe location. There is no way to recover the account and associated funds if this mnemonic is lost.
 
 ```bash
 $ export MNEMONIC="<MNEMONIC>"

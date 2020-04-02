@@ -1,10 +1,12 @@
 #!/bin/sh
 
 # Note: These ENV vars are NOT used in the scripts, but are set to satisfy the CLI config checking.
+# TODO(ashwin): Remove after CLI stops asking for config even for `wire keys generate`.
 export WIRE_SIGNAL_ENDPOINT='http://localhost:4000'
 export WIRE_ICE_ENDPOINTS='[]'
 export WIRE_IPFS_SERVER='http://127.0.0.1:5001'
 export WIRE_IPFS_GATEWAY='http://127.0.0.1:8001/ipfs'
+# End of block.
 
 export WIRE_WNS_ENDPOINT="http://localhost:9473/graphql"
 export WIRE_WNS_USER_KEY="b1e4e95dd3e3294f15869b56697b5e3bdcaa24d9d0af1be9ee57d5a59457843a"
