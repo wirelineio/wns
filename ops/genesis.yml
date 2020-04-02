@@ -11,11 +11,11 @@
   remote_user: wire-user
   tasks:
   - name: get gen tx file name
-    command: ls /home/wire-user/.wireline/wnsd/config/gentx/
+    command: ls /home/wire-user/.wire/wnsd/config/gentx/
     register: gentx_file_name
   - name: fetch gen tx files
     fetch:
-      src: /home/wire-user/.wireline/wnsd/config/gentx/{{ gentx_file_name.stdout }}
+      src: /home/wire-user/.wire/wnsd/config/gentx/{{ gentx_file_name.stdout }}
       dest: .out/gentx/
       flat: yes
 
@@ -25,7 +25,7 @@
   - name: copy gen tx files
     copy:
       src: .out/gentx/
-      dest: /home/wire-user/.wireline/wnsd/config/gentx/
+      dest: /home/wire-user/.wire/wnsd/config/gentx/
 
   - name: create faucet account keys
     shell:
@@ -51,7 +51,7 @@
 
   - name: fetch final genesis.json
     fetch:
-      src: /home/wire-user/.wireline/wnsd/config/genesis.json
+      src: /home/wire-user/.wire/wnsd/config/genesis.json
       dest: .out/genesis.json
       flat: yes
 
@@ -61,5 +61,5 @@
   - name: distribute final genesis.json
     copy:
       src: .out/genesis.json
-      dest: /home/wire-user/.wireline/wnsd/config/genesis.json
+      dest: /home/wire-user/.wire/wnsd/config/genesis.json
 

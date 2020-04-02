@@ -4,8 +4,8 @@
 # Initial set-up.
 #
 
-WNS_CLI_CONFIG_DIR="${HOME}/.wireline/wnscli"
-WNS_SERVER_CONFIG_DIR="${HOME}/.wireline/wnsd"
+WNS_CLI_CONFIG_DIR="${HOME}/.wire/wnscli"
+WNS_SERVER_CONFIG_DIR="${HOME}/.wire/wnsd"
 
 WNS_CLI_EXTRA_ARGS="--home ${WNS_CLI_CONFIG_DIR}"
 WNS_SERVER_EXTRA_ARGS="--home ${WNS_SERVER_CONFIG_DIR}"
@@ -37,11 +37,11 @@ fi
 
 function save_secrets ()
 {
-  mkdir -p ~/.wireline
-  echo "Root Account Mnemonic: ${MNEMONIC}" > ~/.wireline/secrets
-  echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wireline/secrets
-  echo "\nWire CLI Keys:" >> ~/.wireline/secrets
-  wire keys generate --mnemonic="${MNEMONIC}" >> ~/.wireline/secrets
+  mkdir -p ~/.wire
+  echo "Root Account Mnemonic: ${MNEMONIC}" > ~/.wire/secrets
+  echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wire/secrets
+  echo "\nWire CLI Keys:" >> ~/.wire/secrets
+  wire keys generate --mnemonic="${MNEMONIC}" >> ~/.wire/secrets
 }
 
 function reset ()
