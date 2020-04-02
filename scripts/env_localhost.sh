@@ -5,7 +5,7 @@
 export WIRE_SIGNAL_ENDPOINT='http://localhost:4000'
 export WIRE_ICE_ENDPOINTS='[]'
 export WIRE_IPFS_SERVER='http://127.0.0.1:5001'
-export WIRE_IPFS_GATEWAY='http://127.0.0.1:8001/ipfs'
+export WIRE_IPFS_GATEWAY='http://127.0.0.1:8888/ipfs'
 # End of block.
 
 export WIRE_WNS_ENDPOINT="http://localhost:9473/graphql"
