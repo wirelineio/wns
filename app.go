@@ -42,10 +42,10 @@ const appName = "nameservice"
 
 var (
 	// default home directories for the application CLI
-	DefaultCLIHome = os.ExpandEnv("$HOME/.wireline/wnscli")
+	DefaultCLIHome = os.ExpandEnv("$HOME/.wire/wnscli")
 
 	// DefaultNodeHome sets the folder where the applcation data and configuration will be stored
-	DefaultNodeHome = os.ExpandEnv("$HOME/.wireline/wnsd")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.wire/wnsd")
 
 	// NewBasicManager is in charge of setting up basic module elemnets
 	ModuleBasics = module.NewBasicManager(

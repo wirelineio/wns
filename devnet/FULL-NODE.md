@@ -6,7 +6,7 @@ Note: These are instructions for setting up a full node connected to the already
 
 Set an ENV variable with the mnemonic to be used for generating the full node account keys. Use an existing one generated earlier or create a new one using `wire keys generate`.
 
-The mnemonic will be saved to `~/.wireline/secrets` by the setup process, but also copy it to another safe location. There is no way to recover the account and associated funds if this mnemonic is lost.
+The mnemonic will be saved to `~/.wire/secrets` by the setup process, but also copy it to another safe location. There is no way to recover the account and associated funds if this mnemonic is lost.
 
 ```bash
 $ export MNEMONIC="<MNEMONIC>"
@@ -21,10 +21,10 @@ $ ./scripts/setup.sh
 
 ## Genesis File Update
 
-Replace `~/.wireline/wnsd/config/genesis.json` file with the one in the repo.
+Replace `~/.wire/wnsd/config/genesis.json` file with the one in the repo.
 
 ```bash
-$ cp devnet/genesis.json ~/.wireline/wnsd/config/genesis.json
+$ cp devnet/genesis.json ~/.wire/wnsd/config/genesis.json
 ```
 
 ## Peer Setup
