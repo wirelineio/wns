@@ -86,6 +86,10 @@ Setup environment variables for the CLI to work with the local node:
 $ source ./scripts/env_localhost.sh
 ```
 
+## Tests
+
+See https://github.com/wirelineio/registry-client#tests
+
 
 ## GQL Server API
 
