@@ -153,3 +153,23 @@ Apply the changes to `~/.profile`.
 ```bash
 $ source ~/.profile
 ```
+
+
+## Endpoints
+
+### WNS
+
+* GQL API: http://wns1.bozemanpass.net:9473/graphql
+* GQL Playground: http://wns1.bozemanpass.net:9473/console
+* TODO(ashwin): RPC Endpoint
+
+### WNS Lite
+
+* TODO(ashwin): Lite GQL API
+* TODO(ashwin): Lite GQL Playground
+
+### Faucet
+
+* TODO(ashwin): API
+* TODO(ashwin): GQL Playground
+
