@@ -133,12 +133,12 @@ $ source ~/.profile
 Install the `wire` CLI.
 
 ```bash
-$ yarn global add @wirelineio/cli @wirelineio/cli-peer @wirelineio/cli-bot @wirelineio/cli-pad
+$ yarn global add @dxos/cli@beta
 ```
 
 Check version of `wire` CLI.
 
 ```bash
-$ wire --version
-0.6.3
+$ wire version
+v1.0.0-beta.13
 ```
