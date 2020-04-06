@@ -6,8 +6,8 @@ Note: These are instructions to connect to an existing devnet trusted node as a 
 
 WNS
 
-* GQL API: http://wns1.bozemanpass.net:9473/graphql
-* GQL Console: http://wns1.bozemanpass.net:9473/console
+* GQL API: http://node1.dxos.network:9473/graphql
+* GQL Console: http://node1.dxos.network:9473/console
 * TODO(ashwin): RPC Endpoint
 
 WNS Lite
@@ -18,7 +18,7 @@ WNS Lite
 Faucet
 
 * TODO(ashwin): GQL API
-* TODO(ashwin): GQL Console
+* GQL Console: http://faucet.node1.dxos.network:4000/graphql
 
 ## Working with the Devnet
 
