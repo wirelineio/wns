@@ -4,8 +4,21 @@ Note: These are instructions to connect to an existing devnet trusted node as a 
 
 ## Endpoints
 
+WNS
+
 * GQL API: http://wns1.bozemanpass.net:9473/graphql
 * GQL Console: http://wns1.bozemanpass.net:9473/console
+* TODO(ashwin): RPC Endpoint
+
+WNS Lite
+
+* TODO(ashwin): GQL API
+* TODO(ashwin): GQL Console
+
+Faucet
+
+* TODO(ashwin): GQL API
+* TODO(ashwin): GQL Console
 
 ## Working with the Devnet
 
@@ -21,8 +34,8 @@ Once the account is setup, the wire CLI can be used to registers records (e.g. a
 
 ## Troubleshooting
 
-Ensure that the CLI is configured correctly or the following ENV variables are valid.
+Ensure that the CLI is configured correctly or the following ENV variables are correct.
 
-* WIRE_WNS_ENDPOINT - must be the above GQL API endpoint
+* WIRE_WNS_ENDPOINT - must be the above WNS GQL API endpoint
 * WIRE_WNS_USER_KEY - must be the `privateKey` for the devnet account (from output of `wire keys generate`)
 * WIRE_WNS_BOND_ID - must be a bond owned by the account, with sufficient funds (`wire wns bond list --owner <ACCOUNT ADDRESS>`)
