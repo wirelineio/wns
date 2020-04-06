@@ -8,6 +8,11 @@
 
 Note: These are instructions for setting up a validator node from genesis. To run a full node connected to the already running devnet, see the full node [setup](./FULL-NODE.md) doc.
 
+## Endpoints
+
+* GQL API: http://wns1.bozemanpass.net:9473/graphql
+* GQL Console: http://wns1.bozemanpass.net:9473/console
+
 ## Validator Account Setup
 
 Note: Run this step on every validator node.
