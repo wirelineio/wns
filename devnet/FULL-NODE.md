@@ -1,6 +1,12 @@
 # Devnet Full Node Setup
 
-Note: These are instructions for setting up a full node connected to the already running devnet. To run a validator from genesis, see the validator [setup](./README.md) doc.
+Note: These are instructions for setting up a full node connected to the already running devnet. To run a validator from genesis, see the validator [setup](./VALIDATOR.md) doc.
+
+## Requirements
+
+* [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
+* [Ubuntu server](./SERVER.md)
+* [Network](./NETWORK.md)
 
 ## Full Node Account Setup
 
