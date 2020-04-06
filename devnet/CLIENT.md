@@ -32,6 +32,20 @@ To publish records, an [account](./ACCOUNT.md) needs to be setup.
 
 Once the account is setup, the wire CLI can be used to registers records (e.g. app/bot).
 
+## Configuration
+
+TODO(ashwin): What's the recommended way to switch CLI between localhost, xbox.local and devnet?
+
+To connect to the devnet, either
+
+* Configure the CLI (`~/.wire/config`), or
+* Export the private key for the devnet account (`export WIRE_WNS_USER_KEY="<PRIVATE KEY>"`), then run the following override script.
+
+```bash
+$ cd wns
+$ source ./scripts/env_devnet.sh
+```
+
 ## Troubleshooting
 
 Ensure that the CLI is configured correctly or the following ENV variables are correct.
