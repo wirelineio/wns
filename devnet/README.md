@@ -10,13 +10,18 @@ Note: These are instructions for setting up a validator node from genesis. To ru
 
 Note: See the [client doc](./CLIENT.md) for instructions to connect to an existing trusted node.
 
+## Endpoints
+
+* GQL API: http://wns1.bozemanpass.net:9473/graphql
+* GQL Console: http://wns1.bozemanpass.net:9473/console
+
 ## Validator Account Setup
 
 Note: Run this step on every validator node.
 
 Set an ENV variable with the mnemonic to be used for generating the validator account keys. Use an existing one generated earlier or create a new one using `wire keys generate`.
 
-The mnemonic will be saved to `~/.wireline/secrets` by the setup process, but also copy it to another safe location. There is no way to recover the account and associated funds if this mnemonic is lost.
+The mnemonic will be saved to `~/.wire/secrets` by the setup process, but also copy it to another safe location. There is no way to recover the account and associated funds if this mnemonic is lost.
 
 ```bash
 $ export MNEMONIC="<MNEMONIC>"
@@ -29,7 +34,7 @@ $ cd wns
 $ ./scripts/setup.sh
 ```
 
-Check-in the genesis transaction file created in `~/.wireline/wnsd/config/gentx` to the `wns/devnet/gentx` folder.
+Check-in the genesis transaction file created in `~/.wire/wnsd/config/gentx` to the `wns/devnet/gentx` folder.
 
 Get the validator account address.
 
@@ -50,11 +55,11 @@ wnsd add-genesis-account cosmos174hrcf4x9nhwzt82qwns65esa0a7u05425jftp 100000000
 
 Note: Run this step only on the initial validator node, to generate the consolidated `genesis.json` file.
 
-Run the above setup. Delete existing contents in `~/.wireline/wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wireline/wnsd/config/gentx`.
+Run the above setup. Delete existing contents in `~/.wire/wnsd/config/gentx` folder and copy all the gentx files from the repo to `~/.wire/wnsd/config/gentx`.
 
 ```bash
-$ rm ~/.wireline/wnsd/config/gentx/*
-$ cp devnet/gentx/* ~/.wireline/wnsd/config/gentx
+$ rm ~/.wire/wnsd/config/gentx/*
+$ cp devnet/gentx/* ~/.wire/wnsd/config/gentx
 ```
 
 Add the genesis accounts from [SEED_ACCOUNTS.md](./SEED_ACCOUNTS.md).
@@ -66,20 +71,20 @@ $ wnsd collect-gentxs
 $ wnsd validate-genesis
 ```
 
-Check-in the updated `~/.wireline/wnsd/config/genesis.json` file to `wns/devnet/genesis.json`.
+Check-in the updated `~/.wire/wnsd/config/genesis.json` file to `wns/devnet/genesis.json`.
 
 ```bash
-$ cp ~/.wireline/wnsd/config/genesis.json devnet/genesis.json
+$ cp ~/.wire/wnsd/config/genesis.json devnet/genesis.json
 ```
 
 ## Genesis File Update
 
 Note: Run this step on every validator node.
 
-All validators should replace their `~/.wireline/wnsd/config/genesis.json` file with the one in the repo, after the consolidated genesis.json has been generated.
+All validators should replace their `~/.wire/wnsd/config/genesis.json` file with the one in the repo, after the consolidated genesis.json has been generated.
 
 ```bash
-$ cp devnet/genesis.json ~/.wireline/wnsd/config/genesis.json
+$ cp devnet/genesis.json ~/.wire/wnsd/config/genesis.json
 ```
 
 ## Peer Setup
@@ -104,7 +109,7 @@ $ ./scripts/server.sh log
 
 Note: To be run on each node once the devnet is operational and blocks are being generated.
 
-Update `~/.profile` with account private key and node address. The private key can be looked up in `~/.wireline/secrets`.
+Update `~/.profile` with account private key and node address. The private key can be looked up in `~/.wire/secrets`.
 
 ```
 export WIRE_WNS_ENDPOINT="http://localhost:9473/graphql"
@@ -126,7 +131,7 @@ $ wire wns create-bond --type uwire --quantity 10000000000
 }
 ```
 
-List the bond IDs by owner address (`~/.wireline/secrets` has the address to use).
+List the bond IDs by owner address (`~/.wire/secrets` has the address to use).
 
 ```bash
 $ wire wns list-bonds --owner cosmos1np8f3zzu6xss0m2rh2k7ugawegw0x29gh9n2lq
@@ -155,3 +160,23 @@ Apply the changes to `~/.profile`.
 ```bash
 $ source ~/.profile
 ```
+
+
+## Endpoints
+
+### WNS
+
+* GQL API: http://wns1.bozemanpass.net:9473/graphql
+* GQL Playground: http://wns1.bozemanpass.net:9473/console
+* TODO(ashwin): RPC Endpoint
+
+### WNS Lite
+
+* TODO(ashwin): Lite GQL API
+* TODO(ashwin): Lite GQL Playground
+
+### Faucet
+
+* TODO(ashwin): API
+* TODO(ashwin): GQL Playground
+

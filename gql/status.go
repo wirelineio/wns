@@ -15,7 +15,7 @@ import (
 )
 
 // NodeDataPath is the path to the wnsd data folder.
-var NodeDataPath = os.ExpandEnv("$HOME/.wireline/wnsd/data")
+var NodeDataPath = os.ExpandEnv("$HOME/.wire/wnsd/data")
 
 func getStatusInfo(ctx *rpctypes.Context) (*NodeInfo, *SyncInfo, *ValidatorInfo, error) {
 	res, err := core.Status(ctx)
@@ -65,8 +65,9 @@ func getNetInfo(ctx *rpctypes.Context) (string, []*PeerInfo, error) {
 	return strconv.FormatInt(int64(res.NPeers), 10), peersInfo, nil
 }
 
-func getDiskUsage() (string, error) {
-	out, err := exec.Command("du", "-sh", NodeDataPath).Output()
+// GetDiskUsage returns disk usage for the given path.
+func GetDiskUsage(dirPath string) (string, error) {
+	out, err := exec.Command("du", "-sh", dirPath).Output()
 	if err != nil {
 		return "", err
 	}

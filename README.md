@@ -1,10 +1,12 @@
 # Wireline Naming Service
 
-Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
+The Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
 ## Getting Started
 
 ### Installation
+
+TODO(burdon): You must have the `wire` CLI installed before setting up `wnsd`.
 
 * [Install golang](https://golang.org/doc/install) 1.13.0+ for the required platform.
 * Test that `golang` has been successfully installed on the machine.
@@ -76,13 +78,17 @@ $ ./scripts/server.sh stop
 
 ## WNS CLI
 
-[WNS CLI](https://github.com/wirelineio/registry-cli) provides commands within the `wire` utility for publishing and querying WNS records.
+`wire` CLI provides commands for publishing and querying WNS records.
 
 Setup environment variables for the CLI to work with the local node:
 
 ```bash
 $ source ./scripts/env_localhost.sh
 ```
+
+## Tests
+
+See https://github.com/wirelineio/registry-client#tests
 
 
 ## GQL Server API

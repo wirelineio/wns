@@ -24,13 +24,28 @@ var (
 	RegisterCodec     = types.RegisterCodec
 
 	RegisterInvariants = keeper.RegisterInvariants
+
+	GetBlockChangesetIndexKey = keeper.GetBlockChangesetIndexKey
+	GetRecordIndexKey         = keeper.GetRecordIndexKey
+	GetNameRecordIndexKey     = keeper.GetNameRecordIndexKey
+
+	HasRecord     = keeper.HasRecord
+	GetRecord     = keeper.GetRecord
+	ResolveWRN    = keeper.ResolveWRN
+	MatchRecords  = keeper.MatchRecords
+	KeySyncStatus = keeper.KeySyncStatus
 )
 
 type (
 	Keeper       = keeper.Keeper
 	RecordKeeper = keeper.RecordKeeper
+
 	MsgSetRecord = types.MsgSetRecord
 
-	ID     = types.ID
-	Record = types.Record
+	ID         = types.ID
+	Record     = types.Record
+	RecordObj  = types.RecordObj
+	NameRecord = types.NameRecord
+
+	BlockChangeset = types.BlockChangeset
 )

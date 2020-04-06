@@ -35,7 +35,7 @@ const BondIDAttributeName = "bondId"
 // ExpiryTimeAttributeName denotes the record expiry time.
 const ExpiryTimeAttributeName = "expiryTime"
 
-func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameservice.Record) (*Record, error) {
+func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservice.Record) (*Record, error) {
 	// Nil record.
 	if record == nil || record.Deleted {
 		return nil, nil
@@ -71,7 +71,7 @@ func getGQLRecord(ctx context.Context, resolver *queryResolver, record *nameserv
 	}, nil
 }
 
-func getReferences(ctx context.Context, resolver *queryResolver, r *nameservice.Record) ([]*Record, error) {
+func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.Record) ([]*Record, error) {
 	var ids []string
 
 	for _, value := range r.Attributes {
@@ -195,7 +195,7 @@ func matchOnRecordField(record *nameservice.Record, attr *KeyValueInput) (fieldF
 	return
 }
 
-func matchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
+func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
 	// Filter deleted records.
 	if record.Deleted {
 		return false
@@ -294,7 +294,7 @@ func matchOnVersionAttribute(querySemverStr string, recordVersionStr string) boo
 	return querySemverConstraint.Check(recordVersion)
 }
 
-func requestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
+func RequestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
 	for _, attr := range attributes {
 		if attr.Key == VersionAttributeName && attr.Value.String != nil {
 			if *attr.Value.String == VersionMatchAll {
@@ -317,7 +317,7 @@ type bestMatch struct {
 }
 
 // Only return the latest version of each record.
-func getLatestVersions(records []*nameservice.Record) []*nameservice.Record {
+func GetLatestVersions(records []*nameservice.Record) []*nameservice.Record {
 	baseWrnBestMatch := make(map[string]bestMatch)
 	for _, record := range records {
 		baseWrn := record.BaseWRN()

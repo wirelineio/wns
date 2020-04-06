@@ -217,3 +217,10 @@ type NameRecord struct {
 	ID      ID     `json:"id"`
 	Version string `json:"version"`
 }
+
+// BlockChangeset is a changeset corresponding to a block.
+type BlockChangeset struct {
+	Height  int64    `json:"height"`
+	Records []ID     `json:"records"`
+	Names   []string `json:"names"`
+}

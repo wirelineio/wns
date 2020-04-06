@@ -42,10 +42,10 @@ const appName = "nameservice"
 
 var (
 	// default home directories for the application CLI
-	DefaultCLIHome = os.ExpandEnv("$HOME/.wireline/wnscli")
+	DefaultCLIHome = os.ExpandEnv("$HOME/.wire/wnscli")
 
 	// DefaultNodeHome sets the folder where the applcation data and configuration will be stored
-	DefaultNodeHome = os.ExpandEnv("$HOME/.wireline/wnsd")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.wire/wnsd")
 
 	// NewBasicManager is in charge of setting up basic module elemnets
 	ModuleBasics = module.NewBasicManager(
@@ -116,7 +116,7 @@ type nameServiceApp struct {
 
 // NewNameServiceApp is a constructor function for nameServiceApp
 func NewNameServiceApp(
-	logger log.Logger, db dbm.DB, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
+	logger log.Logger, db dbm.DB, invCheckPeriod uint, loadLatest bool, baseAppOptions ...func(*bam.BaseApp),
 ) *nameServiceApp {
 
 	// First define the top level codec that will be shared by the different modules
@@ -309,9 +309,11 @@ func NewNameServiceApp(
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
 
-	err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-	if err != nil {
-		cmn.Exit(err.Error())
+	if loadLatest {
+		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
+		if err != nil {
+			cmn.Exit(err.Error())
+		}
 	}
 
 	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.accountKeeper)

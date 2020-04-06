@@ -1,9 +1,9 @@
 # Peers
 
-Update `~/.wireline/wnsd/config/config.toml` with:
+Update `~/.wire/wnsd/config/config.toml` with:
 
 ```text
-persistent_peers = "cf258070947018977f8d6f8a16b6f9f0c1cd0fdb@139.178.68.130:26656,9380b3f500ae36d256a8e3f6b5a81ceb62768308@139.178.68.131:26656,57706d1ce3f23d22da8eb958c7cd148544c1b8ae@wns1.deepstacksoft.com:26656"
+persistent_peers = "13578da4407a6884c765367769d6d7dfe9a20923@139.178.68.130:26656,c48b4f6f00538dee0ac268c2ae20ec67ec57b771@139.178.68.131:26656,02a9e173f4bc1c3b9969d87aa2c1899ffab60901@wns1.deepstacksoft.com:26656"
 ```
 
 ## Adding Peers
@@ -19,5 +19,5 @@ Get the public hostname/IP for the machine to add as a new peer and update (`<no
 
 ## Troubleshooting
 
-* If the node hostname/IP is not routable, nodes might have trouble connecting to each other. Try setting `addr_book_strict = false` in `~/.wireline/wnsd/config/config.toml`.
+* If the node hostname/IP is not routable, nodes might have trouble connecting to each other. Try setting `addr_book_strict = false` in `~/.wire/wnsd/config/config.toml`.
 * If the node does not have a static IP, [reverse port forwarding](./NETWORK.md) can be used to tunnel through a remote machine that has a public IP/hostname.

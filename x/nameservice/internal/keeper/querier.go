@@ -18,29 +18,29 @@ import (
 
 // query endpoints supported by the nameservice Querier
 const (
-	ListRecords        = "list"
-	GetRecord          = "get"
-	ListNames          = "names"
-	ResolveName        = "resolve"
-	QueryRecordsByBond = "query-by-bond"
-	QueryParameters    = "parameters"
+	ListRecordsPath        = "list"
+	GetRecordPath          = "get"
+	ListNamesPath          = "names"
+	ResolveNamePath        = "resolve"
+	QueryRecordsByBondPath = "query-by-bond"
+	QueryParametersPath    = "parameters"
 )
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case ListRecords:
+		case ListRecordsPath:
 			return listResources(ctx, path[1:], req, keeper)
-		case GetRecord:
+		case GetRecordPath:
 			return getResource(ctx, path[1:], req, keeper)
-		case ListNames:
+		case ListNamesPath:
 			return listNames(ctx, path[1:], req, keeper)
-		case ResolveName:
+		case ResolveNamePath:
 			return resolveName(ctx, path[1:], req, keeper)
-		case QueryRecordsByBond:
+		case QueryRecordsByBondPath:
 			return queryRecordsByBond(ctx, path[1:], req, keeper)
-		case QueryParameters:
+		case QueryParametersPath:
 			return queryParameters(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
