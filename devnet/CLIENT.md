@@ -12,8 +12,8 @@ WNS
 
 WNS Lite
 
-* TODO(ashwin): GQL API
-* TODO(ashwin): GQL Console
+* GQL API: http://node1.dxos.network:9475/graphql
+* GQL Console: http://node1.dxos.network:9475/console
 
 Faucet
 
