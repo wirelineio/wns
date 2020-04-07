@@ -17,7 +17,7 @@ WNS Lite
 
 Faucet
 
-* TODO(ashwin): GQL API
+* GQL API: http://faucet.node1.dxos.network:4000/console
 * GQL Console: http://faucet.node1.dxos.network:4000/graphql
 
 ## Working with the Devnet
