@@ -33,11 +33,21 @@ func Server(ctx *sync.Context) {
 		Debug:          true,
 	}).Handler)
 
+	keeper := sync.NewKeeper(ctx)
+
+	router.Handle("/api", handler.GraphQL(baseGql.NewExecutableSchema(baseGql.Config{Resolvers: &Resolver{
+		Keeper: keeper,
+	}})))
+
+	// TODO(ashwin): Kept for backward compat.
 	router.Handle("/graphql", handler.GraphQL(baseGql.NewExecutableSchema(baseGql.Config{Resolvers: &Resolver{
-		sync.NewKeeper(ctx),
+		Keeper: keeper,
 	}})))
 
 	if viper.GetBool("gql-playground") {
+		router.Handle("/webui", handler.Playground("WNS Lite", "/api"))
+
+		// TODO(ashwin): Kept for backward compat.
 		router.Handle("/console", handler.Playground("WNS Lite", "/graphql"))
 	}
 

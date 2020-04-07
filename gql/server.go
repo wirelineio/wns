@@ -35,21 +35,21 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, a
 	}).Handler)
 
 	if viper.GetBool("gql-playground") {
-		router.Handle("/console", handler.Playground("Wireline Naming Service", "/graphql"))
+		router.Handle("/webui", handler.Playground("Wireline Naming Service", "/api"))
 
-		// TODO(ashwin): Kept for backward compat. Remove after migration to /console for playground is complete.
-		router.Handle("/", handler.Playground("Wireline Naming Service", "/query"))
+		// TODO(ashwin): Kept for backward compat.
+		router.Handle("/console", handler.Playground("Wireline Naming Service", "/graphql"))
 	}
 
-	router.Handle("/graphql", handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{
+	router.Handle("/api", handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{
 		baseApp:       baseApp,
 		codec:         cdc,
 		keeper:        keeper,
 		accountKeeper: accountKeeper,
 	}})))
 
-	// TODO(ashwin): Kept for backward compat. Remove after migration to /graphql for GQL endpoint is complete.
-	router.Handle("/query", handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{
+	// TODO(ashwin): Kept for backward compat.
+	router.Handle("/graphql", handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{
 		baseApp:       baseApp,
 		codec:         cdc,
 		keeper:        keeper,
