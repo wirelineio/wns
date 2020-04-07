@@ -14,7 +14,7 @@ $ wnsd-lite help
 
 ### Initializing the Lite Node
 
-Export the current state from a WNS node and note the height at which the state was exported (available in the logs).
+Export the current state from a WNS node and note the height at which the state was exported (available in the logs). WNS needs to be stopped to run export.
 
 ```bash
 $ wnsd export > ./genesis.json
