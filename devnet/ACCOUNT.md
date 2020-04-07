@@ -18,16 +18,15 @@ Create a [Tweet](https://twitter.com/compose/tweet) with the account address in 
 
 Request funds from the devnet faucet.
 
-TODO(ashwin): Update devnet faucet endpoint once deployed.
 
 ```bash
-$ wire faucet request --faucet-endpoint "<FAUCET ENDPOINT>" --post-url "<Tweet URL>"
+$ wire faucet request --faucet-endpoint http://faucet.node1.dxos.network:4000/graphql --post-url "<Tweet URL>"
 ```
 
 Check that the account has received funds.
 
 ```bash
-$ wire wns account get --address "<ADDRESS>" --endpoint http://wns1.bozemanpass.net:9473/graphql
+$ wire wns account get --address "<ADDRESS>" --endpoint http://node1.dxos.network:9473/graphql
 ```
 
 Note: Request more funds by creating a new Tweet with the same address. The faucet has a configured limit per account.
