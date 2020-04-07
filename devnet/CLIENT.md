@@ -8,7 +8,7 @@ WNS
 
 * GQL API: http://node1.dxos.network:9473/graphql
 * GQL Console: http://node1.dxos.network:9473/console
-* TODO(ashwin): RPC Endpoint
+* RPC Endpoint: tcp://node1.dxos.network:26657
 
 WNS Lite
 
