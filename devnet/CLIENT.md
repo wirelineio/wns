@@ -6,8 +6,8 @@ Note: These are instructions to connect to an existing devnet trusted node as a 
 
 WNS
 
-* GQL API: http://node1.dxos.network:9473/graphql
-* GQL Console: http://node1.dxos.network:9473/console
+* GQL API: http://node1.dxos.network:9473/graphql , https://node1.dxos.network/wns/graphql
+* GQL Console: http://node1.dxos.network:9473/console, https://node1.dxos.network/wns/console
 * RPC Endpoint: tcp://node1.dxos.network:26657
 
 WNS Lite
