@@ -12,13 +12,13 @@ WNS
 
 WNS Lite
 
-* GQL API: http://node1.dxos.network:9475/graphql
-* GQL Console: http://node1.dxos.network:9475/console
+* GQL API: http://node1.dxos.network:9475/graphql , https://node1.dxos.network/wnslite/graphql
+* GQL Console: http://node1.dxos.network:9475/console , https://node1.dxos.network/wnslite/console
 
 Faucet
 
-* GQL API: http://faucet.node1.dxos.network:4000/graphql
-* GQL Console: http://faucet.node1.dxos.network:4000/console
+* GQL API: http://faucet.node1.dxos.network:4000/graphql , https://node1.dxos.network/faucet/graphql
+* GQL Console: http://faucet.node1.dxos.network:4000/console , https://node1.dxos.network/faucet/console
 
 ## Working with the Devnet
 
