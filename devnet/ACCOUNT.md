@@ -45,5 +45,5 @@ $ source ./scripts/env_devnet.sh
 Check bonds associated with the account (should not be empty).
 
 ```bash
-$ wire wns bond list --owner "<ADDRESS>"
+$ wire wns bond list --owner "<ADDRESS>" --endpoint https://node1.dxos.network/wns/graphql
 ```
