@@ -35,7 +35,7 @@ Note: Request more funds by creating a new Tweet with the same address. The fauc
 
 A bond is required to pay rent for records published to the devnet.
 
-To create a bond automatically, source the devnet ENV script (`export WIRE_WNS_USER_KEY="<PRIVATE KEY>"` if prompted).
+To view instructions and set the ENV, source the devnet ENV script (`export WIRE_WNS_USER_KEY="<PRIVATE KEY>"` if prompted).
 
 ```bash
 $ cd wns
