@@ -38,7 +38,7 @@ TODO(ashwin): What's the recommended way to switch CLI between localhost, xbox.l
 
 To connect to the devnet, either
 
-* Configure the CLI (`~/.wire/config`), or
+* Configure the CLI (`~/.wire/config.yml`), or
 * Export the private key for the devnet account (`export WIRE_WNS_USER_KEY="<PRIVATE KEY>"`), then run the following override script.
 
 ```bash
