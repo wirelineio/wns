@@ -3,17 +3,16 @@
 export WIRE_WNS_ENDPOINT="https://node1.dxos.network/wns/graphql"
 
 if [[ -z "$WIRE_WNS_USER_KEY" ]]; then
-  echo "WNS user key not found. Set WIRE_WNS_USER_KEY and try again."
+  echo "WNS user key not found. Export WIRE_WNS_USER_KEY and try again."
   return
 fi
 
-export WIRE_WNS_BOND_ID=
-NUM_BONDS=$(wire wns bond list | jq -e ". | length")
-if [ "$NUM_BONDS" -eq "0" ]; then
-  wire wns bond create --type uwire --quantity 10000000000 > /dev/null
+if [[ -z "$WIRE_WNS_BOND_ID" ]]; then
+  echo "WNS bond ID not found. Export WIRE_WNS_BOND_ID and try again."
+  echo "Create bond: wire wns bond create --type uwire --quantity 1000000000"
+  echo "View bonds : wire wns bond list --owner <ADDRESS>"
+  return
 fi
-
-export WIRE_WNS_BOND_ID=$(wire wns bond list | jq -r ".[0].id")
 
 echo WIRE_WNS_ENDPOINT=${WIRE_WNS_ENDPOINT}
 echo WIRE_WNS_USER_KEY=${WIRE_WNS_USER_KEY}
