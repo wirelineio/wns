@@ -1,7 +1,6 @@
 #!/bin/sh
 
-# TODO(ashwin): To switch to https, we have to distribute self-signed cert to clients.
-export WIRE_WNS_ENDPOINT="http://node1.dxos.network:9473/graphql"
+export WIRE_WNS_ENDPOINT="https://node1.dxos.network/wns/graphql"
 
 if [[ -z "$WIRE_WNS_USER_KEY" ]]; then
   echo "WNS user key not found. Set WIRE_WNS_USER_KEY and try again."

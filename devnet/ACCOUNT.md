@@ -20,13 +20,13 @@ Request funds from the devnet faucet.
 
 
 ```bash
-$ wire faucet request --faucet-endpoint http://faucet.node1.dxos.network:4000/graphql --post-url "<Tweet URL>"
+$ wire faucet request --faucet-endpoint https://node1.dxos.network/faucet/graphql --post-url "<Tweet URL>"
 ```
 
 Check that the account has received funds.
 
 ```bash
-$ wire wns account get --address "<ADDRESS>" --endpoint http://node1.dxos.network:9473/graphql
+$ wire wns account get --address "<ADDRESS>" --endpoint https://node1.dxos.network/wns/graphql
 ```
 
 Note: Request more funds by creating a new Tweet with the same address. The faucet has a configured limit per account.
