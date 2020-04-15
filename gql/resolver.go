@@ -183,8 +183,7 @@ func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {
 		return nil, err
 	}
 
-	blockHeight, _ := strconv.ParseInt(syncInfo.LatestBlockHeight, 10, 64)
-	validatorSet, err := getValidatorSet(rpcContext, blockHeight)
+	validatorSet, err := getValidatorSet(rpcContext)
 	if err != nil {
 		return nil, err
 	}

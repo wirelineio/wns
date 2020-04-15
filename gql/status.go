@@ -36,6 +36,7 @@ func getStatusInfo(ctx *rpctypes.Context) (*NodeInfo, *SyncInfo, *ValidatorInfo,
 			LatestBlockHash:   syncInfo.LatestBlockHash.String(),
 			LatestBlockHeight: strconv.FormatInt(syncInfo.LatestBlockHeight, 10),
 			LatestBlockTime:   syncInfo.LatestBlockTime.UTC().String(),
+			CatchingUp:        syncInfo.CatchingUp,
 		}, &ValidatorInfo{
 			Address:     valInfo.Address.String(),
 			VotingPower: strconv.FormatInt(valInfo.VotingPower, 10),
@@ -75,8 +76,8 @@ func GetDiskUsage(dirPath string) (string, error) {
 	return strings.Fields(string(out))[0], nil
 }
 
-func getValidatorSet(ctx *rpctypes.Context, height int64) ([]*ValidatorInfo, error) {
-	res, err := core.Validators(ctx, &height)
+func getValidatorSet(ctx *rpctypes.Context) ([]*ValidatorInfo, error) {
+	res, err := core.Validators(ctx, nil)
 
 	if err != nil {
 		return nil, err
