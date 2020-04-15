@@ -74,6 +74,7 @@ func main() {
 	// Add flags for GQL server.
 	rootCmd.PersistentFlags().Bool("gql-server", false, "Start GQL server.")
 	rootCmd.PersistentFlags().Bool("gql-playground", false, "Enable GQL playground.")
+	rootCmd.PersistentFlags().String("gql-playground-api-base", "", "GQL API base path to use in GQL playground.")
 	rootCmd.PersistentFlags().String("gql-port", "9473", "Port to use for the GQL server.")
 
 	// Invariant checking flag.
