@@ -2,6 +2,28 @@
 
 LOG=/tmp/wns.log
 API_ENDPOINT=http://localhost:9473/graphql
+GQL_PLAYGROUND_API_BASE=""
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --tail)
+    TAIL_LOGS=1
+    shift
+    ;;
+    --gql-playground-api-base)
+    GQL_PLAYGROUND_API_BASE="$2"
+    shift
+    shift
+    ;;
+    *)
+    POSITIONAL+=("$1")
+    shift
+    ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
 
 function start_server ()
 {
@@ -11,9 +33,9 @@ function start_server ()
   rm -f ${LOG}
 
   # Start the server.
-  nohup wnsd start --gql-server --gql-playground > ${LOG} 2>&1 &
+  nohup wnsd start --gql-server --gql-playground --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" > ${LOG} 2>&1 &
 
-  if [[ $1 = "--tail" ]]; then
+  if [[ ! -z "${TAIL_LOGS}" ]]; then
     log
   fi
 }
@@ -42,7 +64,7 @@ function test ()
 function command ()
 {
   case $1 in
-    start ) start_server $2; exit;;
+    start ) start_server; exit;;
     stop ) stop_server; exit;;
     log ) log; exit;;
     test ) test; exit;;
@@ -51,7 +73,7 @@ function command ()
 
 command=$1
 if [[ ! -z "$command" ]]; then
-  command $1 $2
+  command $1
   exit
 fi
 
