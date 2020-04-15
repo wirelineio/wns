@@ -35,10 +35,12 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, a
 	}).Handler)
 
 	if viper.GetBool("gql-playground") {
-		router.Handle("/webui", handler.Playground("Wireline Naming Service", "/api"))
+		apiBase := viper.GetString("gql-playground-api-base")
+
+		router.Handle("/webui", handler.Playground("Wireline Naming Service", apiBase+"/api"))
 
 		// TODO(ashwin): Kept for backward compat.
-		router.Handle("/console", handler.Playground("Wireline Naming Service", "/graphql"))
+		router.Handle("/console", handler.Playground("Wireline Naming Service", apiBase+"/graphql"))
 	}
 
 	router.Handle("/api", handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{
