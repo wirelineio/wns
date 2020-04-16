@@ -12,7 +12,7 @@ import (
 )
 
 // DefaultLightNodeHome is the root directory for the wnsd-lite node.
-var DefaultLightNodeHome = os.ExpandEnv("$HOME/.wireline/wnsd-lite")
+var DefaultLightNodeHome = os.ExpandEnv("$HOME/.wire/wnsd-lite")
 
 func main() {
 	cobra.EnableCommandSorting = false

@@ -15,7 +15,7 @@ import (
 )
 
 // LiteNodeDataPath is the path to the lite node data folder.
-var LiteNodeDataPath = os.ExpandEnv("$HOME/.wireline/wnsd-lite/data")
+var LiteNodeDataPath = os.ExpandEnv("$HOME/.wire/wnsd-lite/data")
 
 // Resolver is the GQL query resolver.
 type Resolver struct {
