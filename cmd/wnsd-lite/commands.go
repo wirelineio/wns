@@ -30,9 +30,19 @@ var initCmd = &cobra.Command{
 		logLevel, _ := cmd.Flags().GetString("log-level")
 		chainID, _ := cmd.Flags().GetString("chain-id")
 		home, _ := cmd.Flags().GetString("home")
+		nodeAddress, _ := cmd.Flags().GetString("node")
 		height, _ := cmd.Flags().GetInt64("height")
+		initFromNode, _ := cmd.Flags().GetBool("from-node")
+		initFromGenesisFile, _ := cmd.Flags().GetBool("from-genesis-file")
 
-		config := sync.Config{LogLevel: logLevel, ChainID: chainID, Home: home}
+		config := sync.Config{
+			LogLevel:            logLevel,
+			ChainID:             chainID,
+			Home:                home,
+			NodeAddress:         nodeAddress,
+			InitFromNode:        initFromNode,
+			InitFromGenesisFile: initFromGenesisFile,
+		}
 		ctx := sync.NewContext(&config)
 
 		sync.Init(ctx, height)
@@ -65,10 +75,11 @@ var startCmd = &cobra.Command{
 
 func init() {
 	// Init command flags.
-	initCmd.Flags().Int64("height", 1, "Initial height (corresponding to genesis.json, if present)")
+	initCmd.Flags().Bool("from-node", false, "Initialize from trusted node.")
+	initCmd.Flags().Bool("from-genesis-file", false, "Initialize from genesis file.")
+	initCmd.Flags().Int64("height", 1, "Initial height (if using --from-genesis-file option)")
 
 	// Start command flags.
-	startCmd.Flags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
 	startCmd.Flags().Bool("gql-server", true, "Start GQL server.")
 	startCmd.Flags().Bool("gql-playground", true, "Enable GQL playground.")
 	startCmd.Flags().String("gql-port", "9473", "Port to use for the GQL server.")

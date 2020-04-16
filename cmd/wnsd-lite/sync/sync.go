@@ -32,42 +32,15 @@ func Init(ctx *Context, height int64) {
 		ctx.log.Fatalln("Node already initialized, aborting.")
 	}
 
-	// Create <home>/config directory if it doesn't exist.
-	configDirPath := filepath.Join(ctx.config.Home, "config")
-	os.Mkdir(configDirPath, 0755)
-
-	// Import genesis.json, if present.
-	genesisJSONPath := filepath.Join(configDirPath, "genesis.json")
-	if _, err := os.Stat(genesisJSONPath); err == nil {
-		geneisState := GenesisState{}
-		bytes, err := ioutil.ReadFile(genesisJSONPath)
-		if err != nil {
-			ctx.log.Fatalln(err)
-		}
-
-		err = ctx.codec.UnmarshalJSON(bytes, &geneisState)
-		if err != nil {
-			ctx.log.Fatalln(err)
-		}
-
-		// Check that chain-id matches.
-		if geneisState.ChainID != ctx.config.ChainID {
-			ctx.log.Fatalln("Chain ID mismatch:", genesisJSONPath)
-		}
-
-		names := geneisState.AppState.Nameservice.Names
-		for _, nameEntry := range names {
-			ctx.keeper.SetNameRecord(nameEntry.Name, nameEntry.Entry)
-		}
-
-		records := geneisState.AppState.Nameservice.Records
-		for _, record := range records {
-			ctx.keeper.PutRecord(record)
-		}
+	if !ctx.config.InitFromNode && !ctx.config.InitFromGenesisFile {
+		ctx.log.Fatalln("Must pass one of `--from-node` and `--from-genesis-file`.")
 	}
 
-	// Create sync status record.
-	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
+	if ctx.config.InitFromNode {
+		initFromNode(ctx)
+	} else if ctx.config.InitFromGenesisFile {
+		initFromGenesisFile(ctx, height)
+	}
 }
 
 // Start initiates the sync process.
@@ -188,4 +161,55 @@ func logErrorAndWait(ctx *Context, err error) {
 
 	// TODO(ashwin): Exponential backoff logic.
 	time.Sleep(ErrorWaitDurationMillis * time.Millisecond)
+}
+
+func initFromNode(ctx *Context) {
+	chainCurrentHeight, err := ctx.getCurrentHeight()
+	if err != nil {
+		ctx.log.Fatalln("Error fetching current height:", err)
+	}
+
+	ctx.log.Debugln(chainCurrentHeight)
+}
+
+func initFromGenesisFile(ctx *Context, height int64) {
+	// Create <home>/config directory if it doesn't exist.
+	configDirPath := filepath.Join(ctx.config.Home, "config")
+	os.Mkdir(configDirPath, 0755)
+
+	// Import genesis.json.
+	genesisJSONPath := filepath.Join(configDirPath, "genesis.json")
+	_, err := os.Stat(genesisJSONPath)
+	if err != nil {
+		ctx.log.Fatalln("Genesis file error:", err)
+	}
+
+	geneisState := GenesisState{}
+	bytes, err := ioutil.ReadFile(genesisJSONPath)
+	if err != nil {
+		ctx.log.Fatalln(err)
+	}
+
+	err = ctx.codec.UnmarshalJSON(bytes, &geneisState)
+	if err != nil {
+		ctx.log.Fatalln(err)
+	}
+
+	// Check that chain-id matches.
+	if geneisState.ChainID != ctx.config.ChainID {
+		ctx.log.Fatalln("Chain ID mismatch:", genesisJSONPath)
+	}
+
+	names := geneisState.AppState.Nameservice.Names
+	for _, nameEntry := range names {
+		ctx.keeper.SetNameRecord(nameEntry.Name, nameEntry.Entry)
+	}
+
+	records := geneisState.AppState.Nameservice.Records
+	for _, record := range records {
+		ctx.keeper.PutRecord(record)
+	}
+
+	// Create sync status record.
+	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
 }

@@ -32,10 +32,12 @@ type GenesisState struct {
 
 // Config represents config for sync functionality.
 type Config struct {
-	LogLevel    string
-	NodeAddress string
-	ChainID     string
-	Home        string
+	LogLevel            string
+	NodeAddress         string
+	ChainID             string
+	Home                string
+	InitFromNode        bool
+	InitFromGenesisFile bool
 }
 
 // Context contains sync context info.
