@@ -164,12 +164,40 @@ func logErrorAndWait(ctx *Context, err error) {
 }
 
 func initFromNode(ctx *Context) {
-	chainCurrentHeight, err := ctx.getCurrentHeight()
+	height, err := ctx.getCurrentHeight()
 	if err != nil {
 		ctx.log.Fatalln("Error fetching current height:", err)
 	}
 
-	ctx.log.Debugln(chainCurrentHeight)
+	ctx.log.Debugln("Current block height:", height)
+
+	recordKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixCIDToRecordIndex, height)
+	if err != nil {
+		ctx.log.Fatalln("Error fetching records", err)
+	}
+
+	for _, kv := range recordKVs {
+		var record nameservice.RecordObj
+		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &record)
+		ctx.log.Debugln("Importing record", record.ID)
+		ctx.keeper.PutRecord(record)
+	}
+
+	namesKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixWRNToNameRecordIndex, height)
+	if err != nil {
+		ctx.log.Fatalln("Error fetching name records", err)
+	}
+
+	for _, kv := range namesKVs {
+		var nameRecord nameservice.NameRecord
+		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &nameRecord)
+		wrn := string(kv.Key[len(nameservice.PrefixWRNToNameRecordIndex):])
+		ctx.log.Debugln("Importing name", wrn)
+		ctx.keeper.SetNameRecord(wrn, nameRecord)
+	}
+
+	// Create sync status record.
+	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
 }
 
 func initFromGenesisFile(ctx *Context, height int64) {
