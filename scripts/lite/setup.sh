@@ -4,9 +4,36 @@
 # Initial set-up.
 #
 
-WNS_LITE_SERVER_CONFIG_DIR="${HOME}/.wireline/wnsd-lite"
+WNS_LITE_SERVER_CONFIG_DIR="${HOME}/.wire/wnsd-lite"
+CHAIN_ID="wireline"
+WNS_NODE_ADDRESS="tcp://localhost:26657"
+RESET=
 
-CHAIN_ID=wireline
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --reset)
+    RESET=1
+    shift
+    ;;
+    --node)
+    WNS_NODE_ADDRESS="$2"
+    shift
+    shift
+    ;;
+    --chain-id)
+    CHAIN_ID="$2"
+    shift
+    shift
+    ;;
+    *)
+    POSITIONAL+=("$1")
+    shift
+    ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
 
 function reset ()
 {
@@ -16,34 +43,22 @@ function reset ()
 
 function init_node ()
 {
-  if [[ ! -z "$1" ]]; then
-    mkdir -p "${WNS_LITE_SERVER_CONFIG_DIR}/config"
-    cp "$1" "${WNS_LITE_SERVER_CONFIG_DIR}/config/genesis.json"
-  fi
-
-  if [[ ! -z "$2" ]]; then
-    EXTRA_ARGS="--height $2"
-  fi
-
-  # Init the node.
-  wnsd-lite init --chain-id "${CHAIN_ID}" ${EXTRA_ARGS}
+  wnsd-lite init --chain-id "${CHAIN_ID}" --from-node --node "${WNS_NODE_ADDRESS}"
 }
 
-#
-# Options
-#
+if [[ ! -z "${RESET}" ]]; then
+  reset
+fi
 
 # Test if installed already.
 if [[ -d "${WNS_LITE_SERVER_CONFIG_DIR}" ]]; then
   echo "Do you wish to RESET?"
   select yn in "Yes" "No"; do
     case $yn in
-      Yes ) reset $1 $2; break;;
+      Yes ) reset; break;;
       No ) exit;;
     esac
   done
 fi
 
-init_node $1 $2
-
-echo "OK"
+init_node

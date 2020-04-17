@@ -25,6 +25,9 @@ var (
 
 	RegisterInvariants = keeper.RegisterInvariants
 
+	PrefixCIDToRecordIndex     = keeper.PrefixCIDToRecordIndex
+	PrefixWRNToNameRecordIndex = keeper.PrefixWRNToNameRecordIndex
+
 	GetBlockChangesetIndexKey = keeper.GetBlockChangesetIndexKey
 	GetRecordIndexKey         = keeper.GetRecordIndexKey
 	GetNameRecordIndexKey     = keeper.GetNameRecordIndexKey

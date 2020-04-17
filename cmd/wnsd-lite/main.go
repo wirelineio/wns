@@ -12,7 +12,7 @@ import (
 )
 
 // DefaultLightNodeHome is the root directory for the wnsd-lite node.
-var DefaultLightNodeHome = os.ExpandEnv("$HOME/.wireline/wnsd-lite")
+var DefaultLightNodeHome = os.ExpandEnv("$HOME/.wire/wnsd-lite")
 
 func main() {
 	cobra.EnableCommandSorting = false
@@ -24,6 +24,7 @@ func main() {
 
 	rootCmd.PersistentFlags().String("chain-id", "wireline", "Chain identifier")
 	rootCmd.PersistentFlags().String("log-level", "debug", "Log level")
+	rootCmd.PersistentFlags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
 
 	rootCmd.AddCommand(versionCmd, initCmd, startCmd)
 

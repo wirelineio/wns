@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	storeTypes "github.com/cosmos/cosmos-sdk/store/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"github.com/wirelineio/wns/x/nameservice"
 )
@@ -75,4 +76,19 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	}
 
 	return res.Response.Value, nil
+}
+
+func (ctx *Context) getStoreSubspace(subspace string, key []byte, height int64) ([]storeTypes.KVPair, error) {
+	opts := rpcclient.ABCIQueryOptions{Height: height}
+	path := fmt.Sprintf("/store/%s/subspace", subspace)
+
+	res, err := ctx.client.ABCIQueryWithOptions(path, key, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var KVs []storeTypes.KVPair
+	ctx.codec.MustUnmarshalBinaryLengthPrefixed(res.Response.Value, &KVs)
+
+	return KVs, nil
 }
