@@ -83,4 +83,5 @@ func init() {
 	startCmd.Flags().Bool("gql-server", true, "Start GQL server.")
 	startCmd.Flags().Bool("gql-playground", true, "Enable GQL playground.")
 	startCmd.Flags().String("gql-port", "9473", "Port to use for the GQL server.")
+	startCmd.Flags().String("gql-playground-api-base", "", "GQL API base path to use in GQL playground.")
 }
