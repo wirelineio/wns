@@ -65,6 +65,12 @@ func Start(ctx *Context) {
 		}
 
 		newSyncHeight := lastSyncedHeight + 1
+		if newSyncHeight > chainCurrentHeight {
+			// Can't sync beyond chain height, just wait.
+			waitAfterSync(chainCurrentHeight, chainCurrentHeight)
+			continue
+		}
+
 		err = ctx.syncAtHeight(newSyncHeight)
 		if err != nil {
 			logErrorAndWait(ctx, err)
