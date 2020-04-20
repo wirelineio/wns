@@ -47,7 +47,7 @@ Note: On first run, the node needs to catch up to the existing devnet block heig
 
 Get funds to run a validator, then run the following command to create a validator (change the moniker below):
 
-Note: Use the passphrase from `./scripts/setup.sh`.
+Note: Use the CLI passphrase from `~/.wire/secrets`.
 
 ```bash
 $ wnscli tx staking create-validator \

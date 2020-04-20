@@ -155,3 +155,110 @@ Apply the changes to `~/.profile`.
 ```bash
 $ source ~/.profile
 ```
+
+## Unjail Validator
+
+If a validator node is offline for too long, it will get jailed.
+
+Check the status of a validator.
+
+```bash
+$ wnsd tendermint show-validator
+cosmosvalconspub1zcjduepqt2nxz4y2zw6ffdc67wfhgrpnzqy3l64k5m40mdlsw5kw8cg7yhfqvz6a0m
+
+$ wnscli query staking validators
+```
+
+Note the `"jailed": true` in the output for the corresponding validator (`consensus_pubkey`).
+
+```text
+  {
+    "operator_address": "cosmosvaloper174hrcf4x9nhwzt82qwns65esa0a7u0540qxu8j",
+    "consensus_pubkey": "cosmosvalconspub1zcjduepqt2nxz4y2zw6ffdc67wfhgrpnzqy3l64k5m40mdlsw5kw8cg7yhfqvz6a0m",
+    "jailed": true,
+    "status": 1,
+    "tokens": "9900000000000",
+    "delegator_shares": "10000000000000.000000000000000000",
+    "description": {
+      "moniker": "xbox-nuc",
+      "identity": "",
+      "website": "",
+      "details": ""
+    },
+    "unbonding_height": "227413",
+    "unbonding_time": "2020-05-09T05:39:39.645217342Z",
+    "commission": {
+      "commission_rates": {
+        "rate": "0.100000000000000000",
+        "max_rate": "0.200000000000000000",
+        "max_change_rate": "0.010000000000000000"
+      },
+      "update_time": "2020-04-02T13:13:39.434616781Z"
+    },
+    "min_self_delegation": "1"
+  }
+```
+
+Create a transaction to unjail the validator.
+
+Note: Use the CLI passphrase from `~/.wire/secrets`.
+
+```bash
+$ wnscli tx slashing unjail --from root
+```
+
+The validator set change should be visible in the logs:
+
+```text
+I[2020-04-20|05:12:25.298] Committed state                              module=state height=256451 txs=0 appHash=063AF2F36CE278B7C7D54B940DA8B0E2704906D04E3C6CBC818B1C45A74CDF1B
+I[2020-04-20|05:12:31.099] Executed block                               module=state height=256452 validTxs=1 invalidTxs=0
+I[2020-04-20|05:12:31.100] Updates to validators                        module=state updates=AF0B35B4846CA7BF0E9328C9B9DED08DDE103302:9900000
+I[2020-04-20|05:12:31.101] Committed state                              module=state height=256452 txs=1 appHash=F827190E5136B5D79898A7CBAD89BB12EC963DF3E8E5A2BF9C298B34C8A9B2EE
+I[2020-04-20|05:12:37.083] Executed block                               module=state height=256453 validTxs=0 invalidTxs=0
+```
+
+Check that the validator is unjailed (grep should return a matching line).
+
+```bash
+$ wnscli query tendermint-validator-set | grep "$(wnsd tendermint show-validator)"
+```
+
+Check voting power (should be non-zero):
+
+```
+$ wnscli status
+{
+  "node_info": {
+    "protocol_version": {
+      "p2p": "7",
+      "block": "10",
+      "app": "0"
+    },
+    "id": "02a9e173f4bc1c3b9969d87aa2c1899ffab60901",
+    "listen_addr": "tcp://0.0.0.0:26656",
+    "network": "wireline",
+    "version": "0.32.2",
+    "channels": "4020212223303800",
+    "moniker": "xbox-nuc",
+    "other": {
+      "tx_index": "on",
+      "rpc_address": "tcp://127.0.0.1:26657"
+    }
+  },
+  "sync_info": {
+    "latest_block_hash": "8D0FF6DE0E06E6E0B4C8AEB203002CA29D0F00F1055E5DE365BC8523041EF233",
+    "latest_app_hash": "503B67B7BA15F75F1FF2E1F97501EF7EED9E60BD072970F4CBFA48D245398B31",
+    "latest_block_height": "256487",
+    "latest_block_time": "2020-04-20T05:15:49.667060991Z",
+    "catching_up": false
+  },
+  "validator_info": {
+    "address": "AF0B35B4846CA7BF0E9328C9B9DED08DDE103302",
+    "pub_key": {
+      "type": "tendermint/PubKeyEd25519",
+      "value": "WqZhVIoTtJS3GvOTdAwzEAkf6ram6v238HUs4+EeJdI="
+    },
+    "voting_power": "9900000"
+  }
+}
+```
