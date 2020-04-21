@@ -15,6 +15,16 @@ POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    --endpoint)
+    WIRE_WNS_ENDPOINT="$2"
+    shift
+    shift
+    ;;
+    --faucet-endpoint)
+    WIRE_FAUCET_ENDPOINT="$2"
+    shift
+    shift
+    ;;
     --mnemonic)
     MNEMONIC="$2"
     shift
