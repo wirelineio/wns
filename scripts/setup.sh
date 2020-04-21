@@ -4,18 +4,49 @@
 # Initial set-up.
 #
 
+DEFAULT_MNEMONIC="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
+DEFAULT_PASSPHRASE="12345678"
+
+NODE_NAME=`hostname`
+CHAIN_ID=wireline
+DENOM=uwire
+
 WNS_CLI_CONFIG_DIR="${HOME}/.wire/wnscli"
 WNS_SERVER_CONFIG_DIR="${HOME}/.wire/wnsd"
 
 WNS_CLI_EXTRA_ARGS="--home ${WNS_CLI_CONFIG_DIR}"
 WNS_SERVER_EXTRA_ARGS="--home ${WNS_SERVER_CONFIG_DIR}"
 
-NODE_NAME=`hostname`
-CHAIN_ID=wireline
-DENOM=uwire
-
-DEFAULT_MNEMONIC="salad portion potato insect unknown exile lion soft layer evolve flavor hollow emerge celery ankle sponsor easy effort flush furnace life maximum rotate apple"
-DEFAULT_PASSPHRASE="12345678"
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --reset)
+    RESET=1
+    shift
+    ;;
+    --chain-id)
+    CHAIN_ID="$2"
+    shift
+    shift
+    ;;
+    --mnemonic)
+    MNEMONIC="$2"
+    shift
+    shift
+    ;;
+    --passphrase)
+    PASSPHRASE="$2"
+    shift
+    shift
+    ;;
+    *)
+    POSITIONAL+=("$1")
+    shift
+    ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
 
 function init_secrets ()
 {
@@ -41,7 +72,6 @@ function save_secrets ()
   echo "Root Account Mnemonic: ${MNEMONIC}" > ~/.wire/secrets
   echo "CLI Passphrase: ${PASSPHRASE}" >> ~/.wire/secrets
   echo "Wire CLI Keys:" >> ~/.wire/secrets
-  source ./scripts/env_localhost.sh --skip-bond-id
   wire keys generate --mnemonic="${MNEMONIC}" >> ~/.wire/secrets
 }
 
@@ -89,6 +119,10 @@ function init_root ()
 # Options
 #
 
+if [[ ! -z "${RESET}" ]]; then
+  reset
+fi
+
 # Test if installed already.
 if [[ -d "${WNS_SERVER_CONFIG_DIR}" ]]; then
   echo "Do you wish to RESET?"
@@ -107,5 +141,3 @@ init_node
 init_root
 
 save_secrets
-
-echo "OK"
