@@ -38,18 +38,33 @@ type Config struct {
 	Home                string
 	InitFromNode        bool
 	InitFromGenesisFile bool
+	Endpoint            string
 }
 
 // Context contains sync context info.
 type Context struct {
-	config   *Config
-	codec    *amino.Codec
-	client   *rpcclient.HTTP
+	config *Config
+	codec  *amino.Codec
+
+	// Primary RPC primaryNode, used for verification.
+	primaryNode *RPCNode
+
+	// Other RPC secondaryNodes, used for load distribution.
+	secondaryNodes map[string]*RPCNode
+
 	log      *logrus.Logger
 	verifier tmlite.Verifier
 	store    store.KVStore
 	cache    *cachekv.Store
 	keeper   *Keeper
+}
+
+// RPCNode is used to call an RPC endpoint and maintains basic stats.
+type RPCNode struct {
+	Address string          `json:"address"`
+	Client  *rpcclient.HTTP `json:"-"`
+	Calls   int64           `json:"calls"`
+	Errors  int64           `json:"errors"`
 }
 
 // NewContext creates a context object.
@@ -72,17 +87,28 @@ func NewContext(config *Config) *Context {
 	nodeAddress := config.NodeAddress
 
 	ctx := Context{
-		config: config,
-		codec:  codec,
-		store:  dbStore,
-		cache:  cacheStore,
-		log:    log,
+		config:         config,
+		codec:          codec,
+		store:          dbStore,
+		cache:          cacheStore,
+		log:            log,
+		secondaryNodes: make(map[string]*RPCNode),
 	}
 
 	ctx.keeper = NewKeeper(&ctx)
 
 	if nodeAddress != "" {
-		ctx.client = rpcclient.NewHTTP(nodeAddress, "/websocket")
+		ctx.primaryNode = &RPCNode{
+			Client:  rpcclient.NewHTTP(nodeAddress, "/websocket"),
+			Address: nodeAddress,
+			Calls:   0,
+			Errors:  0,
+		}
+
+		// Init secondary nodes, as they should have at least one entry.
+		// Don't assume endpoint will be passed for discovery of secondary nodes.
+		ctx.secondaryNodes[nodeAddress] = ctx.primaryNode
+
 		ctx.verifier = CreateVerifier(config)
 	}
 

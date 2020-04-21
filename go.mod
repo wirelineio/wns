@@ -12,6 +12,8 @@ require (
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/gorilla/mux v1.7.0
 	github.com/ipfs/go-cid v0.0.3
+	github.com/machinebox/graphql v0.2.2
+	github.com/matryer/is v1.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/multiformats/go-multihash v0.0.1

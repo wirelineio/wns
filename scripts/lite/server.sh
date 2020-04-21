@@ -45,7 +45,7 @@ function start_server ()
   rm -f "${LOG}"
 
   # Start the server.
-  nohup wnsd-lite start --gql-port "${GQL_SERVER_PORT}" --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" --node "${WNS_NODE_ADDRESS}" > "${LOG}" 2>&1 &
+  nohup wnsd-lite start --gql-port "${GQL_SERVER_PORT}" --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" --node "${WNS_NODE_ADDRESS}" --log-level debug > "${LOG}" 2>&1 &
 }
 
 function stop_server ()

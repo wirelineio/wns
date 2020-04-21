@@ -6,6 +6,8 @@ package sync
 
 import (
 	"fmt"
+	"math/rand"
+	"reflect"
 	"strings"
 
 	storeTypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -18,7 +20,8 @@ const statePrunedError = "proof is unexpectedly empty; ensure height has not bee
 
 // getCurrentHeight gets the current WNS block height.
 func (ctx *Context) getCurrentHeight() (int64, error) {
-	status, err := ctx.client.Status()
+	// Note: Always get from primary node.
+	status, err := ctx.primaryNode.Client.Status()
 	if err != nil {
 		return 0, err
 	}
@@ -38,6 +41,13 @@ func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset
 	return &changeset, nil
 }
 
+func (ctx *Context) getRandomRPCNode() *RPCNode {
+	nodes := ctx.secondaryNodes
+	keys := reflect.ValueOf(nodes).MapKeys()
+	address := keys[rand.Intn(len(keys))].Interface().(string)
+	return nodes[address]
+}
+
 func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
@@ -45,12 +55,17 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	}
 
 	path := "/store/nameservice/key"
-	res, err := ctx.client.ABCIQueryWithOptions(path, key, opts)
+	rpcNode := ctx.getRandomRPCNode()
+	rpcNode.Calls++
+	res, err := rpcNode.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
+		rpcNode.Errors++
 		return nil, err
 	}
 
 	if res.Response.IsErr() {
+		rpcNode.Errors++
+
 		// Check if state has been pruned.
 		if strings.Contains(res.Response.GetLog(), statePrunedError) {
 			ctx.log.Errorln("Error fetching pruned state. Re-init sync with a recent genesis.json OR connect to a node that doesn't prune state.")
@@ -82,8 +97,10 @@ func (ctx *Context) getStoreSubspace(subspace string, key []byte, height int64) 
 	opts := rpcclient.ABCIQueryOptions{Height: height}
 	path := fmt.Sprintf("/store/%s/subspace", subspace)
 
-	res, err := ctx.client.ABCIQueryWithOptions(path, key, opts)
+	ctx.primaryNode.Calls++
+	res, err := ctx.primaryNode.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
+		ctx.primaryNode.Errors++
 		return nil, err
 	}
 

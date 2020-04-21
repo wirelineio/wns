@@ -5,6 +5,7 @@
 package sync
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,7 +21,7 @@ const AggressiveSyncIntervalInMillis = 250
 const SyncIntervalInMillis = 5 * 1000
 
 // ErrorWaitDurationMillis is the wait duration in case of errors.
-const ErrorWaitDurationMillis = 5 * 1000
+const ErrorWaitDurationMillis = 1 * 1000
 
 // SyncLaggingMinHeightDiff is the min. difference in height to consider a lite node as lagging the full node.
 const SyncLaggingMinHeightDiff = 5
@@ -53,7 +54,16 @@ func Start(ctx *Context) {
 	syncStatus := ctx.keeper.GetStatusRecord()
 	lastSyncedHeight := syncStatus.LastSyncedHeight
 
+	var loopCounter int64 = 0
+
 	for {
+		loopCounter++
+		if loopCounter%10 == 0 {
+			// Log call/error stats on RPC nodes.
+			bytes, _ := json.Marshal(ctx.secondaryNodes)
+			ctx.log.Debugln(string(bytes))
+		}
+
 		chainCurrentHeight, err := ctx.getCurrentHeight()
 		if err != nil {
 			logErrorAndWait(ctx, err)
