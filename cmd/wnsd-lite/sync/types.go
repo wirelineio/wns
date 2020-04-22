@@ -6,6 +6,7 @@ package sync
 
 import (
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
@@ -52,6 +53,9 @@ type Context struct {
 
 	// Other RPC secondaryNodes, used for load distribution.
 	secondaryNodes map[string]*RPCNodeHandler
+
+	// Mutex to read/write to secondaryNodes map.
+	nodeLock sync.RWMutex
 
 	log      *logrus.Logger
 	verifier tmlite.Verifier

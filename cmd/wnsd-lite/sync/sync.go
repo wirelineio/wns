@@ -54,7 +54,7 @@ func Start(ctx *Context) {
 		ctx.log.Fatalln("Node not initialized, aborting.")
 	}
 
-	go dumpConnectionStats(ctx)
+	go dumpConnectionStatsOnTimer(ctx)
 
 	syncStatus := ctx.keeper.GetStatusRecord()
 	lastSyncedHeight := syncStatus.LastSyncedHeight
@@ -255,12 +255,18 @@ func initFromGenesisFile(ctx *Context, height int64) {
 	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
 }
 
-func dumpConnectionStats(ctx *Context) {
+func dumpConnectionStatsOnTimer(ctx *Context) {
 	for {
 		time.Sleep(DumpRPCNodeStatsFrequencyMillis * time.Millisecond)
-
-		// Log RPC node stats.
-		bytes, _ := json.Marshal(ctx.secondaryNodes)
-		ctx.log.Debugln(string(bytes))
+		dumpConnectionStats(ctx)
 	}
+}
+
+func dumpConnectionStats(ctx *Context) {
+	ctx.nodeLock.RLock()
+	defer ctx.nodeLock.RUnlock()
+
+	// Log RPC node stats.
+	bytes, _ := json.Marshal(ctx.secondaryNodes)
+	ctx.log.Debugln(string(bytes))
 }

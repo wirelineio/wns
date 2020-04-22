@@ -47,11 +47,16 @@ func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset
 }
 
 func (ctx *Context) getRandomRPCNodeHandler() *RPCNodeHandler {
-	// TODO(ashwin): Make this persistent. Intelligent selection of nodes (e.g. based on QoS).
+	ctx.nodeLock.RLock()
+	defer ctx.nodeLock.RUnlock()
+
+	// TODO(ashwin): Make address book persistent. Intelligent selection of nodes (e.g. based on QoS).
 	nodes := ctx.secondaryNodes
 	keys := reflect.ValueOf(nodes).MapKeys()
 	address := keys[rand.Intn(len(keys))].Interface().(string)
-	return nodes[address]
+	rpcNodeHandler := nodes[address]
+
+	return rpcNodeHandler
 }
 
 func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
