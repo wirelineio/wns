@@ -6,6 +6,7 @@ package sync
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -78,7 +79,9 @@ func Start(ctx *Context) {
 		}
 
 		if lastSyncedHeight > chainCurrentHeight {
-			ctx.log.Panicln("Last synced height cannot be greater than current chain height.")
+			// Maybe we've connected to a new primary node (after restart) and that isn't fully caught up, yet. Just wait.
+			logErrorAndWait(ctx, errors.New("last synced height greater than current chain height"))
+			continue
 		}
 
 		newSyncHeight := lastSyncedHeight + 1
