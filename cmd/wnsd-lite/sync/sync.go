@@ -33,7 +33,7 @@ const SyncLaggingMinHeightDiff = 5
 const DumpRPCNodeStatsFrequencyMillis = 60 * 1000
 
 // DiscoverRPCNodesFrequencyMillis controls frequency to discover new RPC endpoints.
-const DiscoverRPCNodesFrequencyMillis = 10 * 1000
+const DiscoverRPCNodesFrequencyMillis = 60 * 1000
 
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
@@ -315,7 +315,7 @@ func discoverRPCNodes(ctx *Context) {
 		return
 	}
 
-	ctx.log.Debugln("Discovered RPC endpoints:", rpcEndpoints)
+	ctx.log.Debugln("RPC endpoints:", rpcEndpoints)
 
 	ctx.nodeLock.Lock()
 	defer ctx.nodeLock.Unlock()

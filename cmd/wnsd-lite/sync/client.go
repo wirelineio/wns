@@ -5,17 +5,14 @@
 package sync
 
 import (
+	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	storeTypes "github.com/cosmos/cosmos-sdk/store/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"github.com/wirelineio/wns/x/nameservice"
 )
-
-// Special check for errors due to state pruning.
-const statePrunedError = "proof is unexpectedly empty; ensure height has not been pruned"
 
 // getCurrentHeight gets the current WNS block height.
 func (rpcNodeHandler *RPCNodeHandler) getCurrentHeight() (int64, error) {
@@ -63,21 +60,17 @@ func (rpcNodeHandler *RPCNodeHandler) getStoreValue(ctx *Context, key []byte, he
 
 	if res.Response.IsErr() {
 		rpcNodeHandler.Errors++
-
-		// Check if state has been pruned.
-		if strings.Contains(res.Response.GetLog(), statePrunedError) {
-			ctx.log.Errorln("Error fetching pruned state. Re-init sync with a recent genesis.json OR connect to a node that doesn't prune state.")
-		}
-
-		ctx.log.Panicln(res.Response)
+		return nil, fmt.Errorf("error fetching state: %s", res.Response.GetLog())
 	}
 
 	if res.Response.Height == 0 && res.Response.Value != nil {
-		ctx.log.Panicln("Invalid response height/value.")
+		rpcNodeHandler.Errors++
+		return nil, errors.New("invalid response height/value")
 	}
 
 	if res.Response.Height > 0 && res.Response.Height != height {
-		ctx.log.Panicln(fmt.Sprintf("Invalid response height: %d", res.Response.Height))
+		rpcNodeHandler.Errors++
+		return nil, fmt.Errorf("invalid response height: %d", res.Response.Height)
 	}
 
 	if res.Response.Height > 0 {
