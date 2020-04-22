@@ -43,6 +43,27 @@ type Config struct {
 	Endpoint            string
 }
 
+// RPCNodeHandler is used to call an RPC endpoint and maintains basic stats.
+type RPCNodeHandler struct {
+	Address      string          `json:"address"`
+	Client       *rpcclient.HTTP `json:"-"`
+	Calls        int64           `json:"calls"`
+	Errors       int64           `json:"errors"`
+	LastCalledAt time.Time       `json:"lastCalledAt"`
+}
+
+// NewRPCNodeHandler instantiates a new RPC node handler.
+func NewRPCNodeHandler(nodeAddress string) *RPCNodeHandler {
+	rpcNode := RPCNodeHandler{
+		Client:  rpcclient.NewHTTP(nodeAddress, "/websocket"),
+		Address: nodeAddress,
+		Calls:   0,
+		Errors:  0,
+	}
+
+	return &rpcNode
+}
+
 // Context contains sync context info.
 type Context struct {
 	config *Config
@@ -62,15 +83,6 @@ type Context struct {
 	store    store.KVStore
 	cache    *cachekv.Store
 	keeper   *Keeper
-}
-
-// RPCNodeHandler is used to call an RPC endpoint and maintains basic stats.
-type RPCNodeHandler struct {
-	Address      string          `json:"address"`
-	Client       *rpcclient.HTTP `json:"-"`
-	Calls        int64           `json:"calls"`
-	Errors       int64           `json:"errors"`
-	LastCalledAt time.Time       `json:"lastCalledAt"`
 }
 
 // NewContext creates a context object.
@@ -114,16 +126,4 @@ func NewContext(config *Config) *Context {
 	}
 
 	return &ctx
-}
-
-// NewRPCNodeHandler instantiates a new RPC node handler.
-func NewRPCNodeHandler(nodeAddress string) *RPCNodeHandler {
-	rpcNode := RPCNodeHandler{
-		Client:  rpcclient.NewHTTP(nodeAddress, "/websocket"),
-		Address: nodeAddress,
-		Calls:   0,
-		Errors:  0,
-	}
-
-	return &rpcNode
 }

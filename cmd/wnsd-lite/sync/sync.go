@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	nameservice "github.com/wirelineio/wns/x/nameservice"
@@ -71,8 +73,7 @@ func Start(ctx *Context) {
 	lastSyncedHeight := syncStatus.LastSyncedHeight
 
 	for {
-
-		chainCurrentHeight, err := ctx.getCurrentHeight()
+		chainCurrentHeight, err := ctx.primaryNode.getCurrentHeight()
 		if err != nil {
 			logErrorAndWait(ctx, err)
 			continue
@@ -91,7 +92,7 @@ func Start(ctx *Context) {
 			continue
 		}
 
-		err = ctx.syncAtHeight(newSyncHeight)
+		err = syncAtHeight(ctx, newSyncHeight)
 		if err != nil {
 			logErrorAndWait(ctx, err)
 			continue
@@ -111,10 +112,12 @@ func Start(ctx *Context) {
 }
 
 // syncAtHeight runs a sync cycle for the given height.
-func (ctx *Context) syncAtHeight(height int64) error {
-	ctx.log.Infoln("Syncing at height:", height)
+func syncAtHeight(ctx *Context, height int64) error {
+	rpcNodeHandler := getRandomRPCNodeHandler(ctx)
 
-	changeset, err := ctx.getBlockChangeset(height)
+	ctx.log.Infoln("Syncing from", rpcNodeHandler.Address, "at height:", height)
+
+	changeset, err := rpcNodeHandler.getBlockChangeset(ctx, height)
 	if err != nil {
 		return err
 	}
@@ -127,13 +130,13 @@ func (ctx *Context) syncAtHeight(height int64) error {
 	ctx.log.Debugln("Syncing changeset:", changeset)
 
 	// Sync records.
-	err = ctx.syncRecords(height, changeset.Records)
+	err = rpcNodeHandler.syncRecords(ctx, height, changeset.Records)
 	if err != nil {
 		return err
 	}
 
 	// Sync name records.
-	err = ctx.syncNameRecords(height, changeset.Names)
+	err = rpcNodeHandler.syncNameRecords(ctx, height, changeset.Names)
 	if err != nil {
 		return err
 	}
@@ -144,10 +147,10 @@ func (ctx *Context) syncAtHeight(height int64) error {
 	return nil
 }
 
-func (ctx *Context) syncRecords(height int64, records []nameservice.ID) error {
+func (rpcNodeHandler *RPCNodeHandler) syncRecords(ctx *Context, height int64, records []nameservice.ID) error {
 	for _, id := range records {
 		recordKey := nameservice.GetRecordIndexKey(id)
-		value, err := ctx.getStoreValue(recordKey, height)
+		value, err := rpcNodeHandler.getStoreValue(ctx, recordKey, height)
 		if err != nil {
 			return err
 		}
@@ -158,10 +161,10 @@ func (ctx *Context) syncRecords(height int64, records []nameservice.ID) error {
 	return nil
 }
 
-func (ctx *Context) syncNameRecords(height int64, names []string) error {
+func (rpcNodeHandler *RPCNodeHandler) syncNameRecords(ctx *Context, height int64, names []string) error {
 	for _, name := range names {
 		nameRecordKey := nameservice.GetNameRecordIndexKey(name)
-		value, err := ctx.getStoreValue(nameRecordKey, height)
+		value, err := rpcNodeHandler.getStoreValue(ctx, nameRecordKey, height)
 		if err != nil {
 			return err
 		}
@@ -190,7 +193,7 @@ func logErrorAndWait(ctx *Context, err error) {
 }
 
 func initFromNode(ctx *Context) {
-	height, err := ctx.getCurrentHeight()
+	height, err := ctx.primaryNode.getCurrentHeight()
 	if err != nil {
 		ctx.log.Fatalln("Error fetching current height:", err)
 	}
@@ -266,6 +269,19 @@ func initFromGenesisFile(ctx *Context, height int64) {
 
 	// Create sync status record.
 	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
+}
+
+func getRandomRPCNodeHandler(ctx *Context) *RPCNodeHandler {
+	ctx.nodeLock.RLock()
+	defer ctx.nodeLock.RUnlock()
+
+	// TODO(ashwin): Make address book persistent. Intelligent selection of nodes (e.g. based on QoS).
+	nodes := ctx.secondaryNodes
+	keys := reflect.ValueOf(nodes).MapKeys()
+	address := keys[rand.Intn(len(keys))].Interface().(string)
+	rpcNodeHandler := nodes[address]
+
+	return rpcNodeHandler
 }
 
 func dumpConnectionStatsOnTimer(ctx *Context) {

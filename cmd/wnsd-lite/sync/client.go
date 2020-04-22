@@ -6,8 +6,6 @@ package sync
 
 import (
 	"fmt"
-	"math/rand"
-	"reflect"
 	"strings"
 	"time"
 
@@ -20,22 +18,22 @@ import (
 const statePrunedError = "proof is unexpectedly empty; ensure height has not been pruned"
 
 // getCurrentHeight gets the current WNS block height.
-func (ctx *Context) getCurrentHeight() (int64, error) {
-	ctx.primaryNode.Calls++
-	ctx.primaryNode.LastCalledAt = time.Now().UTC()
+func (rpcNodeHandler *RPCNodeHandler) getCurrentHeight() (int64, error) {
+	rpcNodeHandler.Calls++
+	rpcNodeHandler.LastCalledAt = time.Now().UTC()
 
 	// Note: Always get from primary node.
-	status, err := ctx.primaryNode.Client.Status()
+	status, err := rpcNodeHandler.Client.Status()
 	if err != nil {
-		ctx.primaryNode.Errors++
+		rpcNodeHandler.Errors++
 		return 0, err
 	}
 
 	return status.SyncInfo.LatestBlockHeight, nil
 }
 
-func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset, error) {
-	value, err := ctx.getStoreValue(nameservice.GetBlockChangesetIndexKey(height), height)
+func (rpcNodeHandler *RPCNodeHandler) getBlockChangeset(ctx *Context, height int64) (*nameservice.BlockChangeset, error) {
+	value, err := rpcNodeHandler.getStoreValue(ctx, nameservice.GetBlockChangesetIndexKey(height), height)
 	if err != nil {
 		return nil, err
 	}
@@ -46,27 +44,13 @@ func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset
 	return &changeset, nil
 }
 
-func (ctx *Context) getRandomRPCNodeHandler() *RPCNodeHandler {
-	ctx.nodeLock.RLock()
-	defer ctx.nodeLock.RUnlock()
-
-	// TODO(ashwin): Make address book persistent. Intelligent selection of nodes (e.g. based on QoS).
-	nodes := ctx.secondaryNodes
-	keys := reflect.ValueOf(nodes).MapKeys()
-	address := keys[rand.Intn(len(keys))].Interface().(string)
-	rpcNodeHandler := nodes[address]
-
-	return rpcNodeHandler
-}
-
-func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
+func (rpcNodeHandler *RPCNodeHandler) getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
 		Prove:  true,
 	}
 
 	path := "/store/nameservice/key"
-	rpcNodeHandler := ctx.getRandomRPCNodeHandler()
 
 	rpcNodeHandler.Calls++
 	rpcNodeHandler.LastCalledAt = time.Now().UTC()
