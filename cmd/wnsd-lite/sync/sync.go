@@ -112,7 +112,7 @@ func Start(ctx *Context) {
 
 // syncAtHeight runs a sync cycle for the given height.
 func (ctx *Context) syncAtHeight(height int64) error {
-	ctx.log.Infoln("Syncing at height:", height, time.Now().UTC())
+	ctx.log.Infoln("Syncing at height:", height)
 
 	changeset, err := ctx.getBlockChangeset(height)
 	if err != nil {

@@ -4,6 +4,7 @@ LOG="/tmp/wns-lite.log"
 GQL_SERVER_PORT="9475"
 GQL_PLAYGROUND_API_BASE=""
 WNS_NODE_ADDRESS="tcp://localhost:26657"
+WNS_GQL_ENDPOINT=""
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -29,6 +30,15 @@ while [[ $# -gt 0 ]]; do
     shift
     shift
     ;;
+    --tail)
+    TAIL_LOGS=1
+    shift
+    ;;
+    --endpoint)
+    WNS_GQL_ENDPOINT="$2"
+    shift
+    shift
+    ;;
     *)
     POSITIONAL+=("$1")
     shift
@@ -45,7 +55,16 @@ function start_server ()
   rm -f "${LOG}"
 
   # Start the server.
-  nohup wnsd-lite start --gql-port "${GQL_SERVER_PORT}" --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" --node "${WNS_NODE_ADDRESS}" --log-level debug > "${LOG}" 2>&1 &
+  nohup wnsd-lite start \
+    --gql-port "${GQL_SERVER_PORT}" \
+    --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" \
+    --node "${WNS_NODE_ADDRESS}" \
+    --endpoint "${WNS_GQL_ENDPOINT}" \
+    --log-level debug > "${LOG}" 2>&1 &
+
+  if [[ ! -z "${TAIL_LOGS}" ]]; then
+    log
+  fi
 }
 
 function stop_server ()
