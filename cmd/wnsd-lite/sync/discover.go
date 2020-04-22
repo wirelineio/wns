@@ -35,7 +35,7 @@ type Response struct {
 }
 
 // DiscoverRPCEndpoints queries for WNS RPC endpoints.
-func DiscoverRPCEndpoints(ctx *Context, gqlEndpoint string) []string {
+func DiscoverRPCEndpoints(ctx *Context, gqlEndpoint string) ([]string, error) {
 	client := graphql.NewClient(gqlEndpoint)
 	req := graphql.NewRequest(query)
 	req.Header.Set("Cache-Control", "no-cache")
@@ -44,7 +44,7 @@ func DiscoverRPCEndpoints(ctx *Context, gqlEndpoint string) []string {
 	var response Response
 	if err := client.Run(gqlContext, req, &response); err != nil {
 		ctx.log.Errorln(err)
-		return []string{}
+		return nil, err
 	}
 
 	rpcEndpoints := []string{}
@@ -55,7 +55,7 @@ func DiscoverRPCEndpoints(ctx *Context, gqlEndpoint string) []string {
 				var data map[string]interface{}
 				err := json.Unmarshal([]byte(*kv.Value.String), &data)
 				if err != nil {
-					return []string{}
+					return nil, err
 				}
 
 				if server, ok := data["rpc"].(string); ok {
@@ -65,5 +65,5 @@ func DiscoverRPCEndpoints(ctx *Context, gqlEndpoint string) []string {
 		}
 	}
 
-	return rpcEndpoints
+	return rpcEndpoints, nil
 }

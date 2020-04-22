@@ -29,6 +29,9 @@ const SyncLaggingMinHeightDiff = 5
 // DumpRPCNodeStatsFrequencyMillis controls frequency to dump RPC node stats.
 const DumpRPCNodeStatsFrequencyMillis = 60 * 1000
 
+// DiscoverRPCNodesFrequencyMillis controls frequency to discover new RPC endpoints.
+const DiscoverRPCNodesFrequencyMillis = 10 * 1000
+
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
 	// If sync record exists, abort with error.
@@ -55,6 +58,13 @@ func Start(ctx *Context) {
 	}
 
 	go dumpConnectionStatsOnTimer(ctx)
+
+	if ctx.config.Endpoint != "" {
+		go discoverRPCNodesOnTimer(ctx)
+		ctx.log.Infoln("RPC endpoint discovery ON:", ctx.config.Endpoint)
+	} else {
+		ctx.log.Infoln("RPC endpoint discovery OFF.")
+	}
 
 	syncStatus := ctx.keeper.GetStatusRecord()
 	lastSyncedHeight := syncStatus.LastSyncedHeight
@@ -269,4 +279,33 @@ func dumpConnectionStats(ctx *Context) {
 	// Log RPC node stats.
 	bytes, _ := json.Marshal(ctx.secondaryNodes)
 	ctx.log.Debugln(string(bytes))
+}
+
+func discoverRPCNodesOnTimer(ctx *Context) {
+	for {
+		time.Sleep(DiscoverRPCNodesFrequencyMillis * time.Millisecond)
+		discoverRPCNodes(ctx)
+	}
+}
+
+// Discover new RPC nodes.
+func discoverRPCNodes(ctx *Context) {
+	rpcEndpoints, err := DiscoverRPCEndpoints(ctx, ctx.config.Endpoint)
+	if err != nil {
+		ctx.log.Errorln("Error discovering RPC endpoints", err)
+		return
+	}
+
+	ctx.log.Debugln("Discovered RPC endpoints:", rpcEndpoints)
+
+	ctx.nodeLock.Lock()
+	defer ctx.nodeLock.Unlock()
+
+	for _, rpcEndpoint := range rpcEndpoints {
+		if _, exists := ctx.secondaryNodes[rpcEndpoint]; !exists {
+			ctx.log.Infoln("Added new RPC endpoint:", rpcEndpoint)
+			rpcNodeHandler := NewRPCNodeHandler(rpcEndpoint)
+			ctx.secondaryNodes[rpcEndpoint] = rpcNodeHandler
+		}
+	}
 }
