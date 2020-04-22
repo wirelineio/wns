@@ -26,8 +26,8 @@ const ErrorWaitDurationMillis = 1 * 1000
 // SyncLaggingMinHeightDiff is the min. difference in height to consider a lite node as lagging the full node.
 const SyncLaggingMinHeightDiff = 5
 
-// DumpRPCNodeStatsFrequency controls frequency to dump RPC node stats (loop counter).
-const DumpRPCNodeStatsFrequency = 10
+// DumpRPCNodeStatsFrequencyMillis controls frequency to dump RPC node stats.
+const DumpRPCNodeStatsFrequencyMillis = 60 * 1000
 
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
@@ -54,18 +54,12 @@ func Start(ctx *Context) {
 		ctx.log.Fatalln("Node not initialized, aborting.")
 	}
 
+	go dumpConnectionStats(ctx)
+
 	syncStatus := ctx.keeper.GetStatusRecord()
 	lastSyncedHeight := syncStatus.LastSyncedHeight
 
-	var loopCounter int64 = 0
-
 	for {
-		loopCounter++
-		if loopCounter%DumpRPCNodeStatsFrequency == 0 {
-			// Log call/error stats on RPC nodes.
-			bytes, _ := json.Marshal(ctx.secondaryNodes)
-			ctx.log.Debugln(string(bytes))
-		}
 
 		chainCurrentHeight, err := ctx.getCurrentHeight()
 		if err != nil {
@@ -259,4 +253,14 @@ func initFromGenesisFile(ctx *Context, height int64) {
 
 	// Create sync status record.
 	ctx.keeper.SaveStatus(Status{LastSyncedHeight: height})
+}
+
+func dumpConnectionStats(ctx *Context) {
+	for {
+		time.Sleep(DumpRPCNodeStatsFrequencyMillis * time.Millisecond)
+
+		// Log RPC node stats.
+		bytes, _ := json.Marshal(ctx.secondaryNodes)
+		ctx.log.Debugln(string(bytes))
+	}
 }
