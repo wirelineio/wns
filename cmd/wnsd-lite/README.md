@@ -14,6 +14,22 @@ $ wnsd-lite help
 
 ### Initializing the Lite Node
 
+The lite node needs an upstream full-node to function. It connects to the `cosmos-sdk`/`tendermint` RPC endpoint on the full-node to pull state, with merkle proofs.
+
+To expose the RPC endpoint on a full-node outside the local host, edit `~/.wire/wnsd/config/config.toml` and set the `laddr` in the `[rpc]` section to a static IP or `0.0.0.0`. Ensure the RPC port (`26657` by default) isn't firewalled.
+
+For example:
+
+```text
+##### rpc server configuration options #####
+[rpc]
+
+# TCP or UNIX socket address for the RPC server to listen on
+laddr = "tcp://0.0.0.0:26657"
+```
+
+Initialize the lite node:
+
 ```bash
 $ ./scripts/lite/setup.sh --node "<WNS RPC ENDPOINT>"
 ```
