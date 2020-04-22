@@ -275,7 +275,7 @@ func getRandomRPCNodeHandler(ctx *Context) *RPCNodeHandler {
 	ctx.nodeLock.RLock()
 	defer ctx.nodeLock.RUnlock()
 
-	// TODO(ashwin): Make address book persistent. Intelligent selection of nodes (e.g. based on QoS).
+	// TODO(ashwin): Intelligent selection of nodes (e.g. based on QoS).
 	nodes := ctx.secondaryNodes
 	keys := reflect.ValueOf(nodes).MapKeys()
 	address := keys[rand.Intn(len(keys))].Interface().(string)
@@ -302,8 +302,8 @@ func dumpConnectionStats(ctx *Context) {
 
 func discoverRPCNodesOnTimer(ctx *Context) {
 	for {
-		time.Sleep(DiscoverRPCNodesFrequencyMillis * time.Millisecond)
 		discoverRPCNodes(ctx)
+		time.Sleep(DiscoverRPCNodesFrequencyMillis * time.Millisecond)
 	}
 }
 
