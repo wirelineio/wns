@@ -26,6 +26,9 @@ const ErrorWaitDurationMillis = 1 * 1000
 // SyncLaggingMinHeightDiff is the min. difference in height to consider a lite node as lagging the full node.
 const SyncLaggingMinHeightDiff = 5
 
+// DumpRPCNodeStatsFrequency controls frequency to dump RPC node stats (loop counter).
+const DumpRPCNodeStatsFrequency = 10
+
 // Init sets up the lite node.
 func Init(ctx *Context, height int64) {
 	// If sync record exists, abort with error.
@@ -58,7 +61,7 @@ func Start(ctx *Context) {
 
 	for {
 		loopCounter++
-		if loopCounter%10 == 0 {
+		if loopCounter%DumpRPCNodeStatsFrequency == 0 {
 			// Log call/error stats on RPC nodes.
 			bytes, _ := json.Marshal(ctx.secondaryNodes)
 			ctx.log.Debugln(string(bytes))

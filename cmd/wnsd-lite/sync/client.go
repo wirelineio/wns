@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"reflect"
 	"strings"
+	"time"
 
 	storeTypes "github.com/cosmos/cosmos-sdk/store/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
@@ -20,9 +21,13 @@ const statePrunedError = "proof is unexpectedly empty; ensure height has not bee
 
 // getCurrentHeight gets the current WNS block height.
 func (ctx *Context) getCurrentHeight() (int64, error) {
+	ctx.primaryNode.Calls++
+	ctx.primaryNode.LastCalledAt = time.Now().UTC()
+
 	// Note: Always get from primary node.
 	status, err := ctx.primaryNode.Client.Status()
 	if err != nil {
+		ctx.primaryNode.Errors++
 		return 0, err
 	}
 
@@ -41,7 +46,8 @@ func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset
 	return &changeset, nil
 }
 
-func (ctx *Context) getRandomRPCNode() *RPCNode {
+func (ctx *Context) getRandomRPCNodeHandler() *RPCNodeHandler {
+	// TODO(ashwin): Make this persistent. Intelligent selection of nodes (e.g. based on QoS).
 	nodes := ctx.secondaryNodes
 	keys := reflect.ValueOf(nodes).MapKeys()
 	address := keys[rand.Intn(len(keys))].Interface().(string)
@@ -55,16 +61,19 @@ func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
 	}
 
 	path := "/store/nameservice/key"
-	rpcNode := ctx.getRandomRPCNode()
-	rpcNode.Calls++
-	res, err := rpcNode.Client.ABCIQueryWithOptions(path, key, opts)
+	rpcNodeHandler := ctx.getRandomRPCNodeHandler()
+
+	rpcNodeHandler.Calls++
+	rpcNodeHandler.LastCalledAt = time.Now().UTC()
+
+	res, err := rpcNodeHandler.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
-		rpcNode.Errors++
+		rpcNodeHandler.Errors++
 		return nil, err
 	}
 
 	if res.Response.IsErr() {
-		rpcNode.Errors++
+		rpcNodeHandler.Errors++
 
 		// Check if state has been pruned.
 		if strings.Contains(res.Response.GetLog(), statePrunedError) {
@@ -98,6 +107,8 @@ func (ctx *Context) getStoreSubspace(subspace string, key []byte, height int64) 
 	path := fmt.Sprintf("/store/%s/subspace", subspace)
 
 	ctx.primaryNode.Calls++
+	ctx.primaryNode.LastCalledAt = time.Now().UTC()
+
 	res, err := ctx.primaryNode.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
 		ctx.primaryNode.Errors++
