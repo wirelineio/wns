@@ -5,29 +5,32 @@
 package sync
 
 import (
+	"errors"
 	"fmt"
-	"strings"
+	"time"
 
 	storeTypes "github.com/cosmos/cosmos-sdk/store/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"github.com/wirelineio/wns/x/nameservice"
 )
 
-// Special check for errors due to state pruning.
-const statePrunedError = "proof is unexpectedly empty; ensure height has not been pruned"
-
 // getCurrentHeight gets the current WNS block height.
-func (ctx *Context) getCurrentHeight() (int64, error) {
-	status, err := ctx.client.Status()
+func (rpcNodeHandler *RPCNodeHandler) getCurrentHeight() (int64, error) {
+	rpcNodeHandler.Calls++
+	rpcNodeHandler.LastCalledAt = time.Now().UTC()
+
+	// Note: Always get from primary node.
+	status, err := rpcNodeHandler.Client.Status()
 	if err != nil {
+		rpcNodeHandler.Errors++
 		return 0, err
 	}
 
 	return status.SyncInfo.LatestBlockHeight, nil
 }
 
-func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset, error) {
-	value, err := ctx.getStoreValue(nameservice.GetBlockChangesetIndexKey(height), height)
+func (rpcNodeHandler *RPCNodeHandler) getBlockChangeset(ctx *Context, height int64) (*nameservice.BlockChangeset, error) {
+	value, err := rpcNodeHandler.getStoreValue(ctx, nameservice.GetBlockChangesetIndexKey(height), height)
 	if err != nil {
 		return nil, err
 	}
@@ -38,33 +41,36 @@ func (ctx *Context) getBlockChangeset(height int64) (*nameservice.BlockChangeset
 	return &changeset, nil
 }
 
-func (ctx *Context) getStoreValue(key []byte, height int64) ([]byte, error) {
+func (rpcNodeHandler *RPCNodeHandler) getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
 		Prove:  true,
 	}
 
 	path := "/store/nameservice/key"
-	res, err := ctx.client.ABCIQueryWithOptions(path, key, opts)
+
+	rpcNodeHandler.Calls++
+	rpcNodeHandler.LastCalledAt = time.Now().UTC()
+
+	res, err := rpcNodeHandler.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
+		rpcNodeHandler.Errors++
 		return nil, err
 	}
 
 	if res.Response.IsErr() {
-		// Check if state has been pruned.
-		if strings.Contains(res.Response.GetLog(), statePrunedError) {
-			ctx.log.Errorln("Error fetching pruned state. Re-init sync with a recent genesis.json OR connect to a node that doesn't prune state.")
-		}
-
-		ctx.log.Panicln(res.Response)
+		rpcNodeHandler.Errors++
+		return nil, fmt.Errorf("error fetching state: %s", res.Response.GetLog())
 	}
 
 	if res.Response.Height == 0 && res.Response.Value != nil {
-		ctx.log.Panicln("Invalid response height/value.")
+		rpcNodeHandler.Errors++
+		return nil, errors.New("invalid response height/value")
 	}
 
 	if res.Response.Height > 0 && res.Response.Height != height {
-		ctx.log.Panicln(fmt.Sprintf("Invalid response height: %d", res.Response.Height))
+		rpcNodeHandler.Errors++
+		return nil, fmt.Errorf("invalid response height: %d", res.Response.Height)
 	}
 
 	if res.Response.Height > 0 {
@@ -82,8 +88,12 @@ func (ctx *Context) getStoreSubspace(subspace string, key []byte, height int64) 
 	opts := rpcclient.ABCIQueryOptions{Height: height}
 	path := fmt.Sprintf("/store/%s/subspace", subspace)
 
-	res, err := ctx.client.ABCIQueryWithOptions(path, key, opts)
+	ctx.primaryNode.Calls++
+	ctx.primaryNode.LastCalledAt = time.Now().UTC()
+
+	res, err := ctx.primaryNode.Client.ABCIQueryWithOptions(path, key, opts)
 	if err != nil {
+		ctx.primaryNode.Errors++
 		return nil, err
 	}
 

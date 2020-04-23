@@ -6,6 +6,8 @@ package sync
 
 import (
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
@@ -38,13 +40,44 @@ type Config struct {
 	Home                string
 	InitFromNode        bool
 	InitFromGenesisFile bool
+	Endpoint            string
+}
+
+// RPCNodeHandler is used to call an RPC endpoint and maintains basic stats.
+type RPCNodeHandler struct {
+	Address      string          `json:"address"`
+	Client       *rpcclient.HTTP `json:"-"`
+	Calls        int64           `json:"calls"`
+	Errors       int64           `json:"errors"`
+	LastCalledAt time.Time       `json:"lastCalledAt"`
+}
+
+// NewRPCNodeHandler instantiates a new RPC node handler.
+func NewRPCNodeHandler(nodeAddress string) *RPCNodeHandler {
+	rpcNode := RPCNodeHandler{
+		Client:  rpcclient.NewHTTP(nodeAddress, "/websocket"),
+		Address: nodeAddress,
+		Calls:   0,
+		Errors:  0,
+	}
+
+	return &rpcNode
 }
 
 // Context contains sync context info.
 type Context struct {
-	config   *Config
-	codec    *amino.Codec
-	client   *rpcclient.HTTP
+	config *Config
+	codec  *amino.Codec
+
+	// Primary RPC primaryNode, used for verification.
+	primaryNode *RPCNodeHandler
+
+	// Other RPC secondaryNodes, used for load distribution.
+	secondaryNodes map[string]*RPCNodeHandler
+
+	// Mutex to read/write to secondaryNodes map.
+	nodeLock sync.RWMutex
+
 	log      *logrus.Logger
 	verifier tmlite.Verifier
 	store    store.KVStore
@@ -72,17 +105,23 @@ func NewContext(config *Config) *Context {
 	nodeAddress := config.NodeAddress
 
 	ctx := Context{
-		config: config,
-		codec:  codec,
-		store:  dbStore,
-		cache:  cacheStore,
-		log:    log,
+		config:         config,
+		codec:          codec,
+		store:          dbStore,
+		cache:          cacheStore,
+		log:            log,
+		secondaryNodes: make(map[string]*RPCNodeHandler),
 	}
 
 	ctx.keeper = NewKeeper(&ctx)
 
 	if nodeAddress != "" {
-		ctx.client = rpcclient.NewHTTP(nodeAddress, "/websocket")
+		ctx.primaryNode = NewRPCNodeHandler(nodeAddress)
+
+		// Init secondary nodes, as they should have at least one entry.
+		// Don't assume --endpoint flag will be passed for discovery of secondary nodes.
+		ctx.secondaryNodes[nodeAddress] = ctx.primaryNode
+
 		ctx.verifier = CreateVerifier(config)
 	}
 
