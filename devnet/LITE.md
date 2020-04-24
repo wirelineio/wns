@@ -1,4 +1,4 @@
 # Devnet Lite Node Setup
 
-* Obtain a `genesis.json` for a recent height from a trusted [devnet](./CLIENT.md) node
+* Choose a trusted full-node for initialization of the lite node
 * Follow the lite node [setup instructions](../cmd/wnsd-lite/README.md)
