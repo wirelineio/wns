@@ -124,6 +124,7 @@ type Value struct {
 	Float     *float64   `json:"float"`
 	String    *string    `json:"string"`
 	Boolean   *bool      `json:"boolean"`
+	JSON      *string    `json:"json"`
 	Reference *Reference `json:"reference"`
 	Values    []*Value   `json:"values"`
 }
