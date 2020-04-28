@@ -160,6 +160,7 @@ type ComplexityRoot struct {
 		Float     func(childComplexity int) int
 		String    func(childComplexity int) int
 		Boolean   func(childComplexity int) int
+		JSON      func(childComplexity int) int
 		Reference func(childComplexity int) int
 		Values    func(childComplexity int) int
 	}
@@ -689,6 +690,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Value.Boolean(childComplexity), true
 
+	case "Value.JSON":
+		if e.complexity.Value.JSON == nil {
+			break
+		}
+
+		return e.complexity.Value.JSON(childComplexity), true
+
 	case "Value.Reference":
 		if e.complexity.Value.Reference == nil {
 			break
@@ -831,6 +839,7 @@ type Value {
   float:      Float
   string:     String
   boolean:    Boolean
+  json:       String
 
   reference:  Reference
 
@@ -2880,6 +2889,29 @@ func (ec *executionContext) _Value_boolean(ctx context.Context, field graphql.Co
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Value_json(ctx context.Context, field graphql.CollectedField, obj *Value) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Value",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JSON, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Value_reference(ctx context.Context, field graphql.CollectedField, obj *Value) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -4595,6 +4627,8 @@ func (ec *executionContext) _Value(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Value_string(ctx, field, obj)
 		case "boolean":
 			out.Values[i] = ec._Value_boolean(ctx, field, obj)
+		case "json":
+			out.Values[i] = ec._Value_json(ctx, field, obj)
 		case "reference":
 			out.Values[i] = ec._Value_reference(ctx, field, obj)
 		case "values":

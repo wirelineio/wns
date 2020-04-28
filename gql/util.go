@@ -149,7 +149,7 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 					}
 
 					jsonStr := string(bytes)
-					kvPair.Value.String = &jsonStr
+					kvPair.Value.JSON = &jsonStr
 				}
 			}
 		}
