@@ -7,6 +7,8 @@ package sync
 import (
 	"context"
 
+	"encoding/json"
+
 	"github.com/machinebox/graphql"
 	"github.com/wirelineio/wns/gql"
 )
@@ -20,7 +22,7 @@ const query = `
 		attributes {
 			key
 			value {
-				string
+				json
 			}
 		}
 	}
@@ -50,9 +52,16 @@ func DiscoverRPCEndpoints(ctx *Context, gqlEndpoint string) ([]string, error) {
 	for _, record := range response.Records {
 		for _, kv := range record.Attributes {
 			if kv.Key == "wns" {
-				var wnsData map[string]interface{}
-				if server, ok := wnsData["rpc"].(string); ok {
-					rpcEndpoints = append(rpcEndpoints, server)
+				var data map[string]interface{}
+				err := json.Unmarshal([]byte(*kv.Value.JSON), &data)
+				if err != nil {
+					return nil, err
+				}
+
+				if server, ok := data["rpc"].(string); ok {
+					if server != "" {
+						rpcEndpoints = append(rpcEndpoints, server)
+					}
 				}
 			}
 		}
