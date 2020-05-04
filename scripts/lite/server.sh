@@ -5,6 +5,8 @@ GQL_SERVER_PORT="9475"
 GQL_PLAYGROUND_API_BASE=""
 WNS_NODE_ADDRESS="tcp://localhost:26657"
 WNS_GQL_ENDPOINT=""
+RESET=
+SCRIPT_DIR="$(dirname "$0")"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -34,6 +36,10 @@ while [[ $# -gt 0 ]]; do
     TAIL_LOGS=1
     shift
     ;;
+    --reset)
+    RESET=1
+    shift
+    ;;
     --endpoint)
     WNS_GQL_ENDPOINT="$2"
     shift
@@ -53,6 +59,10 @@ function start_server ()
   set -x
 
   rm -f "${LOG}"
+
+  if [[ ! -z "${RESET}" ]]; then
+    /bin/bash "${SCRIPT_DIR}/setup.sh" --node "${WNS_NODE_ADDRESS}" --reset
+  fi
 
   # Start the server.
   nohup wnsd-lite start \
