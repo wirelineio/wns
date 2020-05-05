@@ -134,31 +134,77 @@ Example:
   }
 ```
 
-### Signal Server
+### Service
 
-* `signal.server` - Signal server endpoint.
+The `service` attribute must be included for a well-formed record, but `description` is optional.
 
-Example:
+If the service needs to define service-specific details (eg, endpoints, protocol version info), by convention they
+should be contained in a tag that matches the `service` (eg, `service: "ipfs", "ipfs": { ... }`).
 
+#### IPFS Example
 ```json
-  {
-    "id": "QmdmNwwZXteqfkmtWUWqyLo653nDhjHLtJ8JsoAiukDXWG",
-    "type": "wrn:xbox",
-    "name": "xbox2.bozemanpass",
+{
+  "record": {
+    "type": "wrn:service",
+    "name": "example.com/services/ipfs",
     "version": "0.0.1",
-    "owners": [
-      "3ffed5d3c00a0ddf30fa25f13c7bf18f57728b82"
-    ],
-    "bondId": "b2cc272774defbc134bfa4106d1bbe585ce91c138a6699c71cacb2d09911bf85",
-    "createTime": "2020-04-16T02:08:52.340592178",
-    "expiryTime": "2021-04-16T02:08:52.340592178",
-    "attributes": {
-      "name": "xbox2.bozemanpass",
-      "signal": {
-        "server": "xbox2.bozemanpass.net:4000"
-      },
-      "type": "wrn:xbox",
-      "version": "0.0.1"
+    "service": "ipfs",
+    "description": "Helpful description of this IPFS service.",
+    "ipfs": {
+        "protocol": "ipfs/0.1.0",
+        "addresses": [
+            "/ip4/192.168.123.56/tcp/4001/p2p/QmR5EQkRx4sLXV3vzgewe3UyXxZJXr4hwL2uwcTScrRtFE"
+        ]
     }
   }
+}
+```
+#### Signal Example
+```json
+{
+  "record": {
+    "type": "wrn:service",
+    "name": "example.com/services/signal",
+    "version": "0.0.1",
+    "service": "signal",
+    "description": "Helpful description of this signal service.",
+    "signal": {
+        "url": "wss://my.host.name/dxos/signal"
+    }
+  }
+}
+```
+
+#### STUN Example
+```json
+{
+  "record": {
+    "type": "wrn:service",
+    "name": "example.com/services/stun",
+    "version": "0.0.1",
+    "service": "stun",
+    "description": "Helpful description of this STUN service.",
+    "stun": {
+        "url": "stun:my.host.name:3478"
+    }
+  }
+}
+```
+
+#### TURN Example
+```json
+{
+  "record": {
+    "type": "wrn:service",
+    "name": "example.com/services/turn",
+    "version": "0.0.1",
+    "service": "turn",
+    "description": "Helpful description of this TURN service.",
+    "turn": {
+        "url": "turn:my.host.name:3478",
+        "username": "freeturn",
+        "password": "freeturn"
+    }
+  }
+}
 ```
