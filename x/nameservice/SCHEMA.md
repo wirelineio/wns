@@ -145,7 +145,7 @@ should be contained in a tag that matches the `service` (eg, `service: "ipfs", "
 ```json
 {
   "record": {
-    "type": "wrn:network:service",
+    "type": "wrn:service",
     "name": "example.com/services/ipfs",
     "version": "0.0.1",
     "service": "ipfs",
@@ -163,7 +163,7 @@ should be contained in a tag that matches the `service` (eg, `service: "ipfs", "
 ```json
 {
   "record": {
-    "type": "wrn:network:service",
+    "type": "wrn:service",
     "name": "example.com/services/signal",
     "version": "0.0.1",
     "service": "signal",
@@ -179,7 +179,7 @@ should be contained in a tag that matches the `service` (eg, `service: "ipfs", "
 ```json
 {
   "record": {
-    "type": "wrn:network:service",
+    "type": "wrn:service",
     "name": "example.com/services/stun",
     "version": "0.0.1",
     "service": "stun",
@@ -195,7 +195,7 @@ should be contained in a tag that matches the `service` (eg, `service: "ipfs", "
 ```json
 {
   "record": {
-    "type": "wrn:network:service",
+    "type": "wrn:service",
     "name": "example.com/services/turn",
     "version": "0.0.1",
     "service": "turn",
