@@ -77,13 +77,7 @@ $ ./scripts/server.sh stop
 
 ## WNS CLI
 
-`wire` CLI provides commands for publishing and querying WNS records.
-
-Setup environment variables for the CLI to work with the local node:
-
-```bash
-$ source ./scripts/env_localhost.sh
-```
+`wire` CLI provides [commands](https://github.com/wirelineio/incubator/blob/master/dxos/wns-cli/README.md) for publishing and querying WNS records.
 
 ## Tests
 
@@ -100,31 +94,6 @@ The GQL server is controlled using the following `wnsd` flags:
 
 See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
 
-
-## Testnets
-
-
-### Development
-
-Endpoints
-
-* GQL: https://wns-testnet.dev.wireline.ninja/graphql
-* GQL Playground: https://wns-testnet.dev.wireline.ninja/console
-* RPC: tcp://wns-testnet.dev.wireline.ninja:26657
-
-### Production
-
-Endpoints
-
-* GQL: https://wns-testnet.wireline.ninja/graphql
-* GQL Playground: https://wns-testnet.wireline.ninja/console
-* RPC: tcp://wns-testnet.wireline.ninja:26657
-
-Note: The `wnscli` command accepts a `--node` flag for the RPC endpoint.
-
-## Faucet
-
-See https://github.com/wirelineio/faucet#environments.
 
 ## References
 

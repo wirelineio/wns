@@ -60,6 +60,14 @@ To enable the lite node to periodically discover additional RPC endpoints from W
 $ ./scripts/lite/server.sh start --node "tcp://node1.dxos.network:26657" --endpoint "http://127.0.0.1:9475/api"
 ```
 
+Optionally, pass `--reset` to also do a full reset before starting the node.
+
+Example:
+
+```bash
+$ ./scripts/lite/server.sh start --node "tcp://node1.dxos.network:26657" --endpoint "http://127.0.0.1:9475/api" --reset
+```
+
 Test if the node is up:
 
 ```bash
