@@ -19,7 +19,8 @@ var LiteNodeDataPath = os.ExpandEnv("$HOME/.wire/wnsd-lite/data")
 
 // Resolver is the GQL query resolver.
 type Resolver struct {
-	Keeper *sync.Keeper
+	Keeper  *sync.Keeper
+	LogFile string
 }
 
 type queryResolver struct{ *Resolver }
@@ -67,6 +68,10 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*b
 	}
 
 	return gqlResponse, nil
+}
+
+func (r *queryResolver) GetLogs(ctx context.Context, count *int) ([]string, error) {
+	return baseGql.GetLogs(ctx, r.LogFile, count)
 }
 
 func (r *queryResolver) GetStatus(ctx context.Context) (*baseGql.Status, error) {

@@ -150,6 +150,13 @@ type Query {
   getStatus: Status!
 
   #
+  # Log API.
+  #
+  getLogs(
+    count: Int
+  ): [String!]
+
+  #
   # Wallet API.
   #
 

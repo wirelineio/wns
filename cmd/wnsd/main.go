@@ -76,6 +76,7 @@ func main() {
 	rootCmd.PersistentFlags().Bool("gql-playground", false, "Enable GQL playground.")
 	rootCmd.PersistentFlags().String("gql-playground-api-base", "", "GQL API base path to use in GQL playground.")
 	rootCmd.PersistentFlags().String("gql-port", "9473", "Port to use for the GQL server.")
+	rootCmd.PersistentFlags().String("log-file", "", "File to tail for GQL 'getLogs' API.")
 
 	// Invariant checking flag.
 	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, "inv-check-period", 0, "Assert registered invariants every N blocks.")

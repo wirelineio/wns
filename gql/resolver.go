@@ -8,7 +8,10 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"os/exec"
 	"strconv"
+	"strings"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -19,6 +22,12 @@ import (
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 )
+
+// DefaultLogNumLines is the number of log lines to tail by default.
+const DefaultLogNumLines = 50
+
+// MaxLogNumLines is the max number of log lines that can be tailed.
+const MaxLogNumLines = 1000
 
 // WnsTypeProtocol => Protocol.
 const WnsTypeProtocol = "wrn:protocol"
@@ -41,6 +50,7 @@ type Resolver struct {
 	codec         *codec.Codec
 	keeper        nameservice.Keeper
 	accountKeeper auth.AccountKeeper
+	logFile       string
 }
 
 // Account resolver.
@@ -168,6 +178,37 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*R
 	}
 
 	return gqlResponse, nil
+}
+
+// GetLogs tails the log file.
+func GetLogs(ctx context.Context, logFile string, count *int) ([]string, error) {
+	if logFile == "" {
+		return []string{}, nil
+	}
+
+	numLines := DefaultLogNumLines
+	if count != nil {
+		// Lower bound check.
+		if *count > 0 {
+			numLines = *count
+		}
+
+		// Upper bound check.
+		if *count > MaxLogNumLines {
+			numLines = MaxLogNumLines
+		}
+	}
+
+	bytes, err := exec.Command("tail", fmt.Sprintf("-%d", numLines), logFile).Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.Split(string(bytes), "\n"), nil
+}
+
+func (r *queryResolver) GetLogs(ctx context.Context, count *int) ([]string, error) {
+	return GetLogs(ctx, r.logFile, count)
 }
 
 func (r *queryResolver) GetStatus(ctx context.Context) (*Status, error) {

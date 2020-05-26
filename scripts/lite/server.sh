@@ -70,6 +70,7 @@ function start_server ()
     --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" \
     --node "${WNS_NODE_ADDRESS}" \
     --endpoint "${WNS_GQL_ENDPOINT}" \
+    --log-file "${LOG}" \
     --log-level debug > "${LOG}" 2>&1 &
 
   if [[ ! -z "${TAIL_LOGS}" ]]; then

@@ -33,7 +33,7 @@ function start_server ()
   rm -f ${LOG}
 
   # Start the server.
-  nohup wnsd start --gql-server --gql-playground --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" > ${LOG} 2>&1 &
+  nohup wnsd start --gql-server --gql-playground --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" --log-file "${LOG}" > ${LOG} 2>&1 &
 
   if [[ ! -z "${TAIL_LOGS}" ]]; then
     log
