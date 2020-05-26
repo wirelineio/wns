@@ -100,6 +100,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetStatus       func(childComplexity int) int
+		GetLogs         func(childComplexity int, count *int) int
 		GetAccounts     func(childComplexity int, addresses []string) int
 		GetBondsByIds   func(childComplexity int, ids []string) int
 		QueryBonds      func(childComplexity int, attributes []*KeyValueInput) int
@@ -179,6 +180,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetStatus(ctx context.Context) (*Status, error)
+	GetLogs(ctx context.Context, count *int) ([]string, error)
 	GetAccounts(ctx context.Context, addresses []string) ([]*Account, error)
 	GetBondsByIds(ctx context.Context, ids []string) ([]*Bond, error)
 	QueryBonds(ctx context.Context, attributes []*KeyValueInput) ([]*Bond, error)
@@ -386,6 +388,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetStatus(childComplexity), true
+
+	case "Query.GetLogs":
+		if e.complexity.Query.GetLogs == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getLogs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetLogs(childComplexity, args["count"].(*int)), true
 
 	case "Query.GetAccounts":
 		if e.complexity.Query.GetAccounts == nil {
@@ -966,6 +980,13 @@ type Query {
   getStatus: Status!
 
   #
+  # Log API.
+  #
+  getLogs(
+    count: Int
+  ): [String!]
+
+  #
   # Wallet API.
   #
 
@@ -1091,6 +1112,20 @@ func (ec *executionContext) field_Query_getBondsByIds_args(ctx context.Context, 
 		}
 	}
 	args["ids"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getLogs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["count"]; ok {
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["count"] = arg0
 	return args, nil
 }
 
@@ -1829,6 +1864,36 @@ func (ec *executionContext) _Query_getStatus(ctx context.Context, field graphql.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNStatus2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getLogs(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getLogs_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetLogs(rctx, args["count"].(*int))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚕstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getAccounts(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -4269,6 +4334,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					invalid = true
 				}
+				return res
+			})
+		case "getLogs":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getLogs(ctx, field)
 				return res
 			})
 		case "getAccounts":

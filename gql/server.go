@@ -34,6 +34,8 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, a
 		Debug:          true,
 	}).Handler)
 
+	logFile := viper.GetString("log-file")
+
 	if viper.GetBool("gql-playground") {
 		apiBase := viper.GetString("gql-playground-api-base")
 
@@ -48,6 +50,7 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, a
 		codec:         cdc,
 		keeper:        keeper,
 		accountKeeper: accountKeeper,
+		logFile:       logFile,
 	}})))
 
 	// TODO(ashwin): Kept for backward compat.
@@ -56,6 +59,7 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, a
 		codec:         cdc,
 		keeper:        keeper,
 		accountKeeper: accountKeeper,
+		logFile:       logFile,
 	}})))
 
 	err := http.ListenAndServe(":"+viper.GetString("gql-port"), router)
