@@ -92,7 +92,7 @@ The GQL server is controlled using the following `wnsd` flags:
 * `--gql-playground` - Enable GQL playground app (Available at http://localhost:9473/console).
 * `--gql-port` - Port to run the GQL server on (default 9473).
 
-See `wnsd/x/nameservice/gql/schema.graphql` for the GQL schema.
+See `wnsd/gql/schema.graphql` for the GQL schema.
 
 
 ## References
