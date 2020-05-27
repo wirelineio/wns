@@ -204,7 +204,7 @@ func GetLogs(ctx context.Context, logFile string, count *int) ([]string, error) 
 		return nil, err
 	}
 
-	return strings.Split(string(bytes), "\n"), nil
+	return strings.Split(strings.TrimSuffix(string(bytes), "\n"), "\n"), nil
 }
 
 func (r *queryResolver) GetLogs(ctx context.Context, count *int) ([]string, error) {
