@@ -4,12 +4,15 @@
   "description": "WNS schema",
   "license": "GPL-3.0",
   "files": [
-    "*.graphql"
+    "gql"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --passWithNoTests"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "jest": "^26.0.1"
   }
 }

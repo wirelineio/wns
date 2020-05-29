@@ -802,7 +802,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: "extensions.graphql", Input: `#
+	&ast.Source{Name: "wns-schema/gql/extensions.graphql", Input: `#
 # Copyright 2019 Wireline, Inc.
 #
 
@@ -828,7 +828,7 @@ type Protocol implements Extension {
   name:       String!
 }
 `},
-	&ast.Source{Name: "schema.graphql", Input: `#
+	&ast.Source{Name: "wns-schema/gql/schema.graphql", Input: `#
 # Copyright 2019 Wireline, Inc.
 #
 
