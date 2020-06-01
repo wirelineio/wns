@@ -37,8 +37,7 @@ jobs:
         mkdir -p build/bin/
         mv go/bin/* build/bin/
         cp -r scripts devnet README.md build/
-        zip -r dist/wns-linux-x64.zip build/
-        
+        (cd build && zip -r ../dist/wns-linux-x64.zip .)
 
         export GOARCH="arm64"
         rm -rf build
@@ -46,7 +45,7 @@ jobs:
         mkdir -p build/bin/
         mv go/bin/linux_arm64/* build/bin/
         cp -r scripts devnet README.md build/
-        zip -r dist/wns-linux-arm64.zip build/
+        (cd build && zip -r ../dist/wns-linux-arm64.zip .)
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
