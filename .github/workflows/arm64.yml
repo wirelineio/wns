@@ -1,4 +1,4 @@
-name: wns arm64
+name: wns multi-arch
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: Build arm64
+    name: Build
     runs-on: ubuntu-latest
     steps:
 
@@ -26,11 +26,14 @@ jobs:
       run: |
         mkdir -p `pwd`/go/bin
         export GOPATH="`pwd`/go"
-        export GOBIN="$GOPATH/bin"
         export PATH="$PATH:$GOBIN"
         export GO111MODULE=on
-        export GOARCH="arm64"
         export GOOS="linux"
+        
+        export GOARCH="amd64"
+        make install
+
+        export GOARCH="arm64"
         make install
     - name: Archive production artifacts
       uses: actions/upload-artifact@v1
