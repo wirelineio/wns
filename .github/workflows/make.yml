@@ -24,9 +24,14 @@ jobs:
 
     - name: make install
       run: |
-        mkdir -p $HOME/go/bin
-        export GOPATH="$HOME/go"
+        mkdir -p `pwd`/go/bin
+        export GOPATH="`pwd`/go"
         export GOBIN="$GOPATH/bin"
-        export PATH="$PATH:\$GOBIN"
+        export PATH="$PATH:$GOBIN"
         export GO111MODULE=on
         make install
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: wnsd-artifacts
+        path: go/bin
