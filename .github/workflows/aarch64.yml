@@ -1,0 +1,44 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build arm64
+    runs-on: ubuntu18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: uraimo/run-on-arch-action@v1.0.9
+        id: runcmd
+        with:
+          architecture: aarch64
+          distribution: ubuntu18.04
+          run: |
+            # Install Go
+            wget --quiet --output-document /tmp/golang.tgz.$$ https://dl.google.com/go/go1.13.8.linux-arm64.tar.gz
+            tar -zx \
+              -C /tmp \
+              -f /tmp/golang.tgz.$$
+            mkdir -p /usr/lib/go-1.13
+            rsync --archive --acls --xattrs /tmp/go/ /usr/lib/go-1.13
+            rm -rf /tmp/golang.tgz.$$
+            ln -s /usr/lib/go-1.13/bin/go /usr/local/bin
+            ln -s /usr/lib/go-1.13/bin/gofmt /usr/local/bin
+            
+            # Build WNS
+            mkdir -p `pwd`/go/bin
+            export GOPATH="`pwd`/go"
+            export GOBIN="$GOPATH/bin"
+            export PATH="$PATH:$GOBIN"
+            export GO111MODULE=on
+            make install
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: wnsd-artifacts
+          path: go/bin
