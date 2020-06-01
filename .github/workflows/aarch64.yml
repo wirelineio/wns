@@ -20,7 +20,8 @@ jobs:
           distribution: ubuntu18.04
           run: |
             # Install Go
-            apt install -y rsync build-essential
+            apt-get update
+            apt-get install -y wget rsync build-essential
             wget --quiet --output-document /tmp/golang.tgz.$$ https://dl.google.com/go/go1.13.8.linux-arm64.tar.gz
             tar -zx \
               -C /tmp \
