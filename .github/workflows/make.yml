@@ -1,4 +1,4 @@
-name: Go
+name: WNS multi-arch
 
 on:
   push:
@@ -26,12 +26,26 @@ jobs:
       run: |
         mkdir -p `pwd`/go/bin
         export GOPATH="`pwd`/go"
-        export GOBIN="$GOPATH/bin"
         export PATH="$PATH:$GOBIN"
         export GO111MODULE=on
+        export GOOS="linux"
+        
+        export GOARCH="amd64"
         make install
-    - name: Archive production artifacts
+        mkdir -p dist/x64
+        mv go/bin/* dist/x64/
+
+        export GOARCH="arm64"
+        make install
+        mkdir -p dist/arm64
+        mv go/bin/linux_arm64/* dist/arm64/
+    - name: Archive x64 artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: wnsd-artifacts
-        path: go/bin
+        name: wnsd-x64
+        path: dist/x64
+    - name: Archive arm64 artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: wnsd-arm64
+        path: dist/arm64
