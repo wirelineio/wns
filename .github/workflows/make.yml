@@ -55,12 +55,12 @@ jobs:
         echo "::set-output name=ipfs_linux_arm64::${HASH}"
         echo "wns-linux-arm64.zip: $HASH"
 
-        export GOOS="darwin"
+        export GOOS="macos"
         export GOARCH="amd64"
         rm -rf build
         make install
         mkdir -p build/bin/
-        mv go/bin/* build/bin/
+        mv go/bin/darwin_amd64/* build/bin/
         cp -r scripts devnet README.md build/
         (cd build && zip -r ../dist/wns-macos-x64.zip .)
         HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-macos-x64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
@@ -69,15 +69,15 @@ jobs:
     - name: Archive Linux x64 artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: wns-linux-x64.zip
+        name: wns-linux-x64
         path: dist/wns-linux-x64.zip
     - name: Archive Linux arm64 artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: wns-linux-arm64.zip
+        name: wns-linux-arm64
         path: dist/wns-linux-x64.zip
     - name: Archive MacOS x64 artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: wns-macos-x64.zip
+        name: wns-macos-x64
         path: dist/wns-macos-x64.zip
