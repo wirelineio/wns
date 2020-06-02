@@ -29,23 +29,38 @@ jobs:
         export PATH="$PATH:$GOBIN"
         export GO111MODULE=on
         export GOOS="linux"
+        mkdir dist
         
         export GOARCH="amd64"
+        rm -rf build
         make install
-        mkdir -p dist/x64
-        mv go/bin/* dist/x64/
+        mkdir -p build/bin/
+        mv go/bin/* build/bin/
+        cp -r scripts devnet README.md build/
+        (cd build && zip -r ../dist/wns-linux-x64.zip .)
+        HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-linux-x64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
+        echo "::set-output name=ipfs_x64::${HASH}"
+        
+        echo "$HASH"
 
         export GOARCH="arm64"
+        rm -rf build
         make install
-        mkdir -p dist/arm64
-        mv go/bin/linux_arm64/* dist/arm64/
+        mkdir -p build/bin/
+        mv go/bin/linux_arm64/* build/bin/
+        cp -r scripts devnet README.md build/
+        (cd build && zip -r ../dist/wns-linux-arm64.zip .)
+        HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-linux-arm64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
+        echo "::set-output name=ipfs_arm64::${HASH}"
+        
+        echo "$HASH"
     - name: Archive x64 artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: wnsd-x64
-        path: dist/x64
+        name: wns-linux-x64.zip
+        path: dist/wns-linux-x64.zip
     - name: Archive arm64 artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: wnsd-arm64
-        path: dist/arm64
+        name: wns-linux-arm64.zip
+        path: dist/wns-linux-x64.zip
