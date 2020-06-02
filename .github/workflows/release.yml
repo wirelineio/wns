@@ -55,7 +55,7 @@ jobs:
         echo "::set-output name=ipfs_linux_arm64::${HASH}"
         echo "wns-linux-arm64.zip: ${HASH}"
         
-        export GOOS="macos"
+        export GOOS="darwin"
         export GOARCH="amd64"
         rm -rf build
         make install
