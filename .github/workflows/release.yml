@@ -22,7 +22,7 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: make install
+    - name: make
       run: |
         mkdir -p `pwd`/go/bin
         export GOPATH="`pwd`/go"
@@ -38,6 +38,8 @@ jobs:
         mv go/bin/* build/bin/
         cp -r scripts devnet README.md build/
         (cd build && zip -r ../dist/wns-linux-x64.zip .)
+        HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-linux-x64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
+        echo "::set-output name=ipfs_x64::${HASH}"
 
         export GOARCH="arm64"
         rm -rf build
@@ -46,6 +48,8 @@ jobs:
         mv go/bin/linux_arm64/* build/bin/
         cp -r scripts devnet README.md build/
         (cd build && zip -r ../dist/wns-linux-arm64.zip .)
+        HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-linux-arm64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
+        echo "::set-output name=ipfs_arm64::${HASH}"
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -56,6 +60,9 @@ jobs:
         release_name: Release ${{ github.ref }}
         draft: false
         prerelease: false
+        body: |
+          wns-linux-x64.zip: ${{ steps.make.outputs.ipfs_x64 }}
+          wns-linux-arm64.zip: ${{ steps.make.outputs.ipfs_arm64 }}
     - name: Upload Release Asset x64
       id: upload-release-asset-x64 
       uses: actions/upload-release-asset@v1
