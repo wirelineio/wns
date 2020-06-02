@@ -29,9 +29,9 @@ jobs:
         export GOPATH="`pwd`/go"
         export PATH="$PATH:$GOBIN"
         export GO111MODULE=on
-        export GOOS="linux"
         mkdir dist
-        
+
+        export GOOS="linux"
         export GOARCH="amd64"
         rm -rf build
         make install
@@ -40,9 +40,10 @@ jobs:
         cp -r scripts devnet README.md build/
         (cd build && zip -r ../dist/wns-linux-x64.zip .)
         HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-linux-x64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
-        echo "::set-output name=ipfs_x64::${HASH}"
+        echo "::set-output name=ipfs_linux_x64::${HASH}"
         echo "wns-linux-x64.zip ${HASH}"
 
+        export GOOS="linux"
         export GOARCH="arm64"
         rm -rf build
         make install
@@ -51,8 +52,21 @@ jobs:
         cp -r scripts devnet README.md build/
         (cd build && zip -r ../dist/wns-linux-arm64.zip .)
         HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-linux-arm64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
-        echo "::set-output name=ipfs_arm64::${HASH}"
+        echo "::set-output name=ipfs_linux_arm64::${HASH}"
         echo "wns-linux-arm64.zip: ${HASH}"
+        
+        export GOOS="macos"
+        export GOARCH="amd64"
+        rm -rf build
+        make install
+        mkdir -p build/bin/
+        mv go/bin/darwin_amd64/* build/bin/
+        cp -r scripts devnet README.md build/
+        (cd build && zip -r ../dist/wns-macos-x64.zip .)
+        HASH=$(curl -s -D - -XPOST --data-binary @./dist/wns-macos-x64.zip https://signal1.dxos.network/ipfs/dxos/gateway/ | grep '^Ipfs-Hash' | awk '{ print $2 }')
+        echo "::set-output name=ipfs_macos_x64::${HASH}"
+        echo "wns-macos-x64.zip: $HASH"
+        
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -64,10 +78,12 @@ jobs:
         draft: false
         prerelease: false
         body: |
-          wns-linux-x64.zip: ${{ steps.make.outputs.ipfs_x64 }}
-          wns-linux-arm64.zip: ${{ steps.make.outputs.ipfs_arm64 }}
-    - name: Upload Release Asset x64
-      id: upload-release-asset-x64 
+          wns-linux-x64.zip: ${{ steps.make.outputs.ipfs_linux_x64 }}
+          wns-linux-arm64.zip: ${{ steps.make.outputs.ipfs_linux_arm64 }}
+          wns-macos-x64.zip: ${{ steps.make.outputs.ipfs_macos_x64 }}
+          
+    - name: Upload Release Asset Linux x64
+      id: upload-release-asset-linux-x64 
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,8 +93,8 @@ jobs:
         asset_name: wns-linux-x64.zip
         asset_content_type: application/zip
 
-    - name: Upload Release Asset arm64
-      id: upload-release-asset-arm64
+    - name: Upload Release Asset Linux arm64
+      id: upload-release-asset-linux-arm64
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -86,4 +102,15 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         asset_path: ./dist/wns-linux-arm64.zip
         asset_name: wns-linux-arm64.zip
+        asset_content_type: application/zip
+
+    - name: Upload Release Asset MacOS x64
+      id: upload-release-asset-macos-x64
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./dist/wns-macos-x64.zip
+        asset_name: wns-macos-x64.zip
         asset_content_type: application/zip
