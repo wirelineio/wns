@@ -169,7 +169,8 @@ should be contained in a tag that matches the `service` (eg, `service: "ipfs", "
     "service": "signal",
     "description": "Helpful description of this signal service.",
     "signal": {
-        "url": "wss://my.host.name/dxos/signal"
+        "url": "wss://my.host.name/dxos/signal",
+        "bootstrap": "my.host.name:4000"
     }
   }
 }
