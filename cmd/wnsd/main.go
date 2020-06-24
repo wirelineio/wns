@@ -93,6 +93,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 	opts := []func(*baseApp.BaseApp){}
 	opts = append(opts, getPruningStrategyOption(logger))
 	opts = append(opts, getHaltHeightOption(logger))
+	opts = append(opts, getMinGasPrices(logger))
 
 	return app.NewNameServiceApp(logger, db, invCheckPeriod, true, opts...)
 }
@@ -139,4 +140,11 @@ func getHaltHeightOption(logger log.Logger) func(*baseApp.BaseApp) {
 	logger.Info(fmt.Sprintf("Halt height: %d", haltHeight))
 
 	return baseApp.SetHaltHeight(uint64(haltHeight))
+}
+
+func getMinGasPrices(logger log.Logger) func(*baseApp.BaseApp) {
+	minGasPrices := viper.GetString("minimum-gas-prices")
+	logger.Info(fmt.Sprintf("Minimum gas prices: %s", minGasPrices))
+
+	return baseApp.SetMinGasPrices(minGasPrices)
 }
