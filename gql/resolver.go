@@ -7,6 +7,7 @@ package gql
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -110,9 +111,10 @@ func (r *mutationResolver) Submit(ctx context.Context, tx string) (*string, erro
 		return nil, err
 	}
 
-	txHash := res.Hash.String()
+	jsonBytes, err := json.MarshalIndent(res, "", "  ")
+	jsonResponse := string(jsonBytes)
 
-	return &txHash, nil
+	return &jsonResponse, nil
 }
 
 type queryResolver struct{ *Resolver }
