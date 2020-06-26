@@ -15,6 +15,7 @@ import (
 // NewHandler returns a handler for "bond" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case types.MsgCreateBond:
 			return handleMsgCreateBond(ctx, keeper, msg)
@@ -83,7 +84,10 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 	// Save bond in store.
 	keeper.SaveBond(ctx, bond)
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(bond.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle handleMsgRefillBond.
