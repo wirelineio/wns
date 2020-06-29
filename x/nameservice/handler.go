@@ -19,6 +19,7 @@ import (
 // NewHandler returns a handler for "nameservice" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case types.MsgSetRecord:
 			return handleMsgSetRecord(ctx, keeper, msg)
@@ -52,7 +53,10 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 
 	if exists := keeper.HasRecord(ctx, record.ID); exists {
 		// Immutable record already exists. No-op.
-		return sdk.Result{}
+		return sdk.Result{
+			Data:   []byte(record.ID),
+			Events: ctx.EventManager().Events(),
+		}
 	}
 
 	if exists := keeper.HasNameRecord(ctx, record.WRN()); exists {
@@ -93,7 +97,10 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		return sdkErr.Result()
 	}
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(record.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle MsgRenewRecord.
@@ -113,7 +120,10 @@ func handleMsgRenewRecord(ctx sdk.Context, keeper Keeper, msg types.MsgRenewReco
 		return err.Result()
 	}
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(record.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenewal bool) sdk.Error {
@@ -168,7 +178,7 @@ func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenew
 
 // Handle MsgClearRecords.
 func handleMsgClearRecords(ctx sdk.Context, keeper Keeper, msg types.MsgClearRecords) sdk.Result {
-	keeper.ClearRecords(ctx)
+	// keeper.ClearRecords(ctx)
 
 	return sdk.Result{}
 }
@@ -205,7 +215,10 @@ func handleMsgAssociateBond(ctx sdk.Context, keeper Keeper, msg types.MsgAssocia
 		keeper.InsertRecordExpiryQueue(ctx, record)
 	}
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(record.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle MsgDissociateBond.
@@ -233,7 +246,10 @@ func handleMsgDissociateBond(ctx sdk.Context, keeper Keeper, msg types.MsgDissoc
 	keeper.PutRecord(ctx, record)
 	keeper.RemoveBondToRecordIndexEntry(ctx, bondID, record.ID)
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(record.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle MsgDissociateRecords.
@@ -258,7 +274,10 @@ func handleMsgDissociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgDis
 		keeper.RemoveBondToRecordIndexEntry(ctx, msg.BondID, record.ID)
 	}
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(bond.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle MsgReassociateRecords.
@@ -299,5 +318,8 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 		}
 	}
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(newBond.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
