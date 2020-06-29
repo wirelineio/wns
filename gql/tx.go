@@ -48,7 +48,7 @@ func broadcastTx(r *mutationResolver, stdTx *auth.StdTx) (*ctypes.ResultBroadcas
 	}
 
 	if res.DeliverTx.IsErr() {
-		errBytes, _ := res.CheckTx.MarshalJSON()
+		errBytes, _ := res.DeliverTx.MarshalJSON()
 		return nil, errors.New(string(errBytes))
 	}
 

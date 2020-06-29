@@ -128,7 +128,10 @@ func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond
 	bond.Balance = updatedBalance
 	keeper.SaveBond(ctx, bond)
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(bond.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle handleMsgWithdrawBond.
@@ -159,7 +162,10 @@ func handleMsgWithdrawBond(ctx sdk.Context, keeper Keeper, msg types.MsgWithdraw
 	bond.Balance = updatedBalance
 	keeper.SaveBond(ctx, bond)
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(bond.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle handleMsgCancelBond.
@@ -188,11 +194,15 @@ func handleMsgCancelBond(ctx sdk.Context, keeper Keeper, msg types.MsgCancelBond
 
 	keeper.DeleteBond(ctx, bond)
 
-	return sdk.Result{}
+	return sdk.Result{
+		Data:   []byte(bond.ID),
+		Events: ctx.EventManager().Events(),
+	}
 }
 
 // Handle handleMsgClear.
 func handleMsgClear(ctx sdk.Context, keeper Keeper, msg types.MsgClear) sdk.Result {
-	keeper.Clear(ctx)
+	// keeper.Clear(ctx)
+
 	return sdk.Result{}
 }
