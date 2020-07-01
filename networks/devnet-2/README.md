@@ -22,5 +22,3 @@ $ wnsd gentx --name validator --amount 10000000000000uwire --output-document <NA
 ```
 
 Commit the generated file to `wns/networks/devnet-2/gentx` folder and push the changes to `feature-mechanisms` branch.
-
-
