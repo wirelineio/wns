@@ -1,0 +1,45 @@
+{
+  "type": "cosmos-sdk/StdTx",
+  "value": {
+    "msg": [
+      {
+        "type": "cosmos-sdk/MsgCreateValidator",
+        "value": {
+          "description": {
+            "moniker": "Ashwins-MacBook-Pro-2.local",
+            "identity": "",
+            "website": "",
+            "details": ""
+          },
+          "commission": {
+            "rate": "0.100000000000000000",
+            "max_rate": "0.200000000000000000",
+            "max_change_rate": "0.010000000000000000"
+          },
+          "min_self_delegation": "1",
+          "delegator_address": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
+          "validator_address": "cosmosvaloper1wh8vvd0ymc5nt37h29z8kk2g2ays45ct05g6fx",
+          "pubkey": "cosmosvalconspub1zcjduepqhkyk26lk846mle7w2p8x4f0jc8dl3szv2sj9ez8psmwra0uypcysn3vpf2",
+          "value": {
+            "denom": "uwire",
+            "amount": "10000000000000"
+          }
+        }
+      }
+    ],
+    "fee": {
+      "amount": [],
+      "gas": "200000"
+    },
+    "signatures": [
+      {
+        "pub_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AurRKtKcUyNksve1ZVgkmYQPz0WlHxZUI4UHKWH032LY"
+        },
+        "signature": "H3jE4HHooqLZMKapEBf1BcvH8RKtdq1J/uHSfeD2O3wD2lijVq+QNSvGVNQ4yO2aY2Cov33GhgzZj81WYmeiuQ=="
+      }
+    ],
+    "memo": "83c573152b52c9e5f2f59ce065c25e3a80af3c68@192.168.0.15:26656"
+  }
+}
