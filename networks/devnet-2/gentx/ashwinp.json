@@ -6,7 +6,7 @@
         "type": "cosmos-sdk/MsgCreateValidator",
         "value": {
           "description": {
-            "moniker": "Ashwins-MacBook-Pro-2.local",
+            "moniker": "ashwinp",
             "identity": "",
             "website": "",
             "details": ""
@@ -17,9 +17,9 @@
             "max_change_rate": "0.010000000000000000"
           },
           "min_self_delegation": "1",
-          "delegator_address": "cosmos1jrljr4th47ry66u33uerdq9rg44qd6jn8rfmkd",
-          "validator_address": "cosmosvaloper1jrljr4th47ry66u33uerdq9rg44qd6jnzhaw67",
-          "pubkey": "cosmosvalconspub1zcjduepqdj6fh2ayfz4vg70hgjsas46u9nuukadr9v75unj4x3arahyv8gxqlwjjx7",
+          "delegator_address": "cosmos1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lfd8n99",
+          "validator_address": "cosmosvaloper1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lvenxfk",
+          "pubkey": "cosmosvalconspub1zcjduepqcvt9fxtyygrdl3vl7pxklnu28lzpsmcdtstfhyfcptz2prynwnysl4gluk",
           "value": {
             "denom": "uwire",
             "amount": "10000000000000"
@@ -35,11 +35,11 @@
       {
         "pub_key": {
           "type": "tendermint/PubKeySecp256k1",
-          "value": "Aiy8kQ09xYwnykos6OxrbgquEt+mt0XMqWLSbnUMEhxY"
+          "value": "AjDes/ZYMhVldaVUdfEraLw5QY4rVYK0UWL/I5a5lgrG"
         },
-        "signature": "cfP3Wf66ywkxSiH7wAL4/zO2c4DrbIe0n2U5u9EBbod3ljTx3XwYRqRRgj3xCDA7oTfk6wPFnq0SODYWNnhnng=="
+        "signature": "51Ixzx2aD0LL85T8eZc9ZyTyHnN+BaNigdpzP9KBmd5pbEWOiQD0J36kbfTLAOP49xxT9B3cNQx3uUA+k/pa2w=="
       }
     ],
-    "memo": "e42888e76f1d3cf2465e8b65e7cdae40b005b050@192.168.0.15:26656"
+    "memo": "6518811b955a7ab6f007eea44b18f91e5ccda1e8@192.168.0.15:26656"
   }
 }
