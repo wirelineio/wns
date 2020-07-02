@@ -30,6 +30,11 @@ while [[ $# -gt 0 ]]; do
     shift
     shift
     ;;
+    --node-name)
+    NODE_NAME="$2"
+    shift
+    shift
+    ;;
     --mnemonic)
     MNEMONIC="$2"
     shift
