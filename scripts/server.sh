@@ -52,6 +52,8 @@ function log ()
   echo "Log file: ${LOG}"
   echo
 
+  sleep 5
+
   tail -f ${LOG}
 }
 
