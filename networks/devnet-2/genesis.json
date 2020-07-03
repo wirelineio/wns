@@ -1992,6 +1992,46 @@
         "original_vesting": [],
         "sequence_number": "0",
         "start_time": "0"
+      },
+      {
+        "address": "cosmos1ueatyeckazxkwnc50eh6xm3d9tjuwvwkgm9yne",
+        "coins": [
+          {
+            "denom": "uwire",
+            "amount": "100000000000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
+      },
+      {
+        "address": "cosmos12cmnfy2ulu2e93x38wvg3vdgfurs37xttu384d",
+        "coins": [
+          {
+            "denom": "uwire",
+            "amount": "100000000000000"
+          }
+        ],
+        "sequence_number": "0",
+        "account_number": "0",
+        "original_vesting": [],
+        "delegated_free": [],
+        "delegated_vesting": [],
+        "start_time": "0",
+        "end_time": "0",
+        "module_name": "",
+        "module_permissions": [
+          ""
+        ]
       }
     ]
   }
