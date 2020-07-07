@@ -6,7 +6,9 @@ package nameservice
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cryptoAmino "github.com/tendermint/tendermint/crypto/encoding/amino"
@@ -22,6 +24,10 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.MsgSetRecord:
 			return handleMsgSetRecord(ctx, keeper, msg)
+		case types.MsgReserveName:
+			return handleMsgReserveName(ctx, keeper, msg)
+		case types.MsgSetName:
+			return handleMsgSetName(ctx, keeper, msg)
 		case types.MsgAssociateBond:
 			return handleMsgAssociateBond(ctx, keeper, msg)
 		case types.MsgDissociateBond:
@@ -305,6 +311,45 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 
 	return sdk.Result{
 		Data:   []byte(newBond.ID),
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgReserveName.
+func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveName) sdk.Result {
+	wrn := msg.Name
+	if !strings.HasPrefix(wrn, "wrn://") {
+		wrn = fmt.Sprintf("wrn://%s", wrn)
+	}
+
+	parsedWRN, err := url.Parse(wrn)
+	if err != nil {
+		return sdk.ErrInternal("Invalid name.").Result()
+	}
+
+	if fmt.Sprintf("wrn://%s", parsedWRN.Host) != wrn {
+		return sdk.ErrInternal("Invalid name (should be of the form 'wrn://<name>').").Result()
+	}
+
+	// Check if name already reserved.
+	if keeper.HasNameAuthority(ctx, wrn) {
+		return sdk.ErrInternal("Name already exists.").Result()
+	}
+
+	// Reserve name with signer as owner.
+	keeper.SetNameRecord(ctx, wrn, NameRecord{Height: ctx.BlockHeight(), Owner: msg.Signer.String()})
+
+	return sdk.Result{
+		Data:   []byte(wrn),
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgSetName.
+func handleMsgSetName(ctx sdk.Context, keeper Keeper, msg types.MsgSetName) sdk.Result {
+
+	return sdk.Result{
+		Data:   []byte(msg.WRN),
 		Events: ctx.EventManager().Events(),
 	}
 }

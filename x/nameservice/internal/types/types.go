@@ -202,8 +202,17 @@ func (payload *Payload) ToPayloadObj() PayloadObj {
 
 // NameRecord is a naming record entry for a WRN.
 type NameRecord struct {
-	ID      ID     `json:"id"`
+	// Target Record ID. Empty ID represents root name/authority.
+	ID ID `json:"id"`
+
+	// TODO(ashwin): Remove.
 	Version string `json:"version"`
+
+	// Namespace owner.
+	Owner string `json:"owner"`
+
+	// Block height at which name record was created.
+	Height int64 `json:"height"`
 }
 
 // BlockChangeset is a changeset corresponding to a block.

@@ -36,6 +36,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 	nameserviceTxCmd.AddCommand(client.PostCommands(
 		GetCmdSetResource(cdc),
+		GetCmdReserveName(cdc),
 		GetCmdClearResources(cdc),
 		GetCmdAssociateBond(cdc),
 		GetCmdDissociateBond(cdc),
@@ -79,6 +80,30 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("sign-only", false, "Only sign the transaction payload.")
+
+	return cmd
+}
+
+// GetCmdReserveName is the CLI command for reserving a name.
+func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reserve-name [name]",
+		Short: "Reserve name.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgReserveName(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 
 	return cmd
 }
