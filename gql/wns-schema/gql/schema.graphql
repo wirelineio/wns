@@ -56,11 +56,6 @@ input KeyValueInput {
   value:      ValueInput!
 }
 
-# Extensions define additional properties for an entity in the graph database.
-interface Extension {
-  name:       String!
-}
-
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
@@ -75,7 +70,6 @@ type Record {
   owners:     [String]!       # Addresses of record owners.
   attributes: [KeyValue]      # Record attributes.
   references: [Record]        # Record references.
-  extension:  Extension       # Extension.
 }
 
 # Mutations require payment in coins (e.g. 100wire).

@@ -316,30 +316,6 @@ type bestMatch struct {
 	record  *nameservice.Record
 }
 
-// Only return the latest version of each record.
-func GetLatestVersions(records []*nameservice.Record) []*nameservice.Record {
-	baseWrnBestMatch := make(map[string]bestMatch)
-	for _, record := range records {
-		baseWrn := record.BaseWRN()
-		recordVersion, _ := semver.NewVersion(record.Version())
-
-		currentBestMatch, exists := baseWrnBestMatch[baseWrn]
-		if !exists || recordVersion.GreaterThan(currentBestMatch.version) {
-			// Update current best match.
-			baseWrnBestMatch[baseWrn] = bestMatch{recordVersion, record}
-		}
-	}
-
-	var matches = make([]*nameservice.Record, len(baseWrnBestMatch))
-	var index int
-	for _, match := range baseWrnBestMatch {
-		matches[index] = match.record
-		index++
-	}
-
-	return matches
-}
-
 func getGQLCoins(coins sdk.Coins) []Coin {
 	gqlCoins := make([]Coin, len(coins))
 	for index, coin := range coins {

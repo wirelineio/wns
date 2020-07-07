@@ -16,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
-	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
@@ -440,32 +439,6 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 
 		// Try to renew the record by taking rent.
 		k.TryTakeRecordRent(ctx, record)
-	}
-}
-
-// ProcessNameRecords creates name records.
-func (k Keeper) ProcessNameRecords(ctx sdk.Context, record types.Record) {
-	k.SetNameRecord(ctx, record.WRN(), record.ToNameRecord())
-	k.MaybeUpdateBaseNameRecord(ctx, record)
-}
-
-// MaybeUpdateBaseNameRecord updates the base name record if required.
-func (k Keeper) MaybeUpdateBaseNameRecord(ctx sdk.Context, record types.Record) {
-	if !k.HasNameRecord(ctx, record.BaseWRN()) {
-		// Create base name record.
-		k.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
-		return
-	}
-
-	// Get current base record (which will have current latest version).
-	baseNameRecord := k.GetNameRecord(ctx, record.BaseWRN())
-	latestRecord := k.GetRecord(ctx, baseNameRecord.ID)
-
-	latestVersion := helpers.GetSemver(latestRecord.Version())
-	createdVersion := helpers.GetSemver(record.Version())
-	if createdVersion.GreaterThan(latestVersion) {
-		// Need to update the base name record.
-		k.SetNameRecord(ctx, record.BaseWRN(), record.ToNameRecord())
 	}
 }
 

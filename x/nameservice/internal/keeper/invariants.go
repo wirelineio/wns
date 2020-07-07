@@ -31,10 +31,6 @@ func RecordInvariants(k Keeper) sdk.Invariant {
 				k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 				record := obj.ToRecord()
 
-				if !k.HasNameRecord(ctx, record.WRN()) {
-					return sdk.FormatInvariant(types.ModuleName, "record-name", fmt.Sprintf("Naming record not found for WRN: '%s'.", record.WRN())), true
-				}
-
 				if record.BondID != "" && !k.BondKeeper.HasBond(ctx, record.BondID) {
 					return sdk.FormatInvariant(types.ModuleName, "record-bond", fmt.Sprintf("Bond not found for record ID: '%s'.", record.ID)), true
 				}

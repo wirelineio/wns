@@ -6,7 +6,6 @@ package nameservice
 
 import (
 	"fmt"
-	"reflect"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,10 +58,6 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 		}
 	}
 
-	if exists := keeper.HasNameRecord(ctx, record.WRN()); exists {
-		return sdk.ErrUnauthorized("Name record already exists.").Result()
-	}
-
 	record.Owners = []string{}
 	for _, sig := range payload.Signatures {
 		pubKey, err := cryptoAmino.PubKeyFromBytes(helpers.BytesFromBase64(sig.PubKey))
@@ -82,15 +77,6 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 
 	// Sort owners list.
 	sort.Strings(record.Owners)
-
-	// Basic access control - check if record owners === owners of `latest` (according to semver) version.
-	if keeper.HasNameRecord(ctx, record.BaseWRN()) {
-		latestNameRecord := keeper.GetNameRecord(ctx, record.BaseWRN())
-		latestRecord := keeper.GetRecord(ctx, latestNameRecord.ID)
-		if !reflect.DeepEqual(latestRecord.Owners, record.Owners) {
-			return sdk.ErrUnauthorized("Owners mismatch, operation not allowed.").Result()
-		}
-	}
 
 	sdkErr := processRecord(ctx, keeper, &record, false)
 	if sdkErr != nil {
@@ -170,7 +156,6 @@ func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenew
 	// Renewal doesn't change the name and bond indexes.
 	if !isRenewal {
 		keeper.AddBondToRecordIndexEntry(ctx, record.BondID, record.ID)
-		keeper.ProcessNameRecords(ctx, *record)
 	}
 
 	return nil
