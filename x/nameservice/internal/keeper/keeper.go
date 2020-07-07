@@ -548,3 +548,13 @@ func (k Keeper) ClearRecords(ctx sdk.Context) {
 	// Clear bonds.
 	k.BondKeeper.Clear(ctx)
 }
+
+// HasNameAuthority - checks if a name/authority exists.
+func (k Keeper) HasNameAuthority(ctx sdk.Context, wrn string) bool {
+	return HasNameAuthority(ctx.KVStore(k.storeKey), wrn)
+}
+
+// HasNameAuthority - checks if a name authority entry exists.
+func HasNameAuthority(store sdk.KVStore, wrn string) bool {
+	return store.Has(GetNameRecordIndexKey(wrn))
+}
