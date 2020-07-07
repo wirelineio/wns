@@ -6,8 +6,6 @@ package types
 
 import (
 	"crypto/sha256"
-	"fmt"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,16 +56,6 @@ func (r Record) GetExpiryTime() string {
 // GetCreateTime returns the create time of the Record.
 func (r Record) GetCreateTime() string {
 	return string(sdk.FormatTimeBytes(r.CreateTime))
-}
-
-// WRN returns the record `wrn`, e.g. `wrn:bot:wireline.io/chess#0.1.0`.
-func (r Record) WRN() string {
-	return strings.ToLower(fmt.Sprintf("%s#%s", r.BaseWRN(), r.Version()))
-}
-
-// BaseWRN returns the record `wrn` minus the version, e.g. `wrn:bot:wireline.io/chess`.
-func (r Record) BaseWRN() string {
-	return strings.ToLower(fmt.Sprintf("%s:%s", r.Type(), r.Name()))
 }
 
 // GetOwners returns the list of owners (for GQL).

@@ -148,10 +148,6 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 func QueryRecords(ctx context.Context, resolver QueryResolver, records []*nameservice.Record, attributes []*KeyValueInput) ([]*Record, error) {
 	gqlResponse := []*Record{}
 
-	if RequestedLatestVersionsOnly(attributes) {
-		records = GetLatestVersions(records)
-	}
-
 	for _, record := range records {
 		gqlRecord, err := GetGQLRecord(ctx, resolver, record)
 		if err != nil {
