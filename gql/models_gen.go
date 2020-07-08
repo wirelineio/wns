@@ -45,9 +45,6 @@ type PeerInfo struct {
 
 type Record struct {
 	ID         string      `json:"id"`
-	Type       string      `json:"type"`
-	Name       string      `json:"name"`
-	Version    string      `json:"version"`
 	BondID     string      `json:"bondId"`
 	CreateTime string      `json:"createTime"`
 	ExpiryTime string      `json:"expiryTime"`

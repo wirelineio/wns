@@ -97,9 +97,6 @@ type ComplexityRoot struct {
 
 	Record struct {
 		ID         func(childComplexity int) int
-		Type       func(childComplexity int) int
-		Name       func(childComplexity int) int
-		Version    func(childComplexity int) int
 		BondID     func(childComplexity int) int
 		CreateTime func(childComplexity int) int
 		ExpiryTime func(childComplexity int) int
@@ -432,27 +429,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Record.ID(childComplexity), true
-
-	case "Record.Type":
-		if e.complexity.Record.Type == nil {
-			break
-		}
-
-		return e.complexity.Record.Type(childComplexity), true
-
-	case "Record.Name":
-		if e.complexity.Record.Name == nil {
-			break
-		}
-
-		return e.complexity.Record.Name(childComplexity), true
-
-	case "Record.Version":
-		if e.complexity.Record.Version == nil {
-			break
-		}
-
-		return e.complexity.Record.Version(childComplexity), true
 
 	case "Record.BondID":
 		if e.complexity.Record.BondID == nil {
@@ -802,9 +778,6 @@ input KeyValueInput {
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
-  type:       String!         # wrn:<type>, e.g. wrn:bot, wrn:pad.
-  name:       String!         # e.g. wireline.io/chess
-  version:    String!         # Version (e.g. 0.1.0).
 
   bondId:     String!         # Associated bond ID.
   createTime: String!         # Record create time.
@@ -1945,84 +1918,6 @@ func (ec *executionContext) _Record_id(ctx context.Context, field graphql.Collec
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ID, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Record_type(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Record",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Record_name(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Record",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Record_version(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Record",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -4084,21 +3979,6 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = graphql.MarshalString("Record")
 		case "id":
 			out.Values[i] = ec._Record_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "type":
-			out.Values[i] = ec._Record_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "name":
-			out.Values[i] = ec._Record_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "version":
-			out.Values[i] = ec._Record_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
