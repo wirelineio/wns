@@ -317,34 +317,32 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 
 // Handle MsgReserveName.
 func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveName) sdk.Result {
-	wrn := msg.Name
-	if !strings.HasPrefix(wrn, "wrn://") {
-		wrn = fmt.Sprintf("wrn://%s", wrn)
-	}
+	wrn := fmt.Sprintf("wrn://%s", msg.Name)
 
 	parsedWRN, err := url.Parse(wrn)
 	if err != nil {
 		return sdk.ErrInternal("Invalid name.").Result()
 	}
 
-	if fmt.Sprintf("wrn://%s", parsedWRN.Host) != wrn {
-		return sdk.ErrInternal("Invalid name (should be of the form 'wrn://<name>').").Result()
+	name := parsedWRN.Host
+	if fmt.Sprintf("wrn://%s", name) != wrn {
+		return sdk.ErrInternal("Invalid name.").Result()
 	}
 
-	if strings.Contains(parsedWRN.Host, ".") {
+	if strings.Contains(name, ".") {
 		return sdk.ErrInternal(("Invalid name (dot is currently not allowed in root authority names).")).Result()
 	}
 
 	// Check if name already reserved.
-	if keeper.HasNameAuthority(ctx, wrn) {
+	if keeper.HasNameAuthority(ctx, name) {
 		return sdk.ErrInternal("Name already exists.").Result()
 	}
 
 	// Reserve name with signer as owner.
-	keeper.SetNameRecord(ctx, wrn, NameRecord{Height: ctx.BlockHeight(), Owner: msg.Signer.String()})
+	keeper.SetNameAuthority(ctx, name, NameAuthority{Height: ctx.BlockHeight(), Owner: msg.Signer.String()})
 
 	return sdk.Result{
-		Data:   []byte(wrn),
+		Data:   []byte(name),
 		Events: ctx.EventManager().Events(),
 	}
 }

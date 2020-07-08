@@ -18,6 +18,7 @@ import (
 
 // query endpoints supported by the nameservice Querier
 const (
+	WhoIs                  = "whois"
 	ListRecordsPath        = "list"
 	GetRecordPath          = "get"
 	ListNamesPath          = "names"
@@ -30,6 +31,8 @@ const (
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
+		case WhoIs:
+			return whoIs(ctx, path[1:], req, keeper)
 		case ListRecordsPath:
 			return listResources(ctx, path[1:], req, keeper)
 		case GetRecordPath:
@@ -46,6 +49,23 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
 	}
+}
+
+func whoIs(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	name := path[0]
+
+	if !keeper.HasNameAuthority(ctx, name) {
+		return nil, sdk.ErrUnknownRequest("Name not found.")
+	}
+
+	nameAuthority := keeper.GetNameAuthority(ctx, name)
+
+	bz, err2 := json.MarshalIndent(nameAuthority, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
 }
 
 // nolint: unparam

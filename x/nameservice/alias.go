@@ -45,10 +45,12 @@ type (
 
 	MsgSetRecord = types.MsgSetRecord
 
-	ID         = types.ID
-	Record     = types.Record
-	RecordObj  = types.RecordObj
-	NameRecord = types.NameRecord
+	ID        = types.ID
+	Record    = types.Record
+	RecordObj = types.RecordObj
+
+	NameAuthority = types.NameAuthority
+	NameRecord    = types.NameRecord
 
 	BlockChangeset = types.BlockChangeset
 )

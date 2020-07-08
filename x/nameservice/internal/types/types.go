@@ -69,12 +69,12 @@ func (r *Record) ToRecordObj() RecordObj {
 	return resourceObj
 }
 
-// ToNameRecord gets a naming record entry for the record.
-func (r *Record) ToNameRecord() NameRecord {
-	var nameRecord NameRecord
-	nameRecord.ID = r.ID
+// ToNameRecordEntry gets a naming record entry for the record.
+func (r *Record) ToNameRecordEntry() NameRecordEntry {
+	var nameRecordEntry NameRecordEntry
+	nameRecordEntry.ID = r.ID
 
-	return nameRecord
+	return nameRecordEntry
 }
 
 // CanonicalJSON returns the canonical JSON respresentation of the record.
@@ -184,21 +184,34 @@ func (payload *Payload) ToPayloadObj() PayloadObj {
 	return payloadObj
 }
 
-// NameRecord is a naming record entry for a WRN.
-type NameRecord struct {
-	// Target Record ID. Empty ID represents root name/authority.
-	ID ID `json:"id"`
-
-	// Namespace owner.
+// NameAuthority records the name/authority ownership info.
+type NameAuthority struct {
+	// Name owner.
 	Owner string `json:"owner"`
+
+	// Block height at which name/authority was created.
+	Height int64 `json:"height"`
+}
+
+// NameRecordEntry is a naming record entry for a WRN.
+type NameRecordEntry struct {
+	// Record ID.
+	ID ID `json:"id"`
 
 	// Block height at which name record was created.
 	Height int64 `json:"height"`
 }
 
+// NameRecord stores name mapping info for a WRN.
+type NameRecord struct {
+	NameRecordEntry
+	History []NameRecordEntry `json:"history"`
+}
+
 // BlockChangeset is a changeset corresponding to a block.
 type BlockChangeset struct {
-	Height  int64    `json:"height"`
-	Records []ID     `json:"records"`
-	Names   []string `json:"names"`
+	Height          int64    `json:"height"`
+	Records         []ID     `json:"records"`
+	NameAuthorities []string `json:"authorities"`
+	Names           []string `json:"names"`
 }
