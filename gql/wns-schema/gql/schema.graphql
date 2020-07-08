@@ -59,9 +59,6 @@ input KeyValueInput {
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
-  type:       String!         # wrn:<type>, e.g. wrn:bot, wrn:pad.
-  name:       String!         # e.g. wireline.io/chess
-  version:    String!         # Version (e.g. 0.1.0).
 
   bondId:     String!         # Associated bond ID.
   createTime: String!         # Record create time.
