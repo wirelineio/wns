@@ -2,10 +2,6 @@
 
 package gql
 
-type Extension interface {
-	IsExtension()
-}
-
 type Account struct {
 	Address  string  `json:"address"`
 	PubKey   *string `json:"pubKey"`
@@ -19,13 +15,6 @@ type Bond struct {
 	Owner   string `json:"owner"`
 	Balance []Coin `json:"balance"`
 }
-
-type Bot struct {
-	Name      string `json:"name"`
-	AccessKey string `json:"accessKey"`
-}
-
-func (Bot) IsExtension() {}
 
 type Coin struct {
 	Type     string  `json:"type"`
@@ -48,23 +37,11 @@ type NodeInfo struct {
 	Moniker string `json:"moniker"`
 }
 
-type Pad struct {
-	Name string `json:"name"`
-}
-
-func (Pad) IsExtension() {}
-
 type PeerInfo struct {
 	Node       NodeInfo `json:"node"`
 	IsOutbound bool     `json:"is_outbound"`
 	RemoteIP   string   `json:"remote_ip"`
 }
-
-type Protocol struct {
-	Name string `json:"name"`
-}
-
-func (Protocol) IsExtension() {}
 
 type Record struct {
 	ID         string      `json:"id"`
@@ -77,7 +54,6 @@ type Record struct {
 	Owners     []*string   `json:"owners"`
 	Attributes []*KeyValue `json:"attributes"`
 	References []*Record   `json:"references"`
-	Extension  Extension   `json:"extension"`
 }
 
 type Reference struct {
@@ -105,12 +81,6 @@ type SyncInfo struct {
 	LatestBlockTime   string `json:"latest_block_time"`
 	CatchingUp        bool   `json:"catching_up"`
 }
-
-type UnknownExtension struct {
-	Name string `json:"name"`
-}
-
-func (UnknownExtension) IsExtension() {}
 
 type ValidatorInfo struct {
 	Address          string  `json:"address"`

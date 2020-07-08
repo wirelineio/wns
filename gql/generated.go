@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -58,11 +57,6 @@ type ComplexityRoot struct {
 		Balance func(childComplexity int) int
 	}
 
-	Bot struct {
-		Name      func(childComplexity int) int
-		AccessKey func(childComplexity int) int
-	}
-
 	Coin struct {
 		Type     func(childComplexity int) int
 		Quantity func(childComplexity int) int
@@ -84,18 +78,10 @@ type ComplexityRoot struct {
 		Moniker func(childComplexity int) int
 	}
 
-	Pad struct {
-		Name func(childComplexity int) int
-	}
-
 	PeerInfo struct {
 		Node       func(childComplexity int) int
 		IsOutbound func(childComplexity int) int
 		RemoteIP   func(childComplexity int) int
-	}
-
-	Protocol struct {
-		Name func(childComplexity int) int
 	}
 
 	Query struct {
@@ -120,7 +106,6 @@ type ComplexityRoot struct {
 		Owners     func(childComplexity int) int
 		Attributes func(childComplexity int) int
 		References func(childComplexity int) int
-		Extension  func(childComplexity int) int
 	}
 
 	Reference struct {
@@ -143,10 +128,6 @@ type ComplexityRoot struct {
 		LatestBlockHeight func(childComplexity int) int
 		LatestBlockTime   func(childComplexity int) int
 		CatchingUp        func(childComplexity int) int
-	}
-
-	UnknownExtension struct {
-		Name func(childComplexity int) int
 	}
 
 	ValidatorInfo struct {
@@ -260,20 +241,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bond.Balance(childComplexity), true
 
-	case "Bot.Name":
-		if e.complexity.Bot.Name == nil {
-			break
-		}
-
-		return e.complexity.Bot.Name(childComplexity), true
-
-	case "Bot.AccessKey":
-		if e.complexity.Bot.AccessKey == nil {
-			break
-		}
-
-		return e.complexity.Bot.AccessKey(childComplexity), true
-
 	case "Coin.Type":
 		if e.complexity.Coin.Type == nil {
 			break
@@ -347,13 +314,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NodeInfo.Moniker(childComplexity), true
 
-	case "Pad.Name":
-		if e.complexity.Pad.Name == nil {
-			break
-		}
-
-		return e.complexity.Pad.Name(childComplexity), true
-
 	case "PeerInfo.Node":
 		if e.complexity.PeerInfo.Node == nil {
 			break
@@ -374,13 +334,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PeerInfo.RemoteIP(childComplexity), true
-
-	case "Protocol.Name":
-		if e.complexity.Protocol.Name == nil {
-			break
-		}
-
-		return e.complexity.Protocol.Name(childComplexity), true
 
 	case "Query.GetStatus":
 		if e.complexity.Query.GetStatus == nil {
@@ -543,13 +496,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Record.References(childComplexity), true
 
-	case "Record.Extension":
-		if e.complexity.Record.Extension == nil {
-			break
-		}
-
-		return e.complexity.Record.Extension(childComplexity), true
-
 	case "Reference.ID":
 		if e.complexity.Reference.ID == nil {
 			break
@@ -640,13 +586,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SyncInfo.CatchingUp(childComplexity), true
-
-	case "UnknownExtension.Name":
-		if e.complexity.UnknownExtension.Name == nil {
-			break
-		}
-
-		return e.complexity.UnknownExtension.Name(childComplexity), true
 
 	case "ValidatorInfo.Address":
 		if e.complexity.ValidatorInfo.Address == nil {
@@ -802,32 +741,6 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: "wns-schema/gql/extensions.graphql", Input: `#
-# Copyright 2019 Wireline, Inc.
-#
-
-# UnknownExtension is returned when an unknown ` + "`" + `Record.type` + "`" + ` is encountered.
-# This can happen if the server is running an older software version (i.e., GQL schema).
-type UnknownExtension implements Extension {
-  name:       String!
-}
-
-# Bots are autonomous agents that interact with users (and other bots).
-type Bot implements Extension {
-  name:       String!
-  accessKey:  String!
-}
-
-# Pads are software modules that provide the UI/UX for applications.
-type Pad implements Extension {
-  name:       String!
-}
-
-# Protocols denote protobuf messages used by applications.
-type Protocol implements Extension {
-  name:       String!
-}
-`},
 	&ast.Source{Name: "wns-schema/gql/schema.graphql", Input: `#
 # Copyright 2019 Wireline, Inc.
 #
@@ -886,11 +799,6 @@ input KeyValueInput {
   value:      ValueInput!
 }
 
-# Extensions define additional properties for an entity in the graph database.
-interface Extension {
-  name:       String!
-}
-
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
@@ -905,7 +813,6 @@ type Record {
   owners:     [String]!       # Addresses of record owners.
   attributes: [KeyValue]      # Record attributes.
   references: [Record]        # Record references.
-  extension:  Extension       # Extension.
 }
 
 # Mutations require payment in coins (e.g. 100wire).
@@ -1416,58 +1323,6 @@ func (ec *executionContext) _Bond_balance(ctx context.Context, field graphql.Col
 	return ec.marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐCoin(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bot_name(ctx context.Context, field graphql.CollectedField, obj *Bot) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Bot",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Bot_accessKey(ctx context.Context, field graphql.CollectedField, obj *Bot) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Bot",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AccessKey, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Coin_type(ctx context.Context, field graphql.CollectedField, obj *Coin) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -1710,32 +1565,6 @@ func (ec *executionContext) _NodeInfo_moniker(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Pad_name(ctx context.Context, field graphql.CollectedField, obj *Pad) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Pad",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _PeerInfo_node(ctx context.Context, field graphql.CollectedField, obj *PeerInfo) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -1801,32 +1630,6 @@ func (ec *executionContext) _PeerInfo_remote_ip(ctx context.Context, field graph
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.RemoteIP, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Protocol_name(ctx context.Context, field graphql.CollectedField, obj *Protocol) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Protocol",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -2383,29 +2186,6 @@ func (ec *executionContext) _Record_references(ctx context.Context, field graphq
 	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Record_extension(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Record",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Extension, nil
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(Extension)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOExtension2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐExtension(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Reference_id(ctx context.Context, field graphql.CollectedField, obj *Reference) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -2736,32 +2516,6 @@ func (ec *executionContext) _SyncInfo_catching_up(ctx context.Context, field gra
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _UnknownExtension_name(ctx context.Context, field graphql.CollectedField, obj *UnknownExtension) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "UnknownExtension",
-		Field:  field,
-		Args:   nil,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ValidatorInfo_address(ctx context.Context, field graphql.CollectedField, obj *ValidatorInfo) graphql.Marshaler {
@@ -3922,31 +3676,6 @@ func (ec *executionContext) unmarshalInputValueInput(ctx context.Context, v inte
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _Extension(ctx context.Context, sel ast.SelectionSet, obj *Extension) graphql.Marshaler {
-	switch obj := (*obj).(type) {
-	case nil:
-		return graphql.Null
-	case UnknownExtension:
-		return ec._UnknownExtension(ctx, sel, &obj)
-	case *UnknownExtension:
-		return ec._UnknownExtension(ctx, sel, obj)
-	case Bot:
-		return ec._Bot(ctx, sel, &obj)
-	case *Bot:
-		return ec._Bot(ctx, sel, obj)
-	case Pad:
-		return ec._Pad(ctx, sel, &obj)
-	case *Pad:
-		return ec._Pad(ctx, sel, obj)
-	case Protocol:
-		return ec._Protocol(ctx, sel, &obj)
-	case *Protocol:
-		return ec._Protocol(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
@@ -4033,38 +3762,6 @@ func (ec *executionContext) _Bond(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "balance":
 			out.Values[i] = ec._Bond_balance(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
-var botImplementors = []string{"Bot", "Extension"}
-
-func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj *Bot) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, botImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	invalid := false
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Bot")
-		case "name":
-			out.Values[i] = ec._Bot_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "accessKey":
-			out.Values[i] = ec._Bot_accessKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4216,33 +3913,6 @@ func (ec *executionContext) _NodeInfo(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var padImplementors = []string{"Pad", "Extension"}
-
-func (ec *executionContext) _Pad(ctx context.Context, sel ast.SelectionSet, obj *Pad) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, padImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	invalid := false
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Pad")
-		case "name":
-			out.Values[i] = ec._Pad_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
 var peerInfoImplementors = []string{"PeerInfo"}
 
 func (ec *executionContext) _PeerInfo(ctx context.Context, sel ast.SelectionSet, obj *PeerInfo) graphql.Marshaler {
@@ -4266,33 +3936,6 @@ func (ec *executionContext) _PeerInfo(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "remote_ip":
 			out.Values[i] = ec._PeerInfo_remote_ip(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
-var protocolImplementors = []string{"Protocol", "Extension"}
-
-func (ec *executionContext) _Protocol(ctx context.Context, sel ast.SelectionSet, obj *Protocol) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, protocolImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	invalid := false
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Protocol")
-		case "name":
-			out.Values[i] = ec._Protocol_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -4483,8 +4126,6 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Record_attributes(ctx, field, obj)
 		case "references":
 			out.Values[i] = ec._Record_references(ctx, field, obj)
-		case "extension":
-			out.Values[i] = ec._Record_extension(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4607,33 +4248,6 @@ func (ec *executionContext) _SyncInfo(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "catching_up":
 			out.Values[i] = ec._SyncInfo_catching_up(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
-var unknownExtensionImplementors = []string{"UnknownExtension", "Extension"}
-
-func (ec *executionContext) _UnknownExtension(ctx context.Context, sel ast.SelectionSet, obj *UnknownExtension) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, unknownExtensionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	invalid := false
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UnknownExtension")
-		case "name":
-			out.Values[i] = ec._UnknownExtension_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -5477,10 +5091,6 @@ func (ec *executionContext) marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋgq
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) marshalOExtension2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐExtension(ctx context.Context, sel ast.SelectionSet, v Extension) graphql.Marshaler {
-	return ec._Extension(ctx, sel, &v)
 }
 
 func (ec *executionContext) unmarshalOFloat2float64(ctx context.Context, v interface{}) (float64, error) {
