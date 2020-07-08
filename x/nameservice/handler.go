@@ -331,6 +331,10 @@ func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveNa
 		return sdk.ErrInternal("Invalid name (should be of the form 'wrn://<name>').").Result()
 	}
 
+	if strings.Contains(parsedWRN.Host, ".") {
+		return sdk.ErrInternal(("Invalid name (dot is currently not allowed in root authority names).")).Result()
+	}
+
 	// Check if name already reserved.
 	if keeper.HasNameAuthority(ctx, wrn) {
 		return sdk.ErrInternal("Name already exists.").Result()
