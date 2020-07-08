@@ -10,21 +10,11 @@ import (
 	"reflect"
 
 	"github.com/Masterminds/semver"
-	"github.com/mitchellh/mapstructure"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// VersionAttributeName denotes the version attribute name in a record.
-const VersionAttributeName = "version"
-
-// VersionMatchAll represents a special value to match all versions.
-const VersionMatchAll = "*"
-
-// VersionMatchLatest represents a special value to match only the latest version of each record.
-const VersionMatchLatest = "latest"
 
 // OwnerAttributeName denotes the owner attribute name for a bond.
 const OwnerAttributeName = "owner"
@@ -46,11 +36,6 @@ func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservi
 		return nil, err
 	}
 
-	extension, err := getExtension(record)
-	if err != nil {
-		return nil, err
-	}
-
 	references, err := getReferences(ctx, resolver, record)
 	if err != nil {
 		return nil, err
@@ -58,16 +43,12 @@ func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservi
 
 	return &Record{
 		ID:         string(record.ID),
-		Type:       record.Type(),
-		Name:       record.Name(),
-		Version:    record.Version(),
 		BondID:     record.GetBondID(),
 		CreateTime: record.GetCreateTime(),
 		ExpiryTime: record.GetExpiryTime(),
 		Owners:     record.GetOwners(),
 		Attributes: attributes,
 		References: references,
-		Extension:  extension,
 	}, nil
 }
 
@@ -90,27 +71,6 @@ func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.R
 
 func getAttributes(r *nameservice.Record) ([]*KeyValue, error) {
 	return mapToKeyValuePairs(r.Attributes)
-}
-
-func getExtension(r *nameservice.Record) (ext Extension, err error) {
-	switch r.Type() {
-	case WnsTypeProtocol:
-		var protocol Protocol
-		err := mapstructure.Decode(r.Attributes, &protocol)
-		return protocol, err
-	case WnsTypeBot:
-		var bot Bot
-		err := mapstructure.Decode(r.Attributes, &bot)
-		return bot, err
-	case WnsTypePad:
-		var pad Pad
-		err := mapstructure.Decode(r.Attributes, &pad)
-		return pad, err
-	default:
-		var unknown UnknownExtension
-		err := mapstructure.Decode(r.Attributes, &unknown)
-		return unknown, err
-	}
 }
 
 func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
@@ -239,15 +199,8 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 				return false
 			}
 
-			// Special handling for version attribute.
-			if attr.Key == VersionAttributeName {
-				if !matchOnVersionAttribute(*attr.Value.String, recAttrValString) {
-					return false
-				}
-			} else {
-				if *attr.Value.String != recAttrValString {
-					return false
-				}
+			if *attr.Value.String != recAttrValString {
+				return false
 			}
 		}
 
@@ -270,41 +223,6 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 		}
 
 		// TODO(ashwin): Handle arrays.
-	}
-
-	return true
-}
-
-func matchOnVersionAttribute(querySemverStr string, recordVersionStr string) bool {
-	if querySemverStr == VersionMatchAll || querySemverStr == VersionMatchLatest {
-		return true
-	}
-
-	querySemverConstraint, err := semver.NewConstraint(querySemverStr)
-	if err != nil {
-		// Handle constraint not being parsable.
-		return false
-	}
-
-	recordVersion, err := semver.NewVersion(recordVersionStr)
-	if err != nil {
-		return false
-	}
-
-	return querySemverConstraint.Check(recordVersion)
-}
-
-func RequestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
-	for _, attr := range attributes {
-		if attr.Key == VersionAttributeName && attr.Value.String != nil {
-			if *attr.Value.String == VersionMatchAll {
-				return false
-			}
-
-			if *attr.Value.String == VersionMatchLatest {
-				return true
-			}
-		}
 	}
 
 	return true
