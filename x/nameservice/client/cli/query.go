@@ -27,14 +27,39 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	nameserviceQueryCmd.AddCommand(client.GetCommands(
-		GetCmdList(storeKey, cdc),
-		GetCmdGetResource(storeKey, cdc),
+		GetCmdWhoIs(storeKey, cdc),
 		GetCmdNames(storeKey, cdc),
 		GetCmdResolve(storeKey, cdc),
+		GetCmdList(storeKey, cdc),
+		GetCmdGetResource(storeKey, cdc),
 		GetCmdQueryByBond(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
+}
+
+// GetCmdWhoIs queries a whois info for a name.
+func GetCmdWhoIs(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "whois [name]",
+		Short: "Get name owner info.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			name := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/whois/%s", queryRoute, name), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
 }
 
 // GetCmdList queries all records.

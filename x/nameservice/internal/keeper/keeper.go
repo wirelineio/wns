@@ -22,8 +22,11 @@ import (
 // Note: Golang doesn't support const arrays.
 var PrefixCIDToRecordIndex = []byte{0x00}
 
+// PrefixNameAuthorityRecordIndex is the prefix for the name -> NameAuthority index.
+var PrefixNameAuthorityRecordIndex = []byte{0x01}
+
 // PrefixWRNToNameRecordIndex is the prefix for the WRN -> NamingRecord index.
-var PrefixWRNToNameRecordIndex = []byte{0x01}
+var PrefixWRNToNameRecordIndex = []byte{0x02}
 
 // PrefixBondIDToRecordsIndex is the prefix for the Bond ID -> [Record] index.
 var PrefixBondIDToRecordsIndex = []byte{0x03}
@@ -85,6 +88,11 @@ func (k Keeper) PutRecord(ctx sdk.Context, record types.Record) {
 // Generates Bond ID -> Bond index key.
 func GetRecordIndexKey(id types.ID) []byte {
 	return append(PrefixCIDToRecordIndex, []byte(id)...)
+}
+
+// Generates name -> NameAuthority index key.
+func GetNameAuthorityIndexKey(name string) []byte {
+	return append(PrefixNameAuthorityRecordIndex, []byte(name)...)
 }
 
 // Generates WRN -> NameRecord index key.
@@ -474,6 +482,12 @@ func (k Keeper) updateBlockChangesetForName(ctx sdk.Context, wrn string) {
 	k.saveBlockChangeset(ctx, changeset)
 }
 
+func (k Keeper) updateBlockChangesetForNameAuthority(ctx sdk.Context, name string) {
+	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
+	changeset.NameAuthorities = append(changeset.NameAuthorities, name)
+	k.saveBlockChangeset(ctx, changeset)
+}
+
 // ClearRecords - Deletes all records and indexes.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
 func (k Keeper) ClearRecords(ctx sdk.Context) {
@@ -490,11 +504,29 @@ func (k Keeper) ClearRecords(ctx sdk.Context) {
 }
 
 // HasNameAuthority - checks if a name/authority exists.
-func (k Keeper) HasNameAuthority(ctx sdk.Context, wrn string) bool {
-	return HasNameAuthority(ctx.KVStore(k.storeKey), wrn)
+func (k Keeper) HasNameAuthority(ctx sdk.Context, name string) bool {
+	return HasNameAuthority(ctx.KVStore(k.storeKey), name)
 }
 
 // HasNameAuthority - checks if a name authority entry exists.
-func HasNameAuthority(store sdk.KVStore, wrn string) bool {
-	return store.Has(GetNameRecordIndexKey(wrn))
+func HasNameAuthority(store sdk.KVStore, name string) bool {
+	return store.Has(GetNameAuthorityIndexKey(name))
+}
+
+// SetNameAuthority creates the NameAutority record.
+func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, nameAuthority types.NameAuthority) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(nameAuthority))
+	k.updateBlockChangesetForNameAuthority(ctx, name)
+}
+
+// GetNameAuthority - gets a name authority from the store.
+func (k Keeper) GetNameAuthority(ctx sdk.Context, name string) types.NameAuthority {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(GetNameAuthorityIndexKey(name))
+
+	var obj types.NameAuthority
+	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+	return obj
 }
