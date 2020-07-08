@@ -28,21 +28,6 @@ type Record struct {
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
 
-// Type of Record.
-func (r Record) Type() string {
-	return r.Attributes["type"].(string)
-}
-
-// Name of Record.
-func (r Record) Name() string {
-	return r.Attributes["name"].(string)
-}
-
-// Version of Record.
-func (r Record) Version() string {
-	return r.Attributes["version"].(string)
-}
-
 // GetBondID returns the BondID of the Record.
 func (r Record) GetBondID() string {
 	return string(r.BondID)
@@ -88,7 +73,6 @@ func (r *Record) ToRecordObj() RecordObj {
 func (r *Record) ToNameRecord() NameRecord {
 	var nameRecord NameRecord
 	nameRecord.ID = r.ID
-	nameRecord.Version = r.Version()
 
 	return nameRecord
 }
@@ -204,9 +188,6 @@ func (payload *Payload) ToPayloadObj() PayloadObj {
 type NameRecord struct {
 	// Target Record ID. Empty ID represents root name/authority.
 	ID ID `json:"id"`
-
-	// TODO(ashwin): Remove.
-	Version string `json:"version"`
 
 	// Namespace owner.
 	Owner string `json:"owner"`

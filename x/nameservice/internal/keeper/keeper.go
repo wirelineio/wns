@@ -7,10 +7,8 @@ package keeper
 import (
 	"bytes"
 	"encoding/binary"
-	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -198,34 +196,21 @@ func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
 }
 
 // ResolveWRN resolves a WRN to a record.
-// Note: Version part of the WRN might have a semver range.
 func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
 	return ResolveWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
 }
 
 // ResolveWRN resolves a WRN to a record.
-// Note: Version part of the WRN might have a semver range.
 func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
-	segments := strings.Split(wrn, "#")
-	if len(segments) == 2 {
-		baseWRN, semver := segments[0], segments[1]
-		if strings.ContainsAny(semver, "^~<>=!") {
-			// Handle semver range.
-			return ResolveBaseWRN(store, codec, baseWRN, semver)
-		}
-	}
-
 	return ResolveFullWRN(store, codec, wrn)
 }
 
 // ResolveFullWRN resolves a WRN (full path) to a record.
-// Note: Version part of the WRN MUST NOT have a semver range.
 func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
 	return ResolveFullWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
 }
 
 // ResolveFullWRN resolves a WRN (full path) to a record.
-// Note: Version part of the WRN MUST NOT have a semver range.
 func ResolveFullWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
 	nameKey := GetNameRecordIndexKey(wrn)
 
@@ -235,51 +220,6 @@ func ResolveFullWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Re
 		codec.MustUnmarshalBinaryBare(bz, &obj)
 
 		record := GetRecord(store, codec, obj.ID)
-		return &record
-	}
-
-	return nil
-}
-
-// ResolveBaseWRN resolves a BaseWRN + semver range to a record (picks the highest matching version).
-func (k Keeper) ResolveBaseWRN(ctx sdk.Context, baseWRN string, semverRange string) *types.Record {
-	return ResolveBaseWRN(ctx.KVStore(k.storeKey), k.cdc, baseWRN, semverRange)
-}
-
-// ResolveBaseWRN resolves a BaseWRN + semver range to a record (picks the highest matching version).
-func ResolveBaseWRN(store sdk.KVStore, codec *amino.Codec, baseWRN string, semverRange string) *types.Record {
-	semverConstraint, err := semver.NewConstraint(semverRange)
-	if err != nil {
-		// Handle constraint not being parsable.
-		return nil
-	}
-
-	baseNameKey := GetNameRecordIndexKey(baseWRN)
-	if !store.Has(baseNameKey) {
-		return nil
-	}
-
-	var highestSemver, _ = semver.NewVersion("0.0.0")
-	var highestNameRecord types.NameRecord = types.NameRecord{}
-
-	itr := sdk.KVStorePrefixIterator(store, baseNameKey)
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		bz := store.Get(itr.Key())
-		if bz != nil {
-			var record types.NameRecord
-			codec.MustUnmarshalBinaryBare(bz, &record)
-
-			semver, err := semver.NewVersion(record.Version)
-			if err == nil && semverConstraint.Check(semver) && semver.GreaterThan(highestSemver) {
-				highestSemver = semver
-				highestNameRecord = record
-			}
-		}
-	}
-
-	if highestNameRecord.ID != "" {
-		record := GetRecord(store, codec, highestNameRecord.ID)
 		return &record
 	}
 
