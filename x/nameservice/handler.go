@@ -358,9 +358,31 @@ func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveNa
 
 // Handle MsgSetName.
 func handleMsgSetName(ctx sdk.Context, keeper Keeper, msg types.MsgSetName) sdk.Result {
+	parsedWRN, err := url.Parse(msg.WRN)
+	if err != nil {
+		return sdk.ErrInternal("Invalid WRN.").Result()
+	}
+
+	name := parsedWRN.Host
+	wrn := fmt.Sprintf("wrn://%s%s", name, parsedWRN.RequestURI())
+	if wrn != msg.WRN {
+		return sdk.ErrInternal("Invalid WRN.").Result()
+	}
+
+	// Check authority record.
+	if !keeper.HasNameAuthority(ctx, name) {
+		return sdk.ErrInternal("Name authority not found.").Result()
+	}
+
+	authority := keeper.GetNameAuthority(ctx, name)
+	if authority.OwnerAddress != msg.Signer.String() {
+		return sdk.ErrUnauthorized("Access denied.").Result()
+	}
+
+	keeper.SetNameRecord(ctx, wrn, msg.ID)
 
 	return sdk.Result{
-		Data:   []byte(msg.WRN),
+		Data:   []byte(wrn),
 		Events: ctx.EventManager().Events(),
 	}
 }

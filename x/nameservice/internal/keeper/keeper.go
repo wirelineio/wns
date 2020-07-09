@@ -121,9 +121,23 @@ func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id
 }
 
 // SetNameRecord - sets a name record.
-func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, nameRecord types.NameRecord) {
+func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, id types.ID) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetNameRecordIndexKey(wrn), k.cdc.MustMarshalBinaryBare(nameRecord))
+	nameRecordIndexKey := GetNameRecordIndexKey(wrn)
+
+	var nameRecord types.NameRecord
+	if store.Has(nameRecordIndexKey) {
+		bz := store.Get(nameRecordIndexKey)
+		k.cdc.MustUnmarshalBinaryBare(bz, &nameRecord)
+		nameRecord.History = append(nameRecord.History, nameRecord.NameRecordEntry)
+	}
+
+	nameRecord.NameRecordEntry = types.NameRecordEntry{
+		ID:     id,
+		Height: ctx.BlockHeight(),
+	}
+
+	store.Set(nameRecordIndexKey, k.cdc.MustMarshalBinaryBare(nameRecord))
 	k.updateBlockChangesetForName(ctx, wrn)
 }
 
