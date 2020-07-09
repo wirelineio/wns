@@ -259,6 +259,7 @@ func NewNameServiceApp(
 	)
 
 	app.nsKeeper = nameservice.NewKeeper(
+		app.accountKeeper,
 		app.recordKeeper,
 		app.bondKeeper,
 		keys[nameservice.StoreKey],

@@ -186,8 +186,11 @@ func (payload *Payload) ToPayloadObj() PayloadObj {
 
 // NameAuthority records the name/authority ownership info.
 type NameAuthority struct {
-	// Name owner.
-	Owner string `json:"owner"`
+	// Owner public key.
+	OwnerPublicKey string `json:"ownerPublicKey"`
+
+	// Owner address.
+	OwnerAddress string `json:"ownerAddress"`
 
 	// Block height at which name/authority was created.
 	Height int64 `json:"height"`
