@@ -35,21 +35,23 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	nameserviceTxCmd.AddCommand(client.PostCommands(
-		GetCmdSetResource(cdc),
-		GetCmdReserveName(cdc),
-		GetCmdClearResources(cdc),
+		GetCmdSetRecord(cdc),
+		GetCmdRenewRecord(cdc),
 		GetCmdAssociateBond(cdc),
 		GetCmdDissociateBond(cdc),
 		GetCmdDissociateRecords(cdc),
 		GetCmdReassociateRecords(cdc),
-		GetCmdRenewRecord(cdc),
+		GetCmdClearRecords(cdc),
+
+		GetCmdReserveName(cdc),
+		GetCmdSetName(cdc),
 	)...)
 
 	return nameserviceTxCmd
 }
 
-// GetCmdSetResource is the CLI command for creating/updating a record.
-func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
+// GetCmdSetRecord is the CLI command for creating/updating a record.
+func GetCmdSetRecord(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set [payload file path] [bond-id]",
 		Short: "Set record.",
@@ -80,30 +82,6 @@ func GetCmdSetResource(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("sign-only", false, "Only sign the transaction payload.")
-
-	return cmd
-}
-
-// GetCmdReserveName is the CLI command for reserving a name.
-func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "reserve-name [name]",
-		Short: "Reserve name.",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			msg := types.NewMsgReserveName(args[0], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
 
 	return cmd
 }
@@ -204,9 +182,9 @@ func GetCmdReassociateRecords(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// GetCmdClearResources is the CLI command for clearing all records.
+// GetCmdClearRecords is the CLI command for clearing all records.
 // NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func GetCmdClearResources(cdc *codec.Codec) *cobra.Command {
+func GetCmdClearRecords(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clear",
 		Short: "Clear records.",
@@ -241,6 +219,54 @@ func GetCmdRenewRecord(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgRenewRecord(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdReserveName is the CLI command for reserving a name.
+func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reserve-name [name]",
+		Short: "Reserve name.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgReserveName(args[0], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdSetName is the CLI command for mapping a name to a CID.
+func GetCmdSetName(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-name [wrn] [cid]",
+		Short: "Set WRN to CID mapping.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgSetName(args[0], args[1], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err

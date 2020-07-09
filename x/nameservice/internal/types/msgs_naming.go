@@ -57,6 +57,15 @@ type MsgSetName struct {
 	Signer sdk.AccAddress `json:"signer"`
 }
 
+// NewMsgSetName is the constructor function for MsgSetName.
+func NewMsgSetName(wrn string, id string, signer sdk.AccAddress) MsgSetName {
+	return MsgSetName{
+		WRN:    wrn,
+		ID:     ID(id),
+		Signer: signer,
+	}
+}
+
 // Route Implements Msg.
 func (msg MsgSetName) Route() string { return RouterKey }
 

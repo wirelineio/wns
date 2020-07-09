@@ -46,7 +46,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 	keeper.SetParams(ctx, data.Params)
 
 	for _, nameEntry := range data.Names {
-		keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry)
+		keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry.ID)
 	}
 
 	for _, record := range data.Records {
