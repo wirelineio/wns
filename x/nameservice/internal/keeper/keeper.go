@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
@@ -43,8 +44,9 @@ var KeySyncStatus = []byte{0xff}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	RecordKeeper RecordKeeper
-	BondKeeper   bond.Keeper
+	AccountKeeper auth.AccountKeeper
+	RecordKeeper  RecordKeeper
+	BondKeeper    bond.Keeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -54,13 +56,14 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
-		RecordKeeper: recordKeeper,
-		BondKeeper:   bondKeeper,
-		storeKey:     storeKey,
-		cdc:          cdc,
-		paramstore:   paramstore.WithKeyTable(ParamKeyTable()),
+		AccountKeeper: accountKeeper,
+		RecordKeeper:  recordKeeper,
+		BondKeeper:    bondKeeper,
+		storeKey:      storeKey,
+		cdc:           cdc,
+		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
 	}
 }
 

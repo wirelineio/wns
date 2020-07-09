@@ -339,7 +339,16 @@ func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveNa
 	}
 
 	// Reserve name with signer as owner.
-	keeper.SetNameAuthority(ctx, name, NameAuthority{Height: ctx.BlockHeight(), Owner: msg.Signer.String()})
+	account := keeper.AccountKeeper.GetAccount(ctx, msg.Signer)
+	if account == nil {
+		return sdk.ErrUnknownAddress("Account not found.").Result()
+	}
+
+	keeper.SetNameAuthority(ctx, name, NameAuthority{
+		OwnerPublicKey: helpers.BytesToBase64(account.GetPubKey().Bytes()),
+		OwnerAddress:   msg.Signer.String(),
+		Height:         ctx.BlockHeight(),
+	})
 
 	return sdk.Result{
 		Data:   []byte(name),
