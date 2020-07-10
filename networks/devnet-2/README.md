@@ -50,7 +50,7 @@ $ cp networks/devnet-2/genesis.json ~/.wire/wnsd/config/genesis.json
 Update `~/.wire/wnsd/config/config.toml` with:
 
 ```text
-persistent_peers = "b0e7891bd855a2e4c52104cb194456bbc5bd2922@dxns1.devnet-2.deepstacksoft.com:26656"
+persistent_peers = "b0e7891bd855a2e4c52104cb194456bbc5bd2922@dxns1.devnet-2.deepstacksoft.com:26656,4661cd608d372ab887b69960d2c850f63d4136ac@wire0.vaasl.io:26656"
 ```
 
 To list your validator node as a peer for others, first get the node ID:
