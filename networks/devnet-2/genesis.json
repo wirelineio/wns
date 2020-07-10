@@ -18,6 +18,12 @@
   },
   "app_hash": "",
   "app_state": {
+    "crisis": {
+      "constant_fee": {
+        "denom": "uwire",
+        "amount": "1000"
+      }
+    },
     "auth": {
       "params": {
         "max_memo_characters": "256",
@@ -27,31 +33,46 @@
         "sig_verify_cost_secp256k1": "1000"
       }
     },
-    "params": null,
-    "mint": {
-      "minter": {
-        "inflation": "0.0",
-        "annual_provisions": "0.0"
+    "gov": {
+      "starting_proposal_id": "1",
+      "deposits": null,
+      "votes": null,
+      "proposals": null,
+      "deposit_params": {
+        "min_deposit": [
+          {
+            "denom": "uwire",
+            "amount": "10000000"
+          }
+        ],
+        "max_deposit_period": "172800000000000"
       },
-      "params": {
-        "mint_denom": "uwire",
-        "inflation_rate_change": "0.0",
-        "inflation_max": "0.0",
-        "inflation_min": "0.0",
-        "goal_bonded": "1.0",
-        "blocks_per_year": "6311520"
+      "voting_params": {
+        "voting_period": "172800000000000"
+      },
+      "tally_params": {
+        "quorum": "0.334000000000000000",
+        "threshold": "0.500000000000000000",
+        "veto": "0.334000000000000000"
       }
     },
-    "bank": {
-      "send_enabled": true
+    "supply": {
+      "supply": []
     },
-    "nameservice": {
+    "staking": {
       "params": {
-        "record_rent": "1wire",
-        "record_expiry_time": "31536000000000000"
+        "unbonding_time": "1814400000000000",
+        "max_validators": 100,
+        "max_entries": 7,
+        "bond_denom": "uwire"
       },
-      "names": null,
-      "records": null
+      "last_total_power": "0",
+      "last_validator_powers": null,
+      "validators": null,
+      "delegations": null,
+      "unbonding_delegations": null,
+      "redelegations": null,
+      "exported": false
     },
     "bond": {
       "params": {
@@ -760,8 +781,16 @@
         }
       ]
     },
-    "genutil": {
-      "gentxs": []
+    "bank": {
+      "send_enabled": true
+    },
+    "nameservice": {
+      "params": {
+        "record_rent": "1wire",
+        "record_expiry_time": "31536000000000000"
+      },
+      "names": null,
+      "records": null
     },
     "distribution": {
       "fee_pool": {
@@ -780,6 +809,20 @@
       "delegator_starting_infos": [],
       "validator_slash_events": []
     },
+    "mint": {
+      "minter": {
+        "inflation": "0.0",
+        "annual_provisions": "0.0"
+      },
+      "params": {
+        "mint_denom": "uwire",
+        "inflation_rate_change": "0.0",
+        "inflation_max": "0.0",
+        "inflation_min": "0.0",
+        "goal_bonded": "1.0",
+        "blocks_per_year": "6311520"
+      }
+    },
     "slashing": {
       "params": {
         "max_evidence_age": "120000000000",
@@ -792,53 +835,7 @@
       "signing_infos": {},
       "missed_blocks": {}
     },
-    "crisis": {
-      "constant_fee": {
-        "denom": "uwire",
-        "amount": "1000"
-      }
-    },
-    "supply": {
-      "supply": []
-    },
-    "gov": {
-      "starting_proposal_id": "1",
-      "deposits": null,
-      "votes": null,
-      "proposals": null,
-      "deposit_params": {
-        "min_deposit": [
-          {
-            "denom": "uwire",
-            "amount": "10000000"
-          }
-        ],
-        "max_deposit_period": "172800000000000"
-      },
-      "voting_params": {
-        "voting_period": "172800000000000"
-      },
-      "tally_params": {
-        "quorum": "0.334000000000000000",
-        "threshold": "0.500000000000000000",
-        "veto": "0.334000000000000000"
-      }
-    },
-    "staking": {
-      "params": {
-        "unbonding_time": "1814400000000000",
-        "max_validators": 100,
-        "max_entries": 7,
-        "bond_denom": "uwire"
-      },
-      "last_total_power": "0",
-      "last_validator_powers": null,
-      "validators": null,
-      "delegations": null,
-      "unbonding_delegations": null,
-      "redelegations": null,
-      "exported": false
-    },
+    "params": null,
     "accounts": [
       {
         "address": "cosmos1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lfd8n99",
@@ -2033,6 +2030,145 @@
           ""
         ]
       }
-    ]
+    ],
+    "genutil": {
+      "gentxs": [
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "2e1a47",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos1ueatyeckazxkwnc50eh6xm3d9tjuwvwkgm9yne",
+                  "validator_address": "cosmosvaloper1ueatyeckazxkwnc50eh6xm3d9tjuwvwkd033l2",
+                  "pubkey": "cosmosvalconspub1zcjduepqgvmxqsarcclt9pa7mnrfx2ng2fpl3aer33xeczyp68fgzsvtzdusr0jacu",
+                  "value": {
+                    "denom": "uwire",
+                    "amount": "10000000000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "A+cqvt7IcIH0Hw55bZoDvCvcjFRnlVcr3ywLpEeD3g49"
+                },
+                "signature": "F6P+MqPqWAcklkd7VXVHiL7rorfRwc/+eGlqRtfFf9ZZDObzq7X+c70ZgSgtJQ6z2M32aRZHKVloEzWIPY990g=="
+              }
+            ],
+            "memo": "4661cd608d372ab887b69960d2c850f63d4136ac@204.130.133.215:26656"
+          }
+        },
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "ashwinp",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lfd8n99",
+                  "validator_address": "cosmosvaloper1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lvenxfk",
+                  "pubkey": "cosmosvalconspub1zcjduepqpjprepe2k05dv4k8rven2rjwe2nyzg96g3d5e28klteyqjh025fqemzv05",
+                  "value": {
+                    "denom": "uwire",
+                    "amount": "10000000000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "AjDes/ZYMhVldaVUdfEraLw5QY4rVYK0UWL/I5a5lgrG"
+                },
+                "signature": "EySntktj3FfYdF/ZP2/fIgKvYw+zHbVOv2n6gdtXODVB6uolKG+pnMMX8yly0H13Pwt+W9OAE1cPBGZnssy+5A=="
+              }
+            ],
+            "memo": "b0e7891bd855a2e4c52104cb194456bbc5bd2922@172.105.37.214:26656"
+          }
+        },
+        {
+          "type": "cosmos-sdk/StdTx",
+          "value": {
+            "msg": [
+              {
+                "type": "cosmos-sdk/MsgCreateValidator",
+                "value": {
+                  "description": {
+                    "moniker": "wireflow01",
+                    "identity": "",
+                    "website": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "cosmos12cmnfy2ulu2e93x38wvg3vdgfurs37xttu384d",
+                  "validator_address": "cosmosvaloper12cmnfy2ulu2e93x38wvg3vdgfurs37xtwg9je7",
+                  "pubkey": "cosmosvalconspub1zcjduepqe52ce5844yh9chyzpxejgt44sg5202hyyjpepke2m6fz9hdjv8fshqlmwy",
+                  "value": {
+                    "denom": "uwire",
+                    "amount": "10000000000000"
+                  }
+                }
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas": "200000"
+            },
+            "signatures": [
+              {
+                "pub_key": {
+                  "type": "tendermint/PubKeySecp256k1",
+                  "value": "AiRPrAV7HQyDObXB/ZhFgF1+QvcPLqzU0KcYpURsWawu"
+                },
+                "signature": "E32Rczck3lmGLhVr/6MbSdw1vMUrVDFL1k/DcokynKMuQsCFw8QB1RUXHzLDPoUAMI1t+Nf2njsfZ38SGILVTw=="
+              }
+            ],
+            "memo": "0d103010b049ca9fd675878390289dffc068f4d1@134.122.84.173:26656"
+          }
+        }
+      ]
+    }
   }
 }
