@@ -19,7 +19,7 @@
           "min_self_delegation": "1",
           "delegator_address": "cosmos1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lfd8n99",
           "validator_address": "cosmosvaloper1n3gwpzwccsj0d2jnx8d6z45v7tpd0c6lvenxfk",
-          "pubkey": "cosmosvalconspub1zcjduepqcvt9fxtyygrdl3vl7pxklnu28lzpsmcdtstfhyfcptz2prynwnysl4gluk",
+          "pubkey": "cosmosvalconspub1zcjduepqpjprepe2k05dv4k8rven2rjwe2nyzg96g3d5e28klteyqjh025fqemzv05",
           "value": {
             "denom": "uwire",
             "amount": "10000000000000"
@@ -37,9 +37,9 @@
           "type": "tendermint/PubKeySecp256k1",
           "value": "AjDes/ZYMhVldaVUdfEraLw5QY4rVYK0UWL/I5a5lgrG"
         },
-        "signature": "51Ixzx2aD0LL85T8eZc9ZyTyHnN+BaNigdpzP9KBmd5pbEWOiQD0J36kbfTLAOP49xxT9B3cNQx3uUA+k/pa2w=="
+        "signature": "EySntktj3FfYdF/ZP2/fIgKvYw+zHbVOv2n6gdtXODVB6uolKG+pnMMX8yly0H13Pwt+W9OAE1cPBGZnssy+5A=="
       }
     ],
-    "memo": "6518811b955a7ab6f007eea44b18f91e5ccda1e8@192.168.0.15:26656"
+    "memo": "b0e7891bd855a2e4c52104cb194456bbc5bd2922@172.105.37.214:26656"
   }
 }
