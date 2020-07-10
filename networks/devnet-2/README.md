@@ -1,5 +1,7 @@
 # DEVNET-2
 
+## Setup
+
 Build and install the binaries:
 
 ```bash
@@ -7,6 +9,8 @@ $ cd wns
 $ git checkout feature-mechanisms
 $ make install
 ```
+
+## Validator at Genesis
 
 Choose a name for your validator (short alphanumeric string, without spaces):
 
@@ -30,3 +34,35 @@ $ wnsd gentx --name $VALIDATOR_NAME --amount 10000000000000uwire --output-docume
 ```
 
 Commit the generated file to `wns/networks/devnet-2/gentx` folder and push the changes to `feature-mechanisms` branch.
+
+## Starting the Chain
+
+### Genesis
+
+Copy over the final genesis.json:
+
+```bash
+$ cp networks/devnet-2/genesis.json ~/.wire/wnsd/config/genesis.json
+```
+
+### Peers
+
+Update `~/.wire/wnsd/config/config.toml` with:
+
+```text
+persistent_peers = "b0e7891bd855a2e4c52104cb194456bbc5bd2922@dxns1.devnet-2.deepstacksoft.com:26656"
+```
+
+To list your validator node as a peer for others, first get the node ID:
+
+```bash
+$ wnsd tendermint show-node-id
+```
+
+Then, get the public hostname/IP for the machine and update (`<node-id>@<host/IP>:26656`) the above list. Peers are separated by commas.
+
+### Run
+
+```bash
+$ ./scripts/server start --tail
+```
