@@ -28,6 +28,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 	nameserviceQueryCmd.AddCommand(client.GetCommands(
 		GetCmdWhoIs(storeKey, cdc),
+		GetCmdLookupWRN(storeKey, cdc),
 		GetCmdNames(storeKey, cdc),
 		GetCmdResolve(storeKey, cdc),
 		GetCmdList(storeKey, cdc),
@@ -49,8 +50,30 @@ func GetCmdWhoIs(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			name := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/whois/%s", queryRoute, name), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdLookupWRN queries naming info for a WRN.
+func GetCmdLookupWRN(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "lookup [wrn]",
+		Short: "Get naming info for WRN.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			wrn := args[0]
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lookup/%s", queryRoute, wrn), nil)
 			if err != nil {
 				return err
 			}
@@ -96,7 +119,6 @@ func GetCmdGetResource(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			id := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/get/%s", queryRoute, id), nil)
 			if err != nil {
 				return err
@@ -144,7 +166,6 @@ func GetCmdResolve(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			wrn := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", queryRoute, wrn), nil)
 			if err != nil {
 				return err
@@ -168,7 +189,6 @@ func GetCmdQueryByBond(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			bondID := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/query-by-bond/%s", queryRoute, bondID), nil)
 			if err != nil {
 				return err

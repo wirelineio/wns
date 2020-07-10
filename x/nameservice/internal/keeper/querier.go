@@ -18,21 +18,25 @@ import (
 
 // query endpoints supported by the nameservice Querier
 const (
-	WhoIs                  = "whois"
 	ListRecordsPath        = "list"
 	GetRecordPath          = "get"
-	ListNamesPath          = "names"
-	ResolveNamePath        = "resolve"
 	QueryRecordsByBondPath = "query-by-bond"
 	QueryParametersPath    = "parameters"
+
+	WhoIsPath       = "whois"
+	LookUpWRNPath   = "lookup"
+	ListNamesPath   = "names"
+	ResolveNamePath = "resolve"
 )
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case WhoIs:
+		case WhoIsPath:
 			return whoIs(ctx, path[1:], req, keeper)
+		case LookUpWRNPath:
+			return lookupWRN(ctx, path[1:], req, keeper)
 		case ListRecordsPath:
 			return listResources(ctx, path[1:], req, keeper)
 		case GetRecordPath:
@@ -61,6 +65,23 @@ func whoIs(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper)
 	nameAuthority := keeper.GetNameAuthority(ctx, name)
 
 	bz, err2 := json.MarshalIndent(nameAuthority, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+func lookupWRN(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	wrn := strings.Join(path, "/")
+
+	if !keeper.HasNameRecord(ctx, wrn) {
+		return nil, sdk.ErrUnknownRequest("WRN not found.")
+	}
+
+	nameRecord := keeper.GetNameRecord(ctx, wrn)
+
+	bz, err2 := json.MarshalIndent(nameRecord, "", "  ")
 	if err2 != nil {
 		panic("Could not marshal result to JSON.")
 	}
