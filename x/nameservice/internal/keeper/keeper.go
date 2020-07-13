@@ -235,7 +235,7 @@ func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record
 		codec.MustUnmarshalBinaryBare(bz, &obj)
 
 		recordExists := HasRecord(store, obj.ID)
-		if !recordExists {
+		if !recordExists || obj.ID == "" {
 			return nil
 		}
 

@@ -28,6 +28,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgReserveName(ctx, keeper, msg)
 		case types.MsgSetName:
 			return handleMsgSetName(ctx, keeper, msg)
+		case types.MsgDeleteName:
+			return handleMsgDeleteName(ctx, keeper, msg)
 		case types.MsgAssociateBond:
 			return handleMsgAssociateBond(ctx, keeper, msg)
 		case types.MsgDissociateBond:
@@ -356,33 +358,58 @@ func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveNa
 	}
 }
 
-// Handle MsgSetName.
-func handleMsgSetName(ctx sdk.Context, keeper Keeper, msg types.MsgSetName) sdk.Result {
-	parsedWRN, err := url.Parse(msg.WRN)
+func checkWRN(ctx sdk.Context, keeper Keeper, signer sdk.AccAddress, inputWRN string) sdk.Error {
+	parsedWRN, err := url.Parse(inputWRN)
 	if err != nil {
-		return sdk.ErrInternal("Invalid WRN.").Result()
+		return sdk.ErrInternal("Invalid WRN.")
 	}
 
 	name := parsedWRN.Host
-	wrn := fmt.Sprintf("wrn://%s%s", name, parsedWRN.RequestURI())
-	if wrn != msg.WRN {
-		return sdk.ErrInternal("Invalid WRN.").Result()
+	formattedWRN := fmt.Sprintf("wrn://%s%s", name, parsedWRN.RequestURI())
+	if formattedWRN != inputWRN {
+		return sdk.ErrInternal("Invalid WRN.")
 	}
 
 	// Check authority record.
 	if !keeper.HasNameAuthority(ctx, name) {
-		return sdk.ErrInternal("Name authority not found.").Result()
+		return sdk.ErrInternal("Name authority not found.")
 	}
 
 	authority := keeper.GetNameAuthority(ctx, name)
-	if authority.OwnerAddress != msg.Signer.String() {
-		return sdk.ErrUnauthorized("Access denied.").Result()
+	if authority.OwnerAddress != signer.String() {
+		return sdk.ErrUnauthorized("Access denied.")
 	}
 
-	keeper.SetNameRecord(ctx, wrn, msg.ID)
+	return nil
+}
+
+// Handle MsgSetName.
+func handleMsgSetName(ctx sdk.Context, keeper Keeper, msg types.MsgSetName) sdk.Result {
+	err := checkWRN(ctx, keeper, msg.Signer, msg.WRN)
+	if err != nil {
+		return err.Result()
+	}
+
+	keeper.SetNameRecord(ctx, msg.WRN, msg.ID)
 
 	return sdk.Result{
-		Data:   []byte(wrn),
+		Data:   []byte(msg.WRN),
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgDeleteName.
+func handleMsgDeleteName(ctx sdk.Context, keeper Keeper, msg types.MsgDeleteName) sdk.Result {
+	err := checkWRN(ctx, keeper, msg.Signer, msg.WRN)
+	if err != nil {
+		return err.Result()
+	}
+
+	// Set CID to empty string.
+	keeper.SetNameRecord(ctx, msg.WRN, "")
+
+	return sdk.Result{
+		Data:   []byte(msg.WRN),
 		Events: ctx.EventManager().Events(),
 	}
 }

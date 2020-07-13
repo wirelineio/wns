@@ -99,3 +99,46 @@ func (msg MsgSetName) GetSignBytes() []byte {
 func (msg MsgSetName) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
+
+// MsgDeleteName defines a DeleteName message.
+type MsgDeleteName struct {
+	WRN    string         `json:"wrn"`
+	Signer sdk.AccAddress `json:"signer"`
+}
+
+// NewMsgDeleteName is the constructor function for MsgDeleteName.
+func NewMsgDeleteName(wrn string, signer sdk.AccAddress) MsgDeleteName {
+	return MsgDeleteName{
+		WRN:    wrn,
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgDeleteName) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgDeleteName) Type() string { return "delete-name" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgDeleteName) ValidateBasic() sdk.Error {
+
+	if msg.WRN == "" {
+		return sdk.ErrInternal("WRN is required.")
+	}
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgDeleteName) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgDeleteName) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}
