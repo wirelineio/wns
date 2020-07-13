@@ -45,6 +45,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 		GetCmdReserveName(cdc),
 		GetCmdSetName(cdc),
+		GetCmdDeleteName(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -267,6 +268,29 @@ func GetCmdSetName(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgSetName(args[0], args[1], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+func GetCmdDeleteName(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete-name [wrn]",
+		Short: "Delete WRN.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgDeleteName(args[0], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
