@@ -227,22 +227,17 @@ func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
 
 // ResolveWRN resolves a WRN to a record.
 func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
-	return ResolveFullWRN(store, codec, wrn)
-}
-
-// ResolveFullWRN resolves a WRN (full path) to a record.
-func (k Keeper) ResolveFullWRN(ctx sdk.Context, wrn string) *types.Record {
-	return ResolveFullWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
-}
-
-// ResolveFullWRN resolves a WRN (full path) to a record.
-func ResolveFullWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
 	nameKey := GetNameRecordIndexKey(wrn)
 
 	if store.Has(nameKey) {
 		bz := store.Get(nameKey)
 		var obj types.NameRecord
 		codec.MustUnmarshalBinaryBare(bz, &obj)
+
+		recordExists := HasRecord(store, obj.ID)
+		if !recordExists {
+			return nil
+		}
 
 		record := GetRecord(store, codec, obj.ID)
 		return &record
