@@ -69,6 +69,47 @@ type Record {
   references: [Record]        # Record references.
 }
 
+# Metadata for query results, e.g. chain height, proofs.
+type ResultMeta {
+  height:     String!         # Block height.
+}
+
+# Name authority record.
+type AuthorityRecord {
+  ownerAddress:     String!   # Owner address.
+  ownerPublicKey:   String!   # Owner public key.
+  height:           String!   # Height at which record was created.
+}
+
+# Name authority result, e.g. authority record + metadata.
+type AuthorityResult {
+  meta:       ResultMeta!
+  records:    [AuthorityRecord]!
+}
+
+# Result for record queries, i.e. records + metadata.
+type RecordResult {
+  meta:       ResultMeta!
+  records:    [Record]!
+}
+
+# Name record entry, created at a particular height.
+type NameRecordEntry {
+  id:         String!         # Target record ID.
+  height:     String!         # Height at which record was created.
+}
+
+type NameRecord {
+  latest:     NameRecordEntry!     # Latest mame record entry.
+  history:    [NameRecordEntry]    # Historical name record entries.
+}
+
+# Name lookup result.
+type NameResult {
+  meta:       ResultMeta!     # Metadata e.g. height at which resolution was done.
+  records:    [NameRecord]!   # Name records.
+}
+
 # Mutations require payment in coins (e.g. 100wire).
 # Used by the wallet to get the account balance for display and mutations.
 type Coin {
@@ -182,10 +223,23 @@ type Query {
     attributes: [KeyValueInput]
   ): [Record]
 
-  # Resolve WRNs to records.
-  resolveRecords(
-    refs: [String!]
-  ): [Record]
+  #
+  # Naming API.
+  #
+
+  lookupAuthorities(
+    names: [String!]
+  ): AuthorityResult!
+
+  # Lookup name to record mapping information.
+  lookupNames(
+    names: [String!]
+  ): NameResult!
+
+  # Resolve names to records.
+  resolveNames(
+    names: [String!]
+  ): RecordResult!
 }
 
 type Mutation {
