@@ -346,11 +346,12 @@ func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveNa
 		return sdk.ErrUnknownAddress("Account not found.").Result()
 	}
 
-	keeper.SetNameAuthority(ctx, name, NameAuthority{
-		OwnerPublicKey: helpers.BytesToBase64(account.GetPubKey().Bytes()),
-		OwnerAddress:   msg.Signer.String(),
-		Height:         ctx.BlockHeight(),
-	})
+	keeper.SetNameAuthority(
+		ctx,
+		name,
+		msg.Signer.String(),
+		helpers.BytesToBase64(account.GetPubKey().Bytes()),
+	)
 
 	return sdk.Result{
 		Data:   []byte(name),

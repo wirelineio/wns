@@ -545,9 +545,14 @@ func HasNameAuthority(store sdk.KVStore, name string) bool {
 }
 
 // SetNameAuthority creates the NameAutority record.
-func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, nameAuthority types.NameAuthority) {
+func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, ownerAddress string, ownerPublicKey string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(nameAuthority))
+	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(
+		types.NameAuthority{
+			OwnerAddress:   ownerAddress,
+			OwnerPublicKey: ownerPublicKey,
+			Height:         ctx.BlockHeight(),
+		}))
 	k.updateBlockChangesetForNameAuthority(ctx, name)
 }
 
