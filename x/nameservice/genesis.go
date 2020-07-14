@@ -22,17 +22,17 @@ type NameEntry struct {
 
 type GenesisState struct {
 	Params      types.Params      `json:"params" yaml:"params"`
+	Records     []types.RecordObj `json:"records" yaml:"records"`
 	Authorities []AuthorityEntry  `json:"authorities" yaml:"authorities"`
 	Names       []NameEntry       `json:"names" yaml:"names"`
-	Records     []types.RecordObj `json:"records" yaml:"records"`
 }
 
-func NewGenesisState(params types.Params, authorities []AuthorityEntry, names []NameEntry, records []types.RecordObj) GenesisState {
+func NewGenesisState(params types.Params, records []types.RecordObj, authorities []AuthorityEntry, names []NameEntry) GenesisState {
 	return GenesisState{
 		Params:      params,
+		Records:     records,
 		Authorities: authorities,
 		Names:       names,
-		Records:     records,
 	}
 }
 
@@ -81,28 +81,34 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	params := keeper.GetParams(ctx)
 
-	authorities := keeper.ListNameAuthorityRecords(ctx)
-	authorityEntries := []AuthorityEntry{}
-	for name, nameAuthorityRecord := range authorities {
-		authorityEntries = append(authorityEntries, AuthorityEntry{name, nameAuthorityRecord})
-	}
-
-	names := keeper.ListNameRecords(ctx)
-	nameEntries := []NameEntry{}
-	for name, nameRecord := range names {
-		nameEntries = append(nameEntries, NameEntry{name, nameRecord})
-	}
-
 	records := keeper.ListRecords(ctx)
 	recordEntries := []types.RecordObj{}
 	for _, record := range records {
 		recordEntries = append(recordEntries, record.ToRecordObj())
 	}
 
+	authorities := keeper.ListNameAuthorityRecords(ctx)
+	authorityEntries := []AuthorityEntry{}
+	for name, record := range authorities {
+		authorityEntries = append(authorityEntries, AuthorityEntry{
+			Name:  name,
+			Entry: record,
+		})
+	}
+
+	names := keeper.ListNameRecords(ctx)
+	nameEntries := []NameEntry{}
+	for name, record := range names {
+		nameEntries = append(nameEntries, NameEntry{
+			Name:  name,
+			Entry: record,
+		})
+	}
+
 	return GenesisState{
 		Params:      params,
+		Records:     recordEntries,
 		Authorities: authorityEntries,
 		Names:       nameEntries,
-		Records:     recordEntries,
 	}
 }
