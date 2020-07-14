@@ -68,7 +68,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 	}
 
 	for _, authorityEntry := range data.Authorities {
-		keeper.SetNameAuthority(ctx, authorityEntry.Name, authorityEntry.Entry)
+		keeper.SetNameAuthority(ctx, authorityEntry.Name, authorityEntry.Entry.OwnerAddress, authorityEntry.Entry.OwnerPublicKey)
 	}
 
 	for _, nameEntry := range data.Names {
