@@ -69,6 +69,11 @@ func (k Keeper) PutRecord(record nameservice.RecordObj) {
 	k.store.Set(nameservice.GetRecordIndexKey(record.ID), k.codec.MustMarshalBinaryBare(record))
 }
 
+// SetNameAuthorityRecord - sets a name authority record.
+func (k Keeper) SetNameAuthorityRecord(name string, nameAuthority nameservice.NameAuthority) {
+	k.store.Set(nameservice.GetNameAuthorityIndexKey(name), k.codec.MustMarshalBinaryBare(nameAuthority))
+}
+
 // SetNameRecord - sets a name record.
 func (k Keeper) SetNameRecord(wrn string, nameRecord nameservice.NameRecord) {
 	k.store.Set(nameservice.GetNameRecordIndexKey(wrn), k.codec.MustMarshalBinaryBare(nameRecord))
