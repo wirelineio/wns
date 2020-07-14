@@ -207,7 +207,7 @@ type NameRecordEntry struct {
 
 // NameRecord stores name mapping info for a WRN.
 type NameRecord struct {
-	NameRecordEntry
+	NameRecordEntry `json:"latest"`
 
 	// TODO(ashwin): Move to external indexer when available.
 	History []NameRecordEntry `json:"history"`

@@ -201,6 +201,25 @@ func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 	return records
 }
 
+// ListNameAuthorityRecords - get all name authority records.
+func (k Keeper) ListNameAuthorityRecords(ctx sdk.Context) map[string]types.NameAuthority {
+	nameAuthorityRecords := make(map[string]types.NameAuthority)
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, PrefixNameAuthorityRecordIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var record types.NameAuthority
+			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+			nameAuthorityRecords[string(itr.Key()[len(PrefixNameAuthorityRecordIndex):])] = record
+		}
+	}
+
+	return nameAuthorityRecords
+}
+
 // ListNameRecords - get all name records.
 func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
 	nameRecords := make(map[string]types.NameRecord)

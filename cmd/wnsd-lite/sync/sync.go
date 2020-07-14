@@ -135,6 +135,12 @@ func syncAtHeight(ctx *Context, height int64) error {
 		return err
 	}
 
+	// Sync name authority records.
+	err = rpcNodeHandler.syncNameAuthorityRecords(ctx, height, changeset.NameAuthorities)
+	if err != nil {
+		return err
+	}
+
 	// Sync name records.
 	err = rpcNodeHandler.syncNameRecords(ctx, height, changeset.Names)
 	if err != nil {
@@ -156,6 +162,20 @@ func (rpcNodeHandler *RPCNodeHandler) syncRecords(ctx *Context, height int64, re
 		}
 
 		ctx.cache.Set(recordKey, value)
+	}
+
+	return nil
+}
+
+func (rpcNodeHandler *RPCNodeHandler) syncNameAuthorityRecords(ctx *Context, height int64, nameAuthorities []string) error {
+	for _, name := range nameAuthorities {
+		nameAuhorityRecordKey := nameservice.GetNameAuthorityIndexKey(name)
+		value, err := rpcNodeHandler.getStoreValue(ctx, nameAuhorityRecordKey, height)
+		if err != nil {
+			return err
+		}
+
+		ctx.cache.Set(nameAuhorityRecordKey, value)
 	}
 
 	return nil
@@ -212,6 +232,19 @@ func initFromNode(ctx *Context) {
 		ctx.keeper.PutRecord(record)
 	}
 
+	authorityKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixNameAuthorityRecordIndex, height)
+	if err != nil {
+		ctx.log.Fatalln("Error fetching authority records", err)
+	}
+
+	for _, kv := range authorityKVs {
+		var authorityRecord nameservice.NameAuthority
+		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &authorityRecord)
+		name := string(kv.Key[len(nameservice.PrefixNameAuthorityRecordIndex):])
+		ctx.log.Debugln("Importing authority", name)
+		ctx.keeper.SetNameAuthorityRecord(name, authorityRecord)
+	}
+
 	namesKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixWRNToNameRecordIndex, height)
 	if err != nil {
 		ctx.log.Fatalln("Error fetching name records", err)
@@ -255,6 +288,11 @@ func initFromGenesisFile(ctx *Context, height int64) {
 	// Check that chain-id matches.
 	if geneisState.ChainID != ctx.config.ChainID {
 		ctx.log.Fatalln("Chain ID mismatch:", genesisJSONPath)
+	}
+
+	authorities := geneisState.AppState.Nameservice.Authorities
+	for _, nameAuthority := range authorities {
+		ctx.keeper.SetNameAuthorityRecord(nameAuthority.Name, nameAuthority.Entry)
 	}
 
 	names := geneisState.AppState.Nameservice.Names
