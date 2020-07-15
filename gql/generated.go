@@ -51,6 +51,17 @@ type ComplexityRoot struct {
 		Balance  func(childComplexity int) int
 	}
 
+	AuthorityRecord struct {
+		OwnerAddress   func(childComplexity int) int
+		OwnerPublicKey func(childComplexity int) int
+		Height         func(childComplexity int) int
+	}
+
+	AuthorityResult struct {
+		Meta    func(childComplexity int) int
+		Records func(childComplexity int) int
+	}
+
 	Bond struct {
 		ID      func(childComplexity int) int
 		Owner   func(childComplexity int) int
@@ -72,6 +83,21 @@ type ComplexityRoot struct {
 		Submit       func(childComplexity int, tx string) int
 	}
 
+	NameRecord struct {
+		Latest  func(childComplexity int) int
+		History func(childComplexity int) int
+	}
+
+	NameRecordEntry struct {
+		ID     func(childComplexity int) int
+		Height func(childComplexity int) int
+	}
+
+	NameResult struct {
+		Meta    func(childComplexity int) int
+		Records func(childComplexity int) int
+	}
+
 	NodeInfo struct {
 		ID      func(childComplexity int) int
 		Network func(childComplexity int) int
@@ -85,14 +111,16 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetStatus       func(childComplexity int) int
-		GetLogs         func(childComplexity int, count *int) int
-		GetAccounts     func(childComplexity int, addresses []string) int
-		GetBondsByIds   func(childComplexity int, ids []string) int
-		QueryBonds      func(childComplexity int, attributes []*KeyValueInput) int
-		GetRecordsByIds func(childComplexity int, ids []string) int
-		QueryRecords    func(childComplexity int, attributes []*KeyValueInput) int
-		ResolveRecords  func(childComplexity int, refs []string) int
+		GetStatus         func(childComplexity int) int
+		GetLogs           func(childComplexity int, count *int) int
+		GetAccounts       func(childComplexity int, addresses []string) int
+		GetBondsByIds     func(childComplexity int, ids []string) int
+		QueryBonds        func(childComplexity int, attributes []*KeyValueInput) int
+		GetRecordsByIds   func(childComplexity int, ids []string) int
+		QueryRecords      func(childComplexity int, attributes []*KeyValueInput) int
+		LookupAuthorities func(childComplexity int, names []string) int
+		LookupNames       func(childComplexity int, names []string) int
+		ResolveNames      func(childComplexity int, names []string) int
 	}
 
 	Record struct {
@@ -105,8 +133,17 @@ type ComplexityRoot struct {
 		References func(childComplexity int) int
 	}
 
+	RecordResult struct {
+		Meta    func(childComplexity int) int
+		Records func(childComplexity int) int
+	}
+
 	Reference struct {
 		ID func(childComplexity int) int
+	}
+
+	ResultMeta struct {
+		Height func(childComplexity int) int
 	}
 
 	Status struct {
@@ -164,7 +201,9 @@ type QueryResolver interface {
 	QueryBonds(ctx context.Context, attributes []*KeyValueInput) ([]*Bond, error)
 	GetRecordsByIds(ctx context.Context, ids []string) ([]*Record, error)
 	QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error)
-	ResolveRecords(ctx context.Context, refs []string) ([]*Record, error)
+	LookupAuthorities(ctx context.Context, names []string) (*AuthorityResult, error)
+	LookupNames(ctx context.Context, names []string) (*NameResult, error)
+	ResolveNames(ctx context.Context, names []string) (*RecordResult, error)
 }
 
 type executableSchema struct {
@@ -216,6 +255,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Account.Balance(childComplexity), true
+
+	case "AuthorityRecord.OwnerAddress":
+		if e.complexity.AuthorityRecord.OwnerAddress == nil {
+			break
+		}
+
+		return e.complexity.AuthorityRecord.OwnerAddress(childComplexity), true
+
+	case "AuthorityRecord.OwnerPublicKey":
+		if e.complexity.AuthorityRecord.OwnerPublicKey == nil {
+			break
+		}
+
+		return e.complexity.AuthorityRecord.OwnerPublicKey(childComplexity), true
+
+	case "AuthorityRecord.Height":
+		if e.complexity.AuthorityRecord.Height == nil {
+			break
+		}
+
+		return e.complexity.AuthorityRecord.Height(childComplexity), true
+
+	case "AuthorityResult.Meta":
+		if e.complexity.AuthorityResult.Meta == nil {
+			break
+		}
+
+		return e.complexity.AuthorityResult.Meta(childComplexity), true
+
+	case "AuthorityResult.Records":
+		if e.complexity.AuthorityResult.Records == nil {
+			break
+		}
+
+		return e.complexity.AuthorityResult.Records(childComplexity), true
 
 	case "Bond.ID":
 		if e.complexity.Bond.ID == nil {
@@ -289,6 +363,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Submit(childComplexity, args["tx"].(string)), true
+
+	case "NameRecord.Latest":
+		if e.complexity.NameRecord.Latest == nil {
+			break
+		}
+
+		return e.complexity.NameRecord.Latest(childComplexity), true
+
+	case "NameRecord.History":
+		if e.complexity.NameRecord.History == nil {
+			break
+		}
+
+		return e.complexity.NameRecord.History(childComplexity), true
+
+	case "NameRecordEntry.ID":
+		if e.complexity.NameRecordEntry.ID == nil {
+			break
+		}
+
+		return e.complexity.NameRecordEntry.ID(childComplexity), true
+
+	case "NameRecordEntry.Height":
+		if e.complexity.NameRecordEntry.Height == nil {
+			break
+		}
+
+		return e.complexity.NameRecordEntry.Height(childComplexity), true
+
+	case "NameResult.Meta":
+		if e.complexity.NameResult.Meta == nil {
+			break
+		}
+
+		return e.complexity.NameResult.Meta(childComplexity), true
+
+	case "NameResult.Records":
+		if e.complexity.NameResult.Records == nil {
+			break
+		}
+
+		return e.complexity.NameResult.Records(childComplexity), true
 
 	case "NodeInfo.ID":
 		if e.complexity.NodeInfo.ID == nil {
@@ -411,17 +527,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.QueryRecords(childComplexity, args["attributes"].([]*KeyValueInput)), true
 
-	case "Query.ResolveRecords":
-		if e.complexity.Query.ResolveRecords == nil {
+	case "Query.LookupAuthorities":
+		if e.complexity.Query.LookupAuthorities == nil {
 			break
 		}
 
-		args, err := ec.field_Query_resolveRecords_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_lookupAuthorities_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.ResolveRecords(childComplexity, args["refs"].([]string)), true
+		return e.complexity.Query.LookupAuthorities(childComplexity, args["names"].([]string)), true
+
+	case "Query.LookupNames":
+		if e.complexity.Query.LookupNames == nil {
+			break
+		}
+
+		args, err := ec.field_Query_lookupNames_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.LookupNames(childComplexity, args["names"].([]string)), true
+
+	case "Query.ResolveNames":
+		if e.complexity.Query.ResolveNames == nil {
+			break
+		}
+
+		args, err := ec.field_Query_resolveNames_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ResolveNames(childComplexity, args["names"].([]string)), true
 
 	case "Record.ID":
 		if e.complexity.Record.ID == nil {
@@ -472,12 +612,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Record.References(childComplexity), true
 
+	case "RecordResult.Meta":
+		if e.complexity.RecordResult.Meta == nil {
+			break
+		}
+
+		return e.complexity.RecordResult.Meta(childComplexity), true
+
+	case "RecordResult.Records":
+		if e.complexity.RecordResult.Records == nil {
+			break
+		}
+
+		return e.complexity.RecordResult.Records(childComplexity), true
+
 	case "Reference.ID":
 		if e.complexity.Reference.ID == nil {
 			break
 		}
 
 		return e.complexity.Reference.ID(childComplexity), true
+
+	case "ResultMeta.Height":
+		if e.complexity.ResultMeta.Height == nil {
+			break
+		}
+
+		return e.complexity.ResultMeta.Height(childComplexity), true
 
 	case "Status.Version":
 		if e.complexity.Status.Version == nil {
@@ -788,6 +949,47 @@ type Record {
   references: [Record]        # Record references.
 }
 
+# Metadata for query results, e.g. chain height, proofs.
+type ResultMeta {
+  height:     String!         # Block height.
+}
+
+# Name authority record.
+type AuthorityRecord {
+  ownerAddress:     String!   # Owner address.
+  ownerPublicKey:   String!   # Owner public key.
+  height:           String!   # Height at which record was created.
+}
+
+# Name authority result, e.g. authority record + metadata.
+type AuthorityResult {
+  meta:       ResultMeta!
+  records:    [AuthorityRecord]!
+}
+
+# Result for record queries, i.e. records + metadata.
+type RecordResult {
+  meta:       ResultMeta!
+  records:    [Record]!
+}
+
+# Name record entry, created at a particular height.
+type NameRecordEntry {
+  id:         String!         # Target record ID.
+  height:     String!         # Height at which record was created.
+}
+
+type NameRecord {
+  latest:     NameRecordEntry!     # Latest mame record entry.
+  history:    [NameRecordEntry]    # Historical name record entries.
+}
+
+# Name lookup result.
+type NameResult {
+  meta:       ResultMeta!     # Metadata e.g. height at which resolution was done.
+  records:    [NameRecord]!   # Name records.
+}
+
 # Mutations require payment in coins (e.g. 100wire).
 # Used by the wallet to get the account balance for display and mutations.
 type Coin {
@@ -901,10 +1103,23 @@ type Query {
     attributes: [KeyValueInput]
   ): [Record]
 
-  # Resolve WRNs to records.
-  resolveRecords(
-    refs: [String!]
-  ): [Record]
+  #
+  # Naming API.
+  #
+
+  lookupAuthorities(
+    names: [String!]
+  ): AuthorityResult!
+
+  # Lookup name to record mapping information.
+  lookupNames(
+    names: [String!]
+  ): NameResult!
+
+  # Resolve names to records.
+  resolveNames(
+    names: [String!]
+  ): RecordResult!
 }
 
 type Mutation {
@@ -1023,6 +1238,34 @@ func (ec *executionContext) field_Query_getRecordsByIds_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_lookupAuthorities_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []string
+	if tmp, ok := rawArgs["names"]; ok {
+		arg0, err = ec.unmarshalOString2ᚕstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["names"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_lookupNames_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []string
+	if tmp, ok := rawArgs["names"]; ok {
+		arg0, err = ec.unmarshalOString2ᚕstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["names"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_queryBonds_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1051,17 +1294,17 @@ func (ec *executionContext) field_Query_queryRecords_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_resolveRecords_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_resolveNames_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 []string
-	if tmp, ok := rawArgs["refs"]; ok {
+	if tmp, ok := rawArgs["names"]; ok {
 		arg0, err = ec.unmarshalOString2ᚕstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["refs"] = arg0
+	args["names"] = arg0
 	return args, nil
 }
 
@@ -1219,6 +1462,136 @@ func (ec *executionContext) _Account_balance(ctx context.Context, field graphql.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOCoin2ᚕgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐCoin(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthorityRecord_ownerAddress(ctx context.Context, field graphql.CollectedField, obj *AuthorityRecord) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "AuthorityRecord",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerAddress, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthorityRecord_ownerPublicKey(ctx context.Context, field graphql.CollectedField, obj *AuthorityRecord) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "AuthorityRecord",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerPublicKey, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthorityRecord_height(ctx context.Context, field graphql.CollectedField, obj *AuthorityRecord) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "AuthorityRecord",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Height, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthorityResult_meta(ctx context.Context, field graphql.CollectedField, obj *AuthorityResult) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "AuthorityResult",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meta, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ResultMeta)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNResultMeta2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐResultMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthorityResult_records(ctx context.Context, field graphql.CollectedField, obj *AuthorityResult) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "AuthorityResult",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Records, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*AuthorityRecord)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNAuthorityRecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Bond_id(ctx context.Context, field graphql.CollectedField, obj *Bond) graphql.Marshaler {
@@ -1458,6 +1831,159 @@ func (ec *executionContext) _Mutation_submit(ctx context.Context, field graphql.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NameRecord_latest(ctx context.Context, field graphql.CollectedField, obj *NameRecord) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NameRecord",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Latest, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(NameRecordEntry)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNNameRecordEntry2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NameRecord_history(ctx context.Context, field graphql.CollectedField, obj *NameRecord) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NameRecord",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.History, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*NameRecordEntry)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalONameRecordEntry2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NameRecordEntry_id(ctx context.Context, field graphql.CollectedField, obj *NameRecordEntry) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NameRecordEntry",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NameRecordEntry_height(ctx context.Context, field graphql.CollectedField, obj *NameRecordEntry) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NameRecordEntry",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Height, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NameResult_meta(ctx context.Context, field graphql.CollectedField, obj *NameResult) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NameResult",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meta, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ResultMeta)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNResultMeta2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐResultMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NameResult_records(ctx context.Context, field graphql.CollectedField, obj *NameResult) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "NameResult",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Records, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*NameRecord)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNNameRecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecord(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NodeInfo_id(ctx context.Context, field graphql.CollectedField, obj *NodeInfo) graphql.Marshaler {
@@ -1822,7 +2348,7 @@ func (ec *executionContext) _Query_queryRecords(ctx context.Context, field graph
 	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_resolveRecords(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+func (ec *executionContext) _Query_lookupAuthorities(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
 	rctx := &graphql.ResolverContext{
@@ -1832,7 +2358,7 @@ func (ec *executionContext) _Query_resolveRecords(ctx context.Context, field gra
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_resolveRecords_args(ctx, rawArgs)
+	args, err := ec.field_Query_lookupAuthorities_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1841,15 +2367,84 @@ func (ec *executionContext) _Query_resolveRecords(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ResolveRecords(rctx, args["refs"].([]string))
+		return ec.resolvers.Query().LookupAuthorities(rctx, args["names"].([]string))
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Record)
+	res := resTmp.(*AuthorityResult)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
+	return ec.marshalNAuthorityResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_lookupNames(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_lookupNames_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().LookupNames(rctx, args["names"].([]string))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*NameResult)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNNameResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_resolveNames(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_resolveNames_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ResolveNames(rctx, args["names"].([]string))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*RecordResult)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNRecordResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecordResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -2081,6 +2676,58 @@ func (ec *executionContext) _Record_references(ctx context.Context, field graphq
 	return ec.marshalORecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _RecordResult_meta(ctx context.Context, field graphql.CollectedField, obj *RecordResult) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "RecordResult",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meta, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ResultMeta)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNResultMeta2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐResultMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RecordResult_records(ctx context.Context, field graphql.CollectedField, obj *RecordResult) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "RecordResult",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Records, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Record)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNRecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Reference_id(ctx context.Context, field graphql.CollectedField, obj *Reference) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -2094,6 +2741,32 @@ func (ec *executionContext) _Reference_id(ctx context.Context, field graphql.Col
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ResultMeta_height(ctx context.Context, field graphql.CollectedField, obj *ResultMeta) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "ResultMeta",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Height, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -3634,6 +4307,75 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var authorityRecordImplementors = []string{"AuthorityRecord"}
+
+func (ec *executionContext) _AuthorityRecord(ctx context.Context, sel ast.SelectionSet, obj *AuthorityRecord) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, authorityRecordImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthorityRecord")
+		case "ownerAddress":
+			out.Values[i] = ec._AuthorityRecord_ownerAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "ownerPublicKey":
+			out.Values[i] = ec._AuthorityRecord_ownerPublicKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "height":
+			out.Values[i] = ec._AuthorityRecord_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var authorityResultImplementors = []string{"AuthorityResult"}
+
+func (ec *executionContext) _AuthorityResult(ctx context.Context, sel ast.SelectionSet, obj *AuthorityResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, authorityResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthorityResult")
+		case "meta":
+			out.Values[i] = ec._AuthorityResult_meta(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "records":
+			out.Values[i] = ec._AuthorityResult_records(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var bondImplementors = []string{"Bond"}
 
 func (ec *executionContext) _Bond(ctx context.Context, sel ast.SelectionSet, obj *Bond) graphql.Marshaler {
@@ -3760,6 +4502,99 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_insertRecord(ctx, field)
 		case "submit":
 			out.Values[i] = ec._Mutation_submit(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var nameRecordImplementors = []string{"NameRecord"}
+
+func (ec *executionContext) _NameRecord(ctx context.Context, sel ast.SelectionSet, obj *NameRecord) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, nameRecordImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NameRecord")
+		case "latest":
+			out.Values[i] = ec._NameRecord_latest(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "history":
+			out.Values[i] = ec._NameRecord_history(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var nameRecordEntryImplementors = []string{"NameRecordEntry"}
+
+func (ec *executionContext) _NameRecordEntry(ctx context.Context, sel ast.SelectionSet, obj *NameRecordEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, nameRecordEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NameRecordEntry")
+		case "id":
+			out.Values[i] = ec._NameRecordEntry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "height":
+			out.Values[i] = ec._NameRecordEntry_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var nameResultImplementors = []string{"NameResult"}
+
+func (ec *executionContext) _NameResult(ctx context.Context, sel ast.SelectionSet, obj *NameResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, nameResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NameResult")
+		case "meta":
+			out.Values[i] = ec._NameResult_meta(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "records":
+			out.Values[i] = ec._NameResult_records(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3940,7 +4775,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_queryRecords(ctx, field)
 				return res
 			})
-		case "resolveRecords":
+		case "lookupAuthorities":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -3948,7 +4783,38 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_resolveRecords(ctx, field)
+				res = ec._Query_lookupAuthorities(ctx, field)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		case "lookupNames":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_lookupNames(ctx, field)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		case "resolveNames":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resolveNames(ctx, field)
+				if res == graphql.Null {
+					invalid = true
+				}
 				return res
 			})
 		case "__type":
@@ -4017,6 +4883,38 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var recordResultImplementors = []string{"RecordResult"}
+
+func (ec *executionContext) _RecordResult(ctx context.Context, sel ast.SelectionSet, obj *RecordResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, recordResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RecordResult")
+		case "meta":
+			out.Values[i] = ec._RecordResult_meta(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "records":
+			out.Values[i] = ec._RecordResult_records(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var referenceImplementors = []string{"Reference"}
 
 func (ec *executionContext) _Reference(ctx context.Context, sel ast.SelectionSet, obj *Reference) graphql.Marshaler {
@@ -4030,6 +4928,33 @@ func (ec *executionContext) _Reference(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = graphql.MarshalString("Reference")
 		case "id":
 			out.Values[i] = ec._Reference_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+var resultMetaImplementors = []string{"ResultMeta"}
+
+func (ec *executionContext) _ResultMeta(ctx context.Context, sel ast.SelectionSet, obj *ResultMeta) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, resultMetaImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResultMeta")
+		case "height":
+			out.Values[i] = ec._ResultMeta_height(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -4459,6 +5384,57 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAuthorityRecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityRecord(ctx context.Context, sel ast.SelectionSet, v []*AuthorityRecord) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAuthorityRecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityRecord(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNAuthorityResult2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityResult(ctx context.Context, sel ast.SelectionSet, v AuthorityResult) graphql.Marshaler {
+	return ec._AuthorityResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuthorityResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityResult(ctx context.Context, sel ast.SelectionSet, v *AuthorityResult) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._AuthorityResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBigUInt2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalString(v)
 }
@@ -4499,8 +5475,118 @@ func (ec *executionContext) unmarshalNKeyValueInput2ᚕᚖgithubᚗcomᚋwirelin
 	return res, nil
 }
 
+func (ec *executionContext) marshalNNameRecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecord(ctx context.Context, sel ast.SelectionSet, v []*NameRecord) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalONameRecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecord(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNNameRecordEntry2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx context.Context, sel ast.SelectionSet, v NameRecordEntry) graphql.Marshaler {
+	return ec._NameRecordEntry(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNameResult2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameResult(ctx context.Context, sel ast.SelectionSet, v NameResult) graphql.Marshaler {
+	return ec._NameResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNameResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameResult(ctx context.Context, sel ast.SelectionSet, v *NameResult) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._NameResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNNodeInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNodeInfo(ctx context.Context, sel ast.SelectionSet, v NodeInfo) graphql.Marshaler {
 	return ec._NodeInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRecord2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx context.Context, sel ast.SelectionSet, v []*Record) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalORecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecord(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNRecordResult2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecordResult(ctx context.Context, sel ast.SelectionSet, v RecordResult) graphql.Marshaler {
+	return ec._RecordResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRecordResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecordResult(ctx context.Context, sel ast.SelectionSet, v *RecordResult) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._RecordResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResultMeta2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐResultMeta(ctx context.Context, sel ast.SelectionSet, v ResultMeta) graphql.Marshaler {
+	return ec._ResultMeta(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNStatus2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐStatus(ctx context.Context, sel ast.SelectionSet, v Status) graphql.Marshaler {
@@ -4865,6 +5951,17 @@ func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋwirelineioᚋwns�
 	return ec._Account(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOAuthorityRecord2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityRecord(ctx context.Context, sel ast.SelectionSet, v AuthorityRecord) graphql.Marshaler {
+	return ec._AuthorityRecord(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOAuthorityRecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuthorityRecord(ctx context.Context, sel ast.SelectionSet, v *AuthorityRecord) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AuthorityRecord(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOBond2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐBond(ctx context.Context, sel ast.SelectionSet, v Bond) graphql.Marshaler {
 	return ec._Bond(ctx, sel, &v)
 }
@@ -5097,6 +6194,65 @@ func (ec *executionContext) unmarshalOKeyValueInput2ᚖgithubᚗcomᚋwirelineio
 	}
 	res, err := ec.unmarshalOKeyValueInput2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐKeyValueInput(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalONameRecord2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecord(ctx context.Context, sel ast.SelectionSet, v NameRecord) graphql.Marshaler {
+	return ec._NameRecord(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalONameRecord2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecord(ctx context.Context, sel ast.SelectionSet, v *NameRecord) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._NameRecord(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalONameRecordEntry2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx context.Context, sel ast.SelectionSet, v NameRecordEntry) graphql.Marshaler {
+	return ec._NameRecordEntry(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalONameRecordEntry2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx context.Context, sel ast.SelectionSet, v []*NameRecordEntry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalONameRecordEntry2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalONameRecordEntry2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐNameRecordEntry(ctx context.Context, sel ast.SelectionSet, v *NameRecordEntry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._NameRecordEntry(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPeerInfo2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐPeerInfo(ctx context.Context, sel ast.SelectionSet, v PeerInfo) graphql.Marshaler {

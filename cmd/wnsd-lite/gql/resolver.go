@@ -54,10 +54,10 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.
 }
 
 // ResolveRecords resolves records by ref/WRN, with semver range support.
-func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*baseGql.Record, error) {
+func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*baseGql.RecordResult, error) {
 	gqlResponse := []*baseGql.Record{}
 
-	for _, ref := range refs {
+	for _, ref := range names {
 		record := r.Keeper.ResolveWRN(ref)
 		gqlRecord, err := baseGql.GetGQLRecord(ctx, r, record)
 		if err != nil {
@@ -67,7 +67,24 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*b
 		gqlResponse = append(gqlResponse, gqlRecord)
 	}
 
-	return gqlResponse, nil
+	result := baseGql.RecordResult{
+		Meta: baseGql.ResultMeta{
+			Height: string(r.Keeper.GetStatusRecord().LastSyncedHeight),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
+}
+
+func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (*baseGql.AuthorityResult, error) {
+	// TODO(ashwin): Implement.
+	return nil, nil
+}
+
+func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*baseGql.NameResult, error) {
+	// TODO(ashwin): Implement.
+	return nil, nil
 }
 
 func (r *queryResolver) GetLogs(ctx context.Context, count *int) ([]string, error) {

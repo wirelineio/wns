@@ -160,12 +160,12 @@ func QueryRecords(ctx context.Context, resolver QueryResolver, records []*namese
 	return gqlResponse, nil
 }
 
-// ResolveRecords resolves records by ref/WRN, with semver range support.
-func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*Record, error) {
+// ResolveNames resolves records by name/WRN.
+func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*RecordResult, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	for _, ref := range refs {
+	for _, ref := range names {
 		record := r.keeper.ResolveWRN(sdkContext, ref)
 		gqlRecord, err := GetGQLRecord(ctx, r, record)
 		if err != nil {
@@ -175,7 +175,24 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*R
 		gqlResponse = append(gqlResponse, gqlRecord)
 	}
 
-	return gqlResponse, nil
+	result := RecordResult{
+		Meta: ResultMeta{
+			Height: string(sdkContext.BlockHeight()),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
+}
+
+func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (*AuthorityResult, error) {
+	// TODO(ashwin): Implement.
+	return nil, nil
+}
+
+func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*NameResult, error) {
+	// TODO(ashwin): Implement.
+	return nil, nil
 }
 
 // GetLogs tails the log file.
