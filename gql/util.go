@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"strconv"
 
 	"github.com/Masterminds/semver"
 	"github.com/wirelineio/wns/x/bond"
@@ -49,6 +50,41 @@ func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservi
 		Owners:     record.GetOwners(),
 		Attributes: attributes,
 		References: references,
+	}, nil
+}
+
+func GetGQLNameRecord(ctx context.Context, resolver QueryResolver, record *nameservice.NameRecord) (*NameRecord, error) {
+	if record == nil {
+		return nil, nil
+	}
+
+	records := make([]*NameRecordEntry, len(record.History))
+	for index, entry := range record.History {
+		records[index] = getNameRecordEntry(entry)
+	}
+
+	return &NameRecord{
+		Latest:  *getNameRecordEntry(record.NameRecordEntry),
+		History: records,
+	}, nil
+}
+
+func getNameRecordEntry(record nameservice.NameRecordEntry) *NameRecordEntry {
+	return &NameRecordEntry{
+		ID:     string(record.ID),
+		Height: strconv.FormatInt(record.Height, 10),
+	}
+}
+
+func GetGQLNameAuthorityRecord(ctx context.Context, resolver QueryResolver, record *nameservice.NameAuthority) (*AuthorityRecord, error) {
+	if record == nil {
+		return nil, nil
+	}
+
+	return &AuthorityRecord{
+		OwnerAddress:   record.OwnerAddress,
+		OwnerPublicKey: record.OwnerPublicKey,
+		Height:         strconv.FormatInt(record.Height, 10),
 	}, nil
 }
 
