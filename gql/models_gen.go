@@ -10,6 +10,17 @@ type Account struct {
 	Balance  []Coin  `json:"balance"`
 }
 
+type AuthorityRecord struct {
+	OwnerAddress   string `json:"ownerAddress"`
+	OwnerPublicKey string `json:"ownerPublicKey"`
+	Height         string `json:"height"`
+}
+
+type AuthorityResult struct {
+	Meta    ResultMeta         `json:"meta"`
+	Records []*AuthorityRecord `json:"records"`
+}
+
 type Bond struct {
 	ID      string `json:"id"`
 	Owner   string `json:"owner"`
@@ -29,6 +40,21 @@ type KeyValue struct {
 type KeyValueInput struct {
 	Key   string     `json:"key"`
 	Value ValueInput `json:"value"`
+}
+
+type NameRecord struct {
+	Latest  NameRecordEntry    `json:"latest"`
+	History []*NameRecordEntry `json:"history"`
+}
+
+type NameRecordEntry struct {
+	ID     string `json:"id"`
+	Height string `json:"height"`
+}
+
+type NameResult struct {
+	Meta    ResultMeta    `json:"meta"`
+	Records []*NameRecord `json:"records"`
 }
 
 type NodeInfo struct {
@@ -53,12 +79,21 @@ type Record struct {
 	References []*Record   `json:"references"`
 }
 
+type RecordResult struct {
+	Meta    ResultMeta `json:"meta"`
+	Records []*Record  `json:"records"`
+}
+
 type Reference struct {
 	ID string `json:"id"`
 }
 
 type ReferenceInput struct {
 	ID string `json:"id"`
+}
+
+type ResultMeta struct {
+	Height string `json:"height"`
 }
 
 type Status struct {
