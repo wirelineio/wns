@@ -165,8 +165,8 @@ func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*Reco
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	for _, ref := range names {
-		record := r.keeper.ResolveWRN(sdkContext, ref)
+	for _, name := range names {
+		record := r.keeper.ResolveWRN(sdkContext, name)
 		gqlRecord, err := GetGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
@@ -177,7 +177,7 @@ func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*Reco
 
 	result := RecordResult{
 		Meta: ResultMeta{
-			Height: string(sdkContext.BlockHeight()),
+			Height: strconv.FormatInt(sdkContext.BlockHeight(), 10),
 		},
 		Records: gqlResponse,
 	}
@@ -186,13 +186,51 @@ func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*Reco
 }
 
 func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (*AuthorityResult, error) {
-	// TODO(ashwin): Implement.
-	return nil, nil
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*AuthorityRecord{}
+
+	for _, name := range names {
+		record := r.keeper.GetNameAuthority(sdkContext, name)
+		gqlRecord, err := GetGQLNameAuthorityRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := AuthorityResult{
+		Meta: ResultMeta{
+			Height: strconv.FormatInt(sdkContext.BlockHeight(), 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
 }
 
 func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*NameResult, error) {
-	// TODO(ashwin): Implement.
-	return nil, nil
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*NameRecord{}
+
+	for _, name := range names {
+		record := r.keeper.GetNameRecord(sdkContext, name)
+		gqlRecord, err := GetGQLNameRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := NameResult{
+		Meta: ResultMeta{
+			Height: strconv.FormatInt(sdkContext.BlockHeight(), 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
 }
 
 // GetLogs tails the log file.

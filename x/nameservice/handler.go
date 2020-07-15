@@ -372,11 +372,11 @@ func checkWRN(ctx sdk.Context, keeper Keeper, signer sdk.AccAddress, inputWRN st
 	}
 
 	// Check authority record.
-	if !keeper.HasNameAuthority(ctx, name) {
+	authority := keeper.GetNameAuthority(ctx, name)
+	if authority == nil {
 		return sdk.ErrInternal("Name authority not found.")
 	}
 
-	authority := keeper.GetNameAuthority(ctx, name)
 	if authority.OwnerAddress != signer.String() {
 		return sdk.ErrUnauthorized("Access denied.")
 	}

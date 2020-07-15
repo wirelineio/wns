@@ -34,11 +34,13 @@ var (
 	GetNameAuthorityIndexKey  = keeper.GetNameAuthorityIndexKey
 	GetNameRecordIndexKey     = keeper.GetNameRecordIndexKey
 
-	HasRecord     = keeper.HasRecord
-	GetRecord     = keeper.GetRecord
-	ResolveWRN    = keeper.ResolveWRN
-	MatchRecords  = keeper.MatchRecords
-	KeySyncStatus = keeper.KeySyncStatus
+	HasRecord        = keeper.HasRecord
+	GetRecord        = keeper.GetRecord
+	ResolveWRN       = keeper.ResolveWRN
+	GetNameAuthority = keeper.GetNameAuthority
+	GetNameRecord    = keeper.GetNameRecord
+	MatchRecords     = keeper.MatchRecords
+	KeySyncStatus    = keeper.KeySyncStatus
 )
 
 type (
@@ -51,8 +53,9 @@ type (
 	Record    = types.Record
 	RecordObj = types.RecordObj
 
-	NameAuthority = types.NameAuthority
-	NameRecord    = types.NameRecord
+	NameAuthority   = types.NameAuthority
+	NameRecord      = types.NameRecord
+	NameRecordEntry = types.NameRecordEntry
 
 	BlockChangeset = types.BlockChangeset
 )

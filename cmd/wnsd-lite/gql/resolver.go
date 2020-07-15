@@ -57,8 +57,8 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.
 func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*baseGql.RecordResult, error) {
 	gqlResponse := []*baseGql.Record{}
 
-	for _, ref := range names {
-		record := r.Keeper.ResolveWRN(ref)
+	for _, name := range names {
+		record := r.Keeper.ResolveWRN(name)
 		gqlRecord, err := baseGql.GetGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
@@ -69,7 +69,7 @@ func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*base
 
 	result := baseGql.RecordResult{
 		Meta: baseGql.ResultMeta{
-			Height: string(r.Keeper.GetStatusRecord().LastSyncedHeight),
+			Height: strconv.FormatInt(r.Keeper.GetStatusRecord().LastSyncedHeight, 10),
 		},
 		Records: gqlResponse,
 	}
@@ -78,13 +78,49 @@ func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*base
 }
 
 func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (*baseGql.AuthorityResult, error) {
-	// TODO(ashwin): Implement.
-	return nil, nil
+	gqlResponse := []*baseGql.AuthorityRecord{}
+
+	for _, name := range names {
+		record := r.Keeper.GetNameAuthority(name)
+		gqlRecord, err := baseGql.GetGQLNameAuthorityRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := baseGql.AuthorityResult{
+		Meta: baseGql.ResultMeta{
+			Height: strconv.FormatInt(r.Keeper.GetStatusRecord().LastSyncedHeight, 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
 }
 
 func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*baseGql.NameResult, error) {
-	// TODO(ashwin): Implement.
-	return nil, nil
+	gqlResponse := []*baseGql.NameRecord{}
+
+	for _, name := range names {
+		record := r.Keeper.GetNameRecord(name)
+		gqlRecord, err := baseGql.GetGQLNameRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := baseGql.NameResult{
+		Meta: baseGql.ResultMeta{
+			Height: strconv.FormatInt(r.Keeper.GetStatusRecord().LastSyncedHeight, 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
 }
 
 func (r *queryResolver) GetLogs(ctx context.Context, count *int) ([]string, error) {

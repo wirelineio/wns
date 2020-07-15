@@ -172,14 +172,22 @@ func GetRecord(store sdk.KVStore, codec *amino.Codec, id types.ID) types.Record 
 }
 
 // GetNameRecord - gets a name record from the store.
-func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) types.NameRecord {
-	store := ctx.KVStore(k.storeKey)
+func GetNameRecord(store sdk.KVStore, codec *amino.Codec, wrn string) *types.NameRecord {
+	nameRecordKey := GetNameRecordIndexKey(wrn)
+	if !store.Has(nameRecordKey) {
+		return nil
+	}
 
-	bz := store.Get(GetNameRecordIndexKey(wrn))
+	bz := store.Get(nameRecordKey)
 	var obj types.NameRecord
-	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+	codec.MustUnmarshalBinaryBare(bz, &obj)
 
-	return obj
+	return &obj
+}
+
+// GetNameRecord - gets a name record from the store.
+func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) *types.NameRecord {
+	return GetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn)
 }
 
 // ListRecords - get all records.
@@ -557,12 +565,20 @@ func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, ownerAddress stri
 }
 
 // GetNameAuthority - gets a name authority from the store.
-func (k Keeper) GetNameAuthority(ctx sdk.Context, name string) types.NameAuthority {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(GetNameAuthorityIndexKey(name))
+func GetNameAuthority(store sdk.KVStore, codec *amino.Codec, name string) *types.NameAuthority {
+	authorityKey := GetNameAuthorityIndexKey(name)
+	if !store.Has(authorityKey) {
+		return nil
+	}
 
+	bz := store.Get(authorityKey)
 	var obj types.NameAuthority
-	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+	codec.MustUnmarshalBinaryBare(bz, &obj)
 
-	return obj
+	return &obj
+}
+
+// GetNameAuthority - gets a name authority from the store.
+func (k Keeper) GetNameAuthority(ctx sdk.Context, name string) *types.NameAuthority {
+	return GetNameAuthority(ctx.KVStore(k.storeKey), k.cdc, name)
 }
