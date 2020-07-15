@@ -42,9 +42,6 @@ const WnsTypePad = "wrn:pad"
 // WrnTypeReference => Reference.
 const WrnTypeReference = "wrn:reference"
 
-// BigUInt represents a 64-bit unsigned integer.
-type BigUInt uint64
-
 // Resolver is the GQL query resolver.
 type Resolver struct {
 	baseApp       *bam.BaseApp
@@ -52,16 +49,6 @@ type Resolver struct {
 	keeper        nameservice.Keeper
 	accountKeeper auth.AccountKeeper
 	logFile       string
-}
-
-// Account resolver.
-func (r *Resolver) Account() AccountResolver {
-	return &accountResolver{r}
-}
-
-// Coin resolver.
-func (r *Resolver) Coin() CoinResolver {
-	return &coinResolver{r}
 }
 
 // Mutation is the entry point to tx execution.
@@ -72,25 +59,6 @@ func (r *Resolver) Mutation() MutationResolver {
 // Query is the entry point to query execution.
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
-}
-
-type accountResolver struct{ *Resolver }
-
-func (r *accountResolver) Number(ctx context.Context, obj *Account) (string, error) {
-	val := uint64(obj.Number)
-	return strconv.FormatUint(val, 10), nil
-}
-
-func (r *accountResolver) Sequence(ctx context.Context, obj *Account) (string, error) {
-	val := uint64(obj.Sequence)
-	return strconv.FormatUint(val, 10), nil
-}
-
-type coinResolver struct{ *Resolver }
-
-func (r *coinResolver) Quantity(ctx context.Context, obj *Coin) (string, error) {
-	val := uint64(obj.Quantity)
-	return strconv.FormatUint(val, 10), nil
 }
 
 type mutationResolver struct{ *Resolver }
@@ -332,8 +300,8 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 		pubKey = &pubKeyStr
 	}
 
-	accNum := BigUInt(account.GetAccountNumber())
-	seq := BigUInt(account.GetSequence())
+	accNum := strconv.FormatUint(account.GetAccountNumber(), 10)
+	seq := strconv.FormatUint(account.GetSequence(), 10)
 
 	return &Account{
 		Address:  address,

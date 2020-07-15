@@ -7,44 +7,11 @@ package gql
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	baseGql "github.com/wirelineio/wns/gql"
 )
 
-// BigUInt represents a 64-bit unsigned integer.
-type BigUInt uint64
-
-type accountResolver struct{ *Resolver }
-
-type coinResolver struct{ *Resolver }
-
 type mutationResolver struct{ *Resolver }
-
-func (r *accountResolver) Number(ctx context.Context, obj *baseGql.Account) (string, error) {
-	val := uint64(obj.Number)
-	return strconv.FormatUint(val, 10), nil
-}
-
-func (r *accountResolver) Sequence(ctx context.Context, obj *baseGql.Account) (string, error) {
-	val := uint64(obj.Sequence)
-	return strconv.FormatUint(val, 10), nil
-}
-
-func (r *coinResolver) Quantity(ctx context.Context, obj *baseGql.Coin) (string, error) {
-	val := uint64(obj.Quantity)
-	return strconv.FormatUint(val, 10), nil
-}
-
-// Account resolver.
-func (r *Resolver) Account() baseGql.AccountResolver {
-	return &accountResolver{r}
-}
-
-// Coin resolver.
-func (r *Resolver) Coin() baseGql.CoinResolver {
-	return &coinResolver{r}
-}
 
 // Mutation is the entry point to tx execution.
 func (r *Resolver) Mutation() baseGql.MutationResolver {

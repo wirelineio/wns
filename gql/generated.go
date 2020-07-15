@@ -33,8 +33,6 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Account() AccountResolver
-	Coin() CoinResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -182,13 +180,6 @@ type ComplexityRoot struct {
 	}
 }
 
-type AccountResolver interface {
-	Number(ctx context.Context, obj *Account) (string, error)
-	Sequence(ctx context.Context, obj *Account) (string, error)
-}
-type CoinResolver interface {
-	Quantity(ctx context.Context, obj *Coin) (string, error)
-}
 type MutationResolver interface {
 	InsertRecord(ctx context.Context, attributes []*KeyValueInput) (*Record, error)
 	Submit(ctx context.Context, tx string) (*string, error)
@@ -882,9 +873,6 @@ var parsedSchema = gqlparser.MustLoadSchema(
 # Copyright 2019 Wireline, Inc.
 #
 
-# BigUInt is a 64-bit unsigned int.
-scalar BigUInt
-
 # Reference to another record.
 type Reference {
   id:         String!         # ID of linked record.
@@ -994,7 +982,7 @@ type NameResult {
 # Used by the wallet to get the account balance for display and mutations.
 type Coin {
   type:       String!         # e.g. 'WIRE'
-  quantity:   BigUInt!        # e.g. 1000000
+  quantity:   String!         # e.g. 1000000
 }
 
 # Represents an account on the blockchain.
@@ -1002,8 +990,8 @@ type Coin {
 type Account {
   address:  String!           # Blockchain address.
   pubKey:   String            # Public key.
-  number:   BigUInt!          # Account number.
-  sequence: BigUInt!          # Sequence number used to prevent replays.
+  number:   String!           # Account number.
+  sequence: String!           # Sequence number used to prevent replays.
   balance:  [Coin!]           # Current balance for each coin type.
 }
 
@@ -1401,7 +1389,7 @@ func (ec *executionContext) _Account_number(ctx context.Context, field graphql.C
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Account().Number(rctx, obj)
+		return obj.Number, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -1412,7 +1400,7 @@ func (ec *executionContext) _Account_number(ctx context.Context, field graphql.C
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBigUInt2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Account_sequence(ctx context.Context, field graphql.CollectedField, obj *Account) graphql.Marshaler {
@@ -1427,7 +1415,7 @@ func (ec *executionContext) _Account_sequence(ctx context.Context, field graphql
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Account().Sequence(rctx, obj)
+		return obj.Sequence, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -1438,7 +1426,7 @@ func (ec *executionContext) _Account_sequence(ctx context.Context, field graphql
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBigUInt2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Account_balance(ctx context.Context, field graphql.CollectedField, obj *Account) graphql.Marshaler {
@@ -1707,7 +1695,7 @@ func (ec *executionContext) _Coin_quantity(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Coin().Quantity(rctx, obj)
+		return obj.Quantity, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -1718,7 +1706,7 @@ func (ec *executionContext) _Coin_quantity(ctx context.Context, field graphql.Co
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBigUInt2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _KeyValue_key(ctx context.Context, field graphql.CollectedField, obj *KeyValue) graphql.Marshaler {
@@ -4267,33 +4255,15 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 		case "pubKey":
 			out.Values[i] = ec._Account_pubKey(ctx, field, obj)
 		case "number":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Account_number(ctx, field, obj)
-				if res == graphql.Null {
-					invalid = true
-				}
-				return res
-			})
+			out.Values[i] = ec._Account_number(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "sequence":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Account_sequence(ctx, field, obj)
-				if res == graphql.Null {
-					invalid = true
-				}
-				return res
-			})
+			out.Values[i] = ec._Account_sequence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "balance":
 			out.Values[i] = ec._Account_balance(ctx, field, obj)
 		default:
@@ -4427,19 +4397,10 @@ func (ec *executionContext) _Coin(ctx context.Context, sel ast.SelectionSet, obj
 				invalid = true
 			}
 		case "quantity":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Coin_quantity(ctx, field, obj)
-				if res == graphql.Null {
-					invalid = true
-				}
-				return res
-			})
+			out.Values[i] = ec._Coin_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5433,14 +5394,6 @@ func (ec *executionContext) marshalNAuthorityResult2ᚖgithubᚗcomᚋwirelineio
 		return graphql.Null
 	}
 	return ec._AuthorityResult(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNBigUInt2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalString(v)
-}
-
-func (ec *executionContext) marshalNBigUInt2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	return graphql.MarshalString(v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
