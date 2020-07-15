@@ -30,17 +30,8 @@ const DefaultLogNumLines = 50
 // MaxLogNumLines is the max number of log lines that can be tailed.
 const MaxLogNumLines = 1000
 
-// WnsTypeProtocol => Protocol.
-const WnsTypeProtocol = "wrn:protocol"
-
-// WnsTypeBot => Bot.
-const WnsTypeBot = "wrn:bot"
-
-// WnsTypePad => Pad.
-const WnsTypePad = "wrn:pad"
-
 // WrnTypeReference => Reference.
-const WrnTypeReference = "wrn:reference"
+const WrnTypeReference = "reference"
 
 // Resolver is the GQL query resolver.
 type Resolver struct {
