@@ -5,8 +5,8 @@ package gql
 type Account struct {
 	Address  string  `json:"address"`
 	PubKey   *string `json:"pubKey"`
-	Number   BigUInt `json:"number"`
-	Sequence BigUInt `json:"sequence"`
+	Number   string  `json:"number"`
+	Sequence string  `json:"sequence"`
 	Balance  []Coin  `json:"balance"`
 }
 
@@ -28,8 +28,8 @@ type Bond struct {
 }
 
 type Coin struct {
-	Type     string  `json:"type"`
-	Quantity BigUInt `json:"quantity"`
+	Type     string `json:"type"`
+	Quantity string `json:"quantity"`
 }
 
 type KeyValue struct {

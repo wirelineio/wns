@@ -275,7 +275,7 @@ func getGQLCoins(coins sdk.Coins) []Coin {
 	for index, coin := range coins {
 		gqlCoins[index] = Coin{
 			Type:     coin.Denom,
-			Quantity: BigUInt(coin.Amount.Int64()),
+			Quantity: strconv.FormatInt(coin.Amount.Int64(), 10),
 		}
 	}
 
