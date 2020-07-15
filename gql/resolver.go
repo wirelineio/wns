@@ -177,7 +177,7 @@ func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*Reco
 
 	result := RecordResult{
 		Meta: ResultMeta{
-			Height: strconv.FormatInt(sdkContext.BlockHeight(), 10),
+			Height: strconv.FormatInt(r.baseApp.LastBlockHeight(), 10),
 		},
 		Records: gqlResponse,
 	}
@@ -201,7 +201,7 @@ func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (
 
 	result := AuthorityResult{
 		Meta: ResultMeta{
-			Height: strconv.FormatInt(sdkContext.BlockHeight(), 10),
+			Height: strconv.FormatInt(r.baseApp.LastBlockHeight(), 10),
 		},
 		Records: gqlResponse,
 	}
@@ -225,7 +225,7 @@ func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*NameR
 
 	result := NameResult{
 		Meta: ResultMeta{
-			Height: strconv.FormatInt(sdkContext.BlockHeight(), 10),
+			Height: strconv.FormatInt(r.baseApp.LastBlockHeight(), 10),
 		},
 		Records: gqlResponse,
 	}
