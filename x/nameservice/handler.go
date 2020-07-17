@@ -24,8 +24,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.MsgSetRecord:
 			return handleMsgSetRecord(ctx, keeper, msg)
-		case types.MsgReserveName:
-			return handleMsgReserveName(ctx, keeper, msg)
+		case types.MsgReserveAuthority:
+			return handleMsgReserveAuthority(ctx, keeper, msg)
 		case types.MsgSetName:
 			return handleMsgSetName(ctx, keeper, msg)
 		case types.MsgDeleteName:
@@ -318,7 +318,7 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 }
 
 // Handle MsgReserveName.
-func handleMsgReserveName(ctx sdk.Context, keeper Keeper, msg types.MsgReserveName) sdk.Result {
+func handleMsgReserveAuthority(ctx sdk.Context, keeper Keeper, msg types.MsgReserveAuthority) sdk.Result {
 	wrn := fmt.Sprintf("wrn://%s", msg.Name)
 
 	parsedWRN, err := url.Parse(wrn)

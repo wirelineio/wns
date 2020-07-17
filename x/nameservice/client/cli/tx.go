@@ -243,7 +243,7 @@ func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
 
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			msg := types.NewMsgReserveName(args[0], cliCtx.GetFromAddress())
+			msg := types.NewMsgReserveAuthority(args[0], cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err
