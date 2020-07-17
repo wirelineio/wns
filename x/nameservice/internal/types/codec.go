@@ -22,7 +22,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSetRecord{}, "nameservice/SetRecord", nil)
 	cdc.RegisterConcrete(MsgRenewRecord{}, "nameservice/RenewRecord", nil)
 
-	cdc.RegisterConcrete(MsgReserveName{}, "nameservice/ReserveName", nil)
+	cdc.RegisterConcrete(MsgReserveAuthority{}, "nameservice/ReserveAuthority", nil)
 	cdc.RegisterConcrete(MsgSetName{}, "nameservice/SetName", nil)
 	cdc.RegisterConcrete(MsgDeleteName{}, "nameservice/DeleteName", nil)
 

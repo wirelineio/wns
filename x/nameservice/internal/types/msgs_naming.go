@@ -6,28 +6,28 @@ package types
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
-// MsgReserveName defines a ReserveName message.
-type MsgReserveName struct {
+// MsgReserveAuthority defines a ReserveName message.
+type MsgReserveAuthority struct {
 	Name   string         `json:"name"`
 	Signer sdk.AccAddress `json:"signer"`
 }
 
-// NewMsgReserveName is the constructor function for MsgReserveName.
-func NewMsgReserveName(name string, signer sdk.AccAddress) MsgReserveName {
-	return MsgReserveName{
+// NewMsgReserveAuthority is the constructor function for MsgReserveAuthority.
+func NewMsgReserveAuthority(name string, signer sdk.AccAddress) MsgReserveAuthority {
+	return MsgReserveAuthority{
 		Name:   name,
 		Signer: signer,
 	}
 }
 
 // Route Implements Msg.
-func (msg MsgReserveName) Route() string { return RouterKey }
+func (msg MsgReserveAuthority) Route() string { return RouterKey }
 
 // Type Implements Msg.
-func (msg MsgReserveName) Type() string { return "reserve-name" }
+func (msg MsgReserveAuthority) Type() string { return "reserve-authority" }
 
 // ValidateBasic Implements Msg.
-func (msg MsgReserveName) ValidateBasic() sdk.Error {
+func (msg MsgReserveAuthority) ValidateBasic() sdk.Error {
 
 	if msg.Name == "" {
 		return sdk.ErrInternal("Name is required.")
@@ -41,12 +41,12 @@ func (msg MsgReserveName) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Implements Msg.
-func (msg MsgReserveName) GetSignBytes() []byte {
+func (msg MsgReserveAuthority) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners Implements Msg.
-func (msg MsgReserveName) GetSigners() []sdk.AccAddress {
+func (msg MsgReserveAuthority) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
 
