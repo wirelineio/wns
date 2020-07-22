@@ -93,11 +93,11 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 }
 
 // QueryRecords filters records by K=V conditions.
-func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
+func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput, all *bool) ([]*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 
 	var records = r.keeper.MatchRecords(sdkContext, func(record *nameservice.Record) bool {
-		return MatchOnAttributes(record, attributes)
+		return MatchOnAttributes(record, attributes, (all != nil && *all))
 	})
 
 	return QueryRecords(ctx, r, records, attributes)

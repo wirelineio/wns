@@ -328,7 +328,7 @@ func MatchRecords(store sdk.KVStore, codec *amino.Codec, matchFn func(*types.Rec
 			var obj types.RecordObj
 			codec.MustUnmarshalBinaryBare(bz, &obj)
 			record := recordObjToRecord(store, codec, obj)
-			if len(record.Names) > 0 && matchFn(&record) {
+			if matchFn(&record) {
 				records = append(records, &record)
 			}
 		}

@@ -115,7 +115,7 @@ type ComplexityRoot struct {
 		GetBondsByIds     func(childComplexity int, ids []string) int
 		QueryBonds        func(childComplexity int, attributes []*KeyValueInput) int
 		GetRecordsByIds   func(childComplexity int, ids []string) int
-		QueryRecords      func(childComplexity int, attributes []*KeyValueInput) int
+		QueryRecords      func(childComplexity int, attributes []*KeyValueInput, all *bool) int
 		LookupAuthorities func(childComplexity int, names []string) int
 		LookupNames       func(childComplexity int, names []string) int
 		ResolveNames      func(childComplexity int, names []string) int
@@ -192,7 +192,7 @@ type QueryResolver interface {
 	GetBondsByIds(ctx context.Context, ids []string) ([]*Bond, error)
 	QueryBonds(ctx context.Context, attributes []*KeyValueInput) ([]*Bond, error)
 	GetRecordsByIds(ctx context.Context, ids []string) ([]*Record, error)
-	QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error)
+	QueryRecords(ctx context.Context, attributes []*KeyValueInput, all *bool) ([]*Record, error)
 	LookupAuthorities(ctx context.Context, names []string) (*AuthorityResult, error)
 	LookupNames(ctx context.Context, names []string) (*NameResult, error)
 	ResolveNames(ctx context.Context, names []string) (*RecordResult, error)
@@ -517,7 +517,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryRecords(childComplexity, args["attributes"].([]*KeyValueInput)), true
+		return e.complexity.Query.QueryRecords(childComplexity, args["attributes"].([]*KeyValueInput), args["all"].(*bool)), true
 
 	case "Query.LookupAuthorities":
 		if e.complexity.Query.LookupAuthorities == nil {
@@ -1100,6 +1100,9 @@ type Query {
   queryRecords(
     # Multiple attribute conditions are in a logical AND.
     attributes: [KeyValueInput]
+
+    # Whether to query all records, not just named ones (false by default).
+    all: Boolean
   ): [Record]
 
   #
@@ -1291,6 +1294,14 @@ func (ec *executionContext) field_Query_queryRecords_args(ctx context.Context, r
 		}
 	}
 	args["attributes"] = arg0
+	var arg1 *bool
+	if tmp, ok := rawArgs["all"]; ok {
+		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["all"] = arg1
 	return args, nil
 }
 
@@ -2337,7 +2348,7 @@ func (ec *executionContext) _Query_queryRecords(ctx context.Context, field graph
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryRecords(rctx, args["attributes"].([]*KeyValueInput))
+		return ec.resolvers.Query().QueryRecords(rctx, args["attributes"].([]*KeyValueInput), args["all"].(*bool))
 	})
 	if resTmp == nil {
 		return graphql.Null
