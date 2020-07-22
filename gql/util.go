@@ -191,9 +191,14 @@ func matchOnRecordField(record *nameservice.Record, attr *KeyValueInput) (fieldF
 	return
 }
 
-func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
+func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput, all bool) bool {
 	// Filter deleted records.
 	if record.Deleted {
+		return false
+	}
+
+	// If ONLY named records are requested, check for that condition first.
+	if !all && len(record.Names) == 0 {
 		return false
 	}
 

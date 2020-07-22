@@ -221,6 +221,9 @@ type Query {
   queryRecords(
     # Multiple attribute conditions are in a logical AND.
     attributes: [KeyValueInput]
+
+    # Whether to query all records, not just named ones (false by default).
+    all: Boolean
   ): [Record]
 
   #

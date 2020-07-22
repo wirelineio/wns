@@ -45,9 +45,9 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*b
 }
 
 // QueryRecords filters records by K=V conditions.
-func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.KeyValueInput) ([]*baseGql.Record, error) {
+func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.KeyValueInput, all *bool) ([]*baseGql.Record, error) {
 	var records = r.Keeper.MatchRecords(func(record *nameservice.Record) bool {
-		return baseGql.MatchOnAttributes(record, attributes)
+		return baseGql.MatchOnAttributes(record, attributes, (all != nil && *all))
 	})
 
 	return baseGql.QueryRecords(ctx, r, records, attributes)
