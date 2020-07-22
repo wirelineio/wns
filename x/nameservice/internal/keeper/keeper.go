@@ -328,7 +328,7 @@ func MatchRecords(store sdk.KVStore, codec *amino.Codec, matchFn func(*types.Rec
 			var obj types.RecordObj
 			codec.MustUnmarshalBinaryBare(bz, &obj)
 			record := recordObjToRecord(store, codec, obj)
-			if matchFn(&record) {
+			if len(record.Names) > 0 && matchFn(&record) {
 				records = append(records, &record)
 			}
 		}
@@ -626,7 +626,9 @@ func recordObjToRecord(store sdk.KVStore, codec *amino.Codec, obj types.RecordOb
 
 	reverseNameIndexKey := GetCIDToNamesIndexKey(obj.ID)
 	if store.Has(reverseNameIndexKey) {
-		codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &record.Names)
+		var names []string
+		codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+		record.Names = names
 	}
 
 	return record
