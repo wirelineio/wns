@@ -43,6 +43,7 @@ func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservi
 
 	return &Record{
 		ID:         string(record.ID),
+		Names:      record.Names,
 		BondID:     record.GetBondID(),
 		CreateTime: record.GetCreateTime(),
 		ExpiryTime: record.GetExpiryTime(),

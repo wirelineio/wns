@@ -56,7 +56,7 @@ input KeyValueInput {
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
-  names:      [String]        # Names pointing to this CID (reverse lookup).
+  names:      [String!]       # Names pointing to this CID (reverse lookup).
 
   bondId:     String!         # Associated bond ID.
   createTime: String!         # Record create time.
