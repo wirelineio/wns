@@ -4,8 +4,8 @@ go 1.13
 
 require (
 	github.com/99designs/gqlgen v0.8.1
-	github.com/Masterminds/semver v1.5.0
 	github.com/cosmos/cosmos-sdk v0.37.0
+	github.com/deckarep/golang-set v1.7.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/gibson042/canonicaljson-go v1.0.3
 	github.com/go-chi/chi v3.3.2+incompatible
@@ -15,7 +15,6 @@ require (
 	github.com/machinebox/graphql v0.2.2
 	github.com/matryer/is v1.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
-	github.com/mitchellh/mapstructure v1.1.2
 	github.com/multiformats/go-multihash v0.0.1
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/procfs v0.0.0-20190328153300-af7bedc223fb // indirect

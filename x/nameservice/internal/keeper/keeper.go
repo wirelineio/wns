@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	set "github.com/deckarep/golang-set"
 	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
@@ -41,6 +42,10 @@ var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
 // KeySyncStatus is the key for the sync status record.
 // Only used by WNS lite but defined here to prevent conflicts with existing prefixes.
 var KeySyncStatus = []byte{0xff}
+
+// PrefixCIDToNamesIndex the the reverse index for naming, i.e. maps CID -> []Names.
+// TODO(ashwin): Move out of WNS once we have an indexing service.
+var PrefixCIDToNamesIndex = []byte{0xe0}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -93,6 +98,10 @@ func GetRecordIndexKey(id types.ID) []byte {
 	return append(PrefixCIDToRecordIndex, []byte(id)...)
 }
 
+func GetCIDToNamesIndexKey(id types.ID) []byte {
+	return append(PrefixCIDToNamesIndex, []byte(id)...)
+}
+
 // Generates name -> NameAuthority index key.
 func GetNameAuthorityIndexKey(name string) []byte {
 	return append(PrefixNameAuthorityRecordIndex, []byte(name)...)
@@ -130,6 +139,23 @@ func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, id types.ID) {
 		bz := store.Get(nameRecordIndexKey)
 		k.cdc.MustUnmarshalBinaryBare(bz, &nameRecord)
 		nameRecord.History = append(nameRecord.History, nameRecord.NameRecordEntry)
+
+		// Update old CID -> []Name index.
+		if nameRecord.NameRecordEntry.ID != "" {
+			reverseNameIndexKey := GetCIDToNamesIndexKey(nameRecord.NameRecordEntry.ID)
+			var names []string
+			k.cdc.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+			nameSet := sliceToSet(names)
+			nameSet.Remove(wrn)
+
+			if nameSet.Cardinality() == 0 {
+				// Delete as storing empty slice throws error from baseapp.
+				store.Delete(reverseNameIndexKey)
+			} else {
+				store.Set(reverseNameIndexKey, k.cdc.MustMarshalBinaryBare(setToSlice(nameSet)))
+			}
+
+		}
 	}
 
 	nameRecord.NameRecordEntry = types.NameRecordEntry{
@@ -139,6 +165,18 @@ func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, id types.ID) {
 
 	store.Set(nameRecordIndexKey, k.cdc.MustMarshalBinaryBare(nameRecord))
 	k.updateBlockChangesetForName(ctx, wrn)
+
+	// Update new CID -> []Name index.
+	if id != "" {
+		reverseNameIndexKey := GetCIDToNamesIndexKey(id)
+		var names []string
+		if store.Has(reverseNameIndexKey) {
+			k.cdc.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+		}
+		nameSet := sliceToSet(names)
+		nameSet.Add(wrn)
+		store.Set(reverseNameIndexKey, k.cdc.MustMarshalBinaryBare(setToSlice(nameSet)))
+	}
 }
 
 // HasRecord - checks if a record by the given ID exists.
@@ -168,7 +206,7 @@ func GetRecord(store sdk.KVStore, codec *amino.Codec, id types.ID) types.Record 
 	var obj types.RecordObj
 	codec.MustUnmarshalBinaryBare(bz, &obj)
 
-	return obj.ToRecord()
+	return recordObjToRecord(store, codec, obj)
 }
 
 // GetNameRecord - gets a name record from the store.
@@ -202,7 +240,7 @@ func (k Keeper) ListRecords(ctx sdk.Context) []types.Record {
 		if bz != nil {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
-			records = append(records, obj.ToRecord())
+			records = append(records, recordObjToRecord(store, k.cdc, obj))
 		}
 	}
 
@@ -289,7 +327,7 @@ func MatchRecords(store sdk.KVStore, codec *amino.Codec, matchFn func(*types.Rec
 		if bz != nil {
 			var obj types.RecordObj
 			codec.MustUnmarshalBinaryBare(bz, &obj)
-			record := obj.ToRecord()
+			record := recordObjToRecord(store, codec, obj)
 			if matchFn(&record) {
 				records = append(records, &record)
 			}
@@ -313,7 +351,7 @@ func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []type
 		if bz != nil {
 			var obj types.RecordObj
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
-			records = append(records, obj.ToRecord())
+			records = append(records, recordObjToRecord(store, k.cdc, obj))
 		}
 	}
 
@@ -581,4 +619,39 @@ func GetNameAuthority(store sdk.KVStore, codec *amino.Codec, name string) *types
 // GetNameAuthority - gets a name authority from the store.
 func (k Keeper) GetNameAuthority(ctx sdk.Context, name string) *types.NameAuthority {
 	return GetNameAuthority(ctx.KVStore(k.storeKey), k.cdc, name)
+}
+
+func recordObjToRecord(store sdk.KVStore, codec *amino.Codec, obj types.RecordObj) types.Record {
+	record := obj.ToRecord()
+
+	reverseNameIndexKey := GetCIDToNamesIndexKey(obj.ID)
+	if store.Has(reverseNameIndexKey) {
+		codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &record.Names)
+	}
+
+	return record
+}
+
+func setToSlice(set set.Set) []string {
+	names := []string{}
+
+	for name := range set.Iter() {
+		if name, ok := name.(string); ok && name != "" {
+			names = append(names, name)
+		}
+	}
+
+	return names
+}
+
+func sliceToSet(names []string) set.Set {
+	set := set.NewThreadUnsafeSet()
+
+	for _, name := range names {
+		if name != "" {
+			set.Add(name)
+		}
+	}
+
+	return set
 }

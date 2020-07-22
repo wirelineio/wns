@@ -20,6 +20,7 @@ type ID string
 // Record represents a WNS record.
 type Record struct {
 	ID         ID                     `json:"id,omitempty"`
+	Names      []string               `json:"names,omitempty"`
 	BondID     bond.ID                `json:"bondId,omitempty"`
 	CreateTime time.Time              `json:"createTime,omitempty"`
 	ExpiryTime time.Time              `json:"expiryTime,omitempty"`
@@ -53,7 +54,7 @@ func (r Record) GetOwners() []*string {
 	return owners
 }
 
-// ToRecordObj convers Record to RecordObj.
+// ToRecordObj converts Record to RecordObj.
 // Why? Because go-amino can't handle maps: https://github.com/tendermint/go-amino/issues/4.
 func (r *Record) ToRecordObj() RecordObj {
 	var resourceObj RecordObj
@@ -151,7 +152,7 @@ type RecordObj struct {
 	Attributes []byte    `json:"attributes,omitempty"`
 }
 
-// ToRecord convers RecordObj to Record.
+// ToRecord converts RecordObj to Record.
 // Why? Because go-amino can't handle maps: https://github.com/tendermint/go-amino/issues/4.
 func (resourceObj *RecordObj) ToRecord() Record {
 	var record Record

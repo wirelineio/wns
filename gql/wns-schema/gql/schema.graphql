@@ -56,6 +56,7 @@ input KeyValueInput {
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
+  names:      [String]        # Names pointing to this CID (reverse lookup).
 
   bondId:     String!         # Associated bond ID.
   createTime: String!         # Record create time.
@@ -96,6 +97,7 @@ type NameRecordEntry {
   height:     String!         # Height at which record was created.
 }
 
+# Name record stores the latest and historical name -> record ID mappings.
 type NameRecord {
   latest:     NameRecordEntry!     # Latest mame record entry.
   history:    [NameRecordEntry]    # Historical name record entries.
@@ -138,6 +140,7 @@ type NodeInfo {
   moniker:    String!         # Name of the node.
 }
 
+# Node sync status.
 type SyncInfo {
   latest_block_hash:    String!
   latest_block_height:  String!
@@ -224,6 +227,7 @@ type Query {
   # Naming API.
   #
 
+  # Lookup authority information.
   lookupAuthorities(
     names: [String!]
   ): AuthorityResult!

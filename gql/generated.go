@@ -123,6 +123,7 @@ type ComplexityRoot struct {
 
 	Record struct {
 		ID         func(childComplexity int) int
+		Names      func(childComplexity int) int
 		BondID     func(childComplexity int) int
 		CreateTime func(childComplexity int) int
 		ExpiryTime func(childComplexity int) int
@@ -561,6 +562,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Record.ID(childComplexity), true
 
+	case "Record.Names":
+		if e.complexity.Record.Names == nil {
+			break
+		}
+
+		return e.complexity.Record.Names(childComplexity), true
+
 	case "Record.BondID":
 		if e.complexity.Record.BondID == nil {
 			break
@@ -927,6 +935,7 @@ input KeyValueInput {
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
+  names:      [String]        # Names pointing to this CID (reverse lookup).
 
   bondId:     String!         # Associated bond ID.
   createTime: String!         # Record create time.
@@ -967,6 +976,7 @@ type NameRecordEntry {
   height:     String!         # Height at which record was created.
 }
 
+# Name record stores the latest and historical name -> record ID mappings.
 type NameRecord {
   latest:     NameRecordEntry!     # Latest mame record entry.
   history:    [NameRecordEntry]    # Historical name record entries.
@@ -1009,6 +1019,7 @@ type NodeInfo {
   moniker:    String!         # Name of the node.
 }
 
+# Node sync status.
 type SyncInfo {
   latest_block_hash:    String!
   latest_block_height:  String!
@@ -1095,6 +1106,7 @@ type Query {
   # Naming API.
   #
 
+  # Lookup authority information.
   lookupAuthorities(
     names: [String!]
   ): AuthorityResult!
@@ -2512,6 +2524,29 @@ func (ec *executionContext) _Record_id(ctx context.Context, field graphql.Collec
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Record_names(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Record",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Names, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Record_bondId(ctx context.Context, field graphql.CollectedField, obj *Record) graphql.Marshaler {
@@ -4809,6 +4844,8 @@ func (ec *executionContext) _Record(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "names":
+			out.Values[i] = ec._Record_names(ctx, field, obj)
 		case "bondId":
 			out.Values[i] = ec._Record_bondId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6359,6 +6396,35 @@ func (ec *executionContext) marshalOString2ᚕstring(ctx context.Context, sel as
 	ret := make(graphql.Array, len(v))
 	for i := range v {
 		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*string, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
 	}
 
 	return ret
