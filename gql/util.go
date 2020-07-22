@@ -10,7 +10,6 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/Masterminds/semver"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 
@@ -262,12 +261,6 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 	}
 
 	return true
-}
-
-// Used to filter records and retain only the latest versions.
-type bestMatch struct {
-	version *semver.Version
-	record  *nameservice.Record
 }
 
 func getGQLCoins(coins sdk.Coins) []Coin {
