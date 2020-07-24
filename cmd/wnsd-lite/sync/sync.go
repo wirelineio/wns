@@ -271,7 +271,11 @@ func initFromNode(ctx *Context) {
 		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &nameRecord)
 		wrn := string(kv.Key[len(ns.PrefixWRNToNameRecordIndex):])
 		ctx.log.Debugln("Importing name", wrn)
-		ctx.keeper.SetNameRecord(wrn, nameRecord)
+
+		ctx.keeper.SetNameRecordRaw(wrn, nameRecord)
+		if nameRecord.ID != "" {
+			ns.AddRecordToNameMapping(ctx.store, ctx.codec, nameRecord.ID, wrn)
+		}
 	}
 
 	// Create sync status record.
