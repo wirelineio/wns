@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"time"
 
-	nameservice "github.com/wirelineio/wns/x/nameservice"
+	ns "github.com/wirelineio/wns/x/nameservice"
 )
 
 // AggressiveSyncIntervalInMillis is the interval for aggressive sync, to catch up quickly to the current height.
@@ -113,11 +113,11 @@ func Start(ctx *Context) {
 
 // syncAtHeight runs a sync cycle for the given height.
 func syncAtHeight(ctx *Context, height int64) error {
-	rpcNodeHandler := getRandomRPCNodeHandler(ctx)
+	rpc := getRandomRPCNodeHandler(ctx)
 
-	ctx.log.Infoln("Syncing from", rpcNodeHandler.Address, "at height:", height)
+	ctx.log.Infoln("Syncing from", rpc.Address, "at height:", height)
 
-	changeset, err := rpcNodeHandler.getBlockChangeset(ctx, height)
+	changeset, err := rpc.getBlockChangeset(ctx, height)
 	if err != nil {
 		return err
 	}
@@ -130,19 +130,19 @@ func syncAtHeight(ctx *Context, height int64) error {
 	ctx.log.Debugln("Syncing changeset:", changeset)
 
 	// Sync records.
-	err = rpcNodeHandler.syncRecords(ctx, height, changeset.Records)
+	err = rpc.syncRecords(ctx, height, changeset.Records)
 	if err != nil {
 		return err
 	}
 
 	// Sync name authority records.
-	err = rpcNodeHandler.syncNameAuthorityRecords(ctx, height, changeset.NameAuthorities)
+	err = rpc.syncNameAuthorityRecords(ctx, height, changeset.NameAuthorities)
 	if err != nil {
 		return err
 	}
 
 	// Sync name records.
-	err = rpcNodeHandler.syncNameRecords(ctx, height, changeset.Names)
+	err = rpc.syncNameRecords(ctx, height, changeset.Names)
 	if err != nil {
 		return err
 	}
@@ -153,10 +153,10 @@ func syncAtHeight(ctx *Context, height int64) error {
 	return nil
 }
 
-func (rpcNodeHandler *RPCNodeHandler) syncRecords(ctx *Context, height int64, records []nameservice.ID) error {
+func (rpc *RPCNodeHandler) syncRecords(ctx *Context, height int64, records []ns.ID) error {
 	for _, id := range records {
-		recordKey := nameservice.GetRecordIndexKey(id)
-		value, err := rpcNodeHandler.getStoreValue(ctx, recordKey, height)
+		recordKey := ns.GetRecordIndexKey(id)
+		value, err := rpc.getStoreValue(ctx, recordKey, height)
 		if err != nil {
 			return err
 		}
@@ -167,10 +167,10 @@ func (rpcNodeHandler *RPCNodeHandler) syncRecords(ctx *Context, height int64, re
 	return nil
 }
 
-func (rpcNodeHandler *RPCNodeHandler) syncNameAuthorityRecords(ctx *Context, height int64, nameAuthorities []string) error {
+func (rpc *RPCNodeHandler) syncNameAuthorityRecords(ctx *Context, height int64, nameAuthorities []string) error {
 	for _, name := range nameAuthorities {
-		nameAuhorityRecordKey := nameservice.GetNameAuthorityIndexKey(name)
-		value, err := rpcNodeHandler.getStoreValue(ctx, nameAuhorityRecordKey, height)
+		nameAuhorityRecordKey := ns.GetNameAuthorityIndexKey(name)
+		value, err := rpc.getStoreValue(ctx, nameAuhorityRecordKey, height)
 		if err != nil {
 			return err
 		}
@@ -181,15 +181,31 @@ func (rpcNodeHandler *RPCNodeHandler) syncNameAuthorityRecords(ctx *Context, hei
 	return nil
 }
 
-func (rpcNodeHandler *RPCNodeHandler) syncNameRecords(ctx *Context, height int64, names []string) error {
+func (rpc *RPCNodeHandler) syncNameRecords(ctx *Context, height int64, names []string) error {
 	for _, name := range names {
-		nameRecordKey := nameservice.GetNameRecordIndexKey(name)
-		value, err := rpcNodeHandler.getStoreValue(ctx, nameRecordKey, height)
+		nameRecordKey := ns.GetNameRecordIndexKey(name)
+		value, err := rpc.getStoreValue(ctx, nameRecordKey, height)
 		if err != nil {
 			return err
 		}
 
 		ctx.cache.Set(nameRecordKey, value)
+
+		// Update Record ID -> []Names index.
+		nameRecord := ns.GetNameRecord(ctx.cache, ctx.codec, name)
+		if nameRecord.ID != "" {
+			// Set name.
+			ns.AddRecordToNameMapping(ctx.cache, ctx.codec, nameRecord.ID, name)
+		} else {
+			// Delete name. ID of old record should be in history.
+			historyCount := len(nameRecord.History)
+			if historyCount > 0 {
+				oldNameEntry := nameRecord.History[historyCount-1]
+				if oldNameEntry.ID != "" {
+					ns.RemoveRecordToNameMapping(ctx.cache, ctx.codec, oldNameEntry.ID, name)
+				}
+			}
+		}
 	}
 
 	return nil
@@ -220,40 +236,40 @@ func initFromNode(ctx *Context) {
 
 	ctx.log.Debugln("Current block height:", height)
 
-	recordKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixCIDToRecordIndex, height)
+	recordKVs, err := ctx.getStoreSubspace("nameservice", ns.PrefixCIDToRecordIndex, height)
 	if err != nil {
 		ctx.log.Fatalln("Error fetching records", err)
 	}
 
 	for _, kv := range recordKVs {
-		var record nameservice.RecordObj
+		var record ns.RecordObj
 		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &record)
 		ctx.log.Debugln("Importing record", record.ID)
 		ctx.keeper.PutRecord(record)
 	}
 
-	authorityKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixNameAuthorityRecordIndex, height)
+	authorityKVs, err := ctx.getStoreSubspace("nameservice", ns.PrefixNameAuthorityRecordIndex, height)
 	if err != nil {
 		ctx.log.Fatalln("Error fetching authority records", err)
 	}
 
 	for _, kv := range authorityKVs {
-		var authorityRecord nameservice.NameAuthority
+		var authorityRecord ns.NameAuthority
 		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &authorityRecord)
-		name := string(kv.Key[len(nameservice.PrefixNameAuthorityRecordIndex):])
+		name := string(kv.Key[len(ns.PrefixNameAuthorityRecordIndex):])
 		ctx.log.Debugln("Importing authority", name)
 		ctx.keeper.SetNameAuthorityRecord(name, authorityRecord)
 	}
 
-	namesKVs, err := ctx.getStoreSubspace("nameservice", nameservice.PrefixWRNToNameRecordIndex, height)
+	namesKVs, err := ctx.getStoreSubspace("nameservice", ns.PrefixWRNToNameRecordIndex, height)
 	if err != nil {
 		ctx.log.Fatalln("Error fetching name records", err)
 	}
 
 	for _, kv := range namesKVs {
-		var nameRecord nameservice.NameRecord
+		var nameRecord ns.NameRecord
 		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &nameRecord)
-		wrn := string(kv.Key[len(nameservice.PrefixWRNToNameRecordIndex):])
+		wrn := string(kv.Key[len(ns.PrefixWRNToNameRecordIndex):])
 		ctx.log.Debugln("Importing name", wrn)
 		ctx.keeper.SetNameRecord(wrn, nameRecord)
 	}
@@ -317,9 +333,9 @@ func getRandomRPCNodeHandler(ctx *Context) *RPCNodeHandler {
 	nodes := ctx.secondaryNodes
 	keys := reflect.ValueOf(nodes).MapKeys()
 	address := keys[rand.Intn(len(keys))].Interface().(string)
-	rpcNodeHandler := nodes[address]
+	rpc := nodes[address]
 
-	return rpcNodeHandler
+	return rpc
 }
 
 func dumpConnectionStatsOnTimer(ctx *Context) {
@@ -361,8 +377,8 @@ func discoverRPCNodes(ctx *Context) {
 	for _, rpcEndpoint := range rpcEndpoints {
 		if _, exists := ctx.secondaryNodes[rpcEndpoint]; !exists {
 			ctx.log.Infoln("Added new RPC endpoint:", rpcEndpoint)
-			rpcNodeHandler := NewRPCNodeHandler(rpcEndpoint)
-			ctx.secondaryNodes[rpcEndpoint] = rpcNodeHandler
+			rpc := NewRPCNodeHandler(rpcEndpoint)
+			ctx.secondaryNodes[rpcEndpoint] = rpc
 		}
 	}
 }
