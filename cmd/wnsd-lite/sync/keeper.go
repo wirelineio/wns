@@ -73,6 +73,11 @@ func (k Keeper) SetNameAuthorityRecord(name string, nameAuthority ns.NameAuthori
 	k.store.Set(ns.GetNameAuthorityIndexKey(name), k.codec.MustMarshalBinaryBare(nameAuthority))
 }
 
+// SetNameRecordRaw - sets a name record (used during intial sync).
+func (k Keeper) SetNameRecordRaw(wrn string, nameRecord ns.NameRecord) {
+	k.store.Set(ns.GetNameRecordIndexKey(wrn), k.codec.MustMarshalBinaryBare(nameRecord))
+}
+
 // SetNameRecord - sets a name record.
 func (k Keeper) SetNameRecord(wrn string, nameRecord ns.NameRecord) {
 	ns.SetNameRecord(k.store, k.codec, wrn, nameRecord.ID, nameRecord.Height)
