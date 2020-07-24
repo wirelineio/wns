@@ -406,6 +406,10 @@ func handleMsgDeleteName(ctx sdk.Context, keeper Keeper, msg types.MsgDeleteName
 		return err.Result()
 	}
 
+	if !keeper.HasNameRecord(ctx, msg.WRN) {
+		return sdk.ErrInternal("Name not found.").Result()
+	}
+
 	// Set CID to empty string.
 	keeper.SetNameRecord(ctx, msg.WRN, "")
 

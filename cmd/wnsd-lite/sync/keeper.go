@@ -7,7 +7,6 @@ package sync
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/tendermint/go-amino"
-	"github.com/wirelineio/wns/x/nameservice"
 	ns "github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -65,18 +64,18 @@ func (k Keeper) GetRecord(id ns.ID) ns.Record {
 }
 
 // PutRecord - saves a record to the store and updates ID -> Record index.
-func (k Keeper) PutRecord(record nameservice.RecordObj) {
-	k.store.Set(nameservice.GetRecordIndexKey(record.ID), k.codec.MustMarshalBinaryBare(record))
+func (k Keeper) PutRecord(record ns.RecordObj) {
+	k.store.Set(ns.GetRecordIndexKey(record.ID), k.codec.MustMarshalBinaryBare(record))
 }
 
 // SetNameAuthorityRecord - sets a name authority record.
-func (k Keeper) SetNameAuthorityRecord(name string, nameAuthority nameservice.NameAuthority) {
-	k.store.Set(nameservice.GetNameAuthorityIndexKey(name), k.codec.MustMarshalBinaryBare(nameAuthority))
+func (k Keeper) SetNameAuthorityRecord(name string, nameAuthority ns.NameAuthority) {
+	k.store.Set(ns.GetNameAuthorityIndexKey(name), k.codec.MustMarshalBinaryBare(nameAuthority))
 }
 
 // SetNameRecord - sets a name record.
-func (k Keeper) SetNameRecord(wrn string, nameRecord nameservice.NameRecord) {
-	k.store.Set(nameservice.GetNameRecordIndexKey(wrn), k.codec.MustMarshalBinaryBare(nameRecord))
+func (k Keeper) SetNameRecord(wrn string, nameRecord ns.NameRecord) {
+	ns.SetNameRecord(k.store, k.codec, wrn, nameRecord.ID, nameRecord.Height)
 }
 
 // ResolveWRN resolves a WRN to a record.

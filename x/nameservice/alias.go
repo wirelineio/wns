@@ -41,6 +41,10 @@ var (
 	GetNameRecord    = keeper.GetNameRecord
 	MatchRecords     = keeper.MatchRecords
 	KeySyncStatus    = keeper.KeySyncStatus
+
+	SetNameRecord             = keeper.SetNameRecord
+	AddRecordToNameMapping    = keeper.AddRecordToNameMapping
+	RemoveRecordToNameMapping = keeper.RemoveRecordToNameMapping
 )
 
 type (

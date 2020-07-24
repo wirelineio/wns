@@ -129,54 +129,72 @@ func (k Keeper) RemoveBondToRecordIndexEntry(ctx sdk.Context, bondID bond.ID, id
 	store.Delete(getBondIDToRecordsIndexKey(bondID, id))
 }
 
+// AddRecordToNameMapping adds a name to the record ID -> []names index.
+func AddRecordToNameMapping(store sdk.KVStore, codec *amino.Codec, id types.ID, wrn string) {
+	reverseNameIndexKey := GetCIDToNamesIndexKey(id)
+
+	var names []string
+	if store.Has(reverseNameIndexKey) {
+		codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+	}
+
+	nameSet := sliceToSet(names)
+	nameSet.Add(wrn)
+	store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(setToSlice(nameSet)))
+}
+
+// RemoveRecordToNameMapping removes a name from the record ID -> []names index.
+func RemoveRecordToNameMapping(store sdk.KVStore, codec *amino.Codec, id types.ID, wrn string) {
+	reverseNameIndexKey := GetCIDToNamesIndexKey(id)
+
+	var names []string
+	codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+	nameSet := sliceToSet(names)
+	nameSet.Remove(wrn)
+
+	if nameSet.Cardinality() == 0 {
+		// Delete as storing empty slice throws error from baseapp.
+		store.Delete(reverseNameIndexKey)
+	} else {
+		store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(setToSlice(nameSet)))
+	}
+}
+
 // SetNameRecord - sets a name record.
-func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, id types.ID) {
-	store := ctx.KVStore(k.storeKey)
+func SetNameRecord(store sdk.KVStore, codec *amino.Codec, wrn string, id types.ID, height int64) {
 	nameRecordIndexKey := GetNameRecordIndexKey(wrn)
 
 	var nameRecord types.NameRecord
 	if store.Has(nameRecordIndexKey) {
 		bz := store.Get(nameRecordIndexKey)
-		k.cdc.MustUnmarshalBinaryBare(bz, &nameRecord)
+		codec.MustUnmarshalBinaryBare(bz, &nameRecord)
 		nameRecord.History = append(nameRecord.History, nameRecord.NameRecordEntry)
 
 		// Update old CID -> []Name index.
 		if nameRecord.NameRecordEntry.ID != "" {
-			reverseNameIndexKey := GetCIDToNamesIndexKey(nameRecord.NameRecordEntry.ID)
-			var names []string
-			k.cdc.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
-			nameSet := sliceToSet(names)
-			nameSet.Remove(wrn)
-
-			if nameSet.Cardinality() == 0 {
-				// Delete as storing empty slice throws error from baseapp.
-				store.Delete(reverseNameIndexKey)
-			} else {
-				store.Set(reverseNameIndexKey, k.cdc.MustMarshalBinaryBare(setToSlice(nameSet)))
-			}
-
+			RemoveRecordToNameMapping(store, codec, nameRecord.NameRecordEntry.ID, wrn)
 		}
 	}
 
 	nameRecord.NameRecordEntry = types.NameRecordEntry{
 		ID:     id,
-		Height: ctx.BlockHeight(),
+		Height: height,
 	}
 
-	store.Set(nameRecordIndexKey, k.cdc.MustMarshalBinaryBare(nameRecord))
-	k.updateBlockChangesetForName(ctx, wrn)
+	store.Set(nameRecordIndexKey, codec.MustMarshalBinaryBare(nameRecord))
 
 	// Update new CID -> []Name index.
 	if id != "" {
-		reverseNameIndexKey := GetCIDToNamesIndexKey(id)
-		var names []string
-		if store.Has(reverseNameIndexKey) {
-			k.cdc.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
-		}
-		nameSet := sliceToSet(names)
-		nameSet.Add(wrn)
-		store.Set(reverseNameIndexKey, k.cdc.MustMarshalBinaryBare(setToSlice(nameSet)))
+		AddRecordToNameMapping(store, codec, id, wrn)
 	}
+}
+
+// SetNameRecord - sets a name record.
+func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, id types.ID) {
+	SetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn, id, ctx.BlockHeight())
+
+	// Update changeset for name.
+	k.updateBlockChangesetForName(ctx, wrn)
 }
 
 // HasRecord - checks if a record by the given ID exists.
