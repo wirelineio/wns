@@ -1,0 +1,34 @@
+{
+  "name": "@wirelineio/wns-docs",
+  "version": "1.0.0-beta.9",
+  "description": "DXOS Documentation",
+  "keywords": [
+    "dxos",
+    "gatsby",
+    "docs"
+  ],
+  "license": "GPL-3.0",
+  "author": "info@dxos.org",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf .cache && rimraf public",
+    "dev": "gatsby develop --port 8003",
+    "build": "yarn clean && gatsby build --prefix-paths && mkdir -p wns && mv public/* wns && mv wns public/",
+    "test": "jest --rootDir ./content --passWithNoTests"
+  },
+  "dependencies": {
+    "@dxos/docs-theme": "^1.0.0-beta.9",
+    "babel-preset-gatsby": "^0.4.12",
+    "gatsby": "^2.17.11",
+    "gatsby-plugin-sharp": "^2.6.14",
+    "gatsby-source-filesystem": "^2.3.14",
+    "gatsby-theme-apollo-core": "^3.0.14",
+    "gatsby-theme-apollo-docs": "4.2.9",
+    "gatsby-transformer-sharp": "^2.5.7",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2"
+  }
+}
