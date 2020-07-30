@@ -2,6 +2,10 @@
 
 The Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
+| Module   | Status | Public URL |
+| -------- | ------ | ---------- |
+| DXOS DOCS WNS | [![Netlify Status](https://api.netlify.com/api/v1/badges/6bbab0ad-84ad-4d77-a575-420940dc55af/deploy-status)](https://app.netlify.com/sites/dxos-docs-wns/deploys) | https://dxos-docs-wns.netlify.app/wns/ |
+
 ## Getting Started
 
 ### Installation
