@@ -952,10 +952,10 @@
   resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-3.1.0.tgz#8ff71d51053cd5ee4981e5a501d80a536244f7fd"
   integrity sha512-GcIY79elgB+azP74j8vqkiXz8xLFfIzbQJdlwOPisgbKT00tviJQuEghOXSMVxJ00HoYJbGswr4kcllUc4xCcg==
 
-"@dxos/docs-theme@^1.0.0-beta.10":
-  version "1.0.0-beta.10"
-  resolved "https://registry.yarnpkg.com/@dxos/docs-theme/-/docs-theme-1.0.0-beta.10.tgz#9a95f6c32a90d111146e1871f1aee6f05ee4c4b5"
-  integrity sha512-mz6cyvRCFdENNNrW9dJC3g9KIV4r/W0dZX+ti7NgZKvAqxm/icU8qCCJkEhXeXsXIn4WY6HJZQB6Z0tY/2nECw==
+"@dxos/docs-theme@^1.0.0-beta.11":
+  version "1.0.0-beta.11"
+  resolved "https://registry.yarnpkg.com/@dxos/docs-theme/-/docs-theme-1.0.0-beta.11.tgz#1eb2c9dc2ab6d3954403acd35b503cb181c11165"
+  integrity sha512-9nNhyakbhoR0zkqadVwywCVxwbJF3Guk5eisiBan0VJASi6xsDEQkzybqH5CoP37E06ejqrdu0EwCd+luh4zSA==
   dependencies:
     gatsby-image "^2.4.9"
     react "^16.11.0"
@@ -2786,25 +2786,6 @@ babel-plugin-transform-react-remove-prop-types@^0.4.24:
   version "0.4.24"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-react-remove-prop-types/-/babel-plugin-transform-react-remove-prop-types-0.4.24.tgz#f2edaf9b4c6a5fbe5c1d678bfb531078c1555f3a"
   integrity sha512-eqj0hVcJUR57/Ug2zE1Yswsw4LhuqqHhD+8v120T1cl3kjg76QwtyBrdIk4WVwK+lAhBJVYCd/v+4nc4y+8JsA==
-
-babel-preset-gatsby@^0.4.12:
-  version "0.4.12"
-  resolved "https://registry.yarnpkg.com/babel-preset-gatsby/-/babel-preset-gatsby-0.4.12.tgz#f69cbcb5e212761a6a11cd2d7a6032bfc672d22b"
-  integrity sha512-qsrIrZmwFhXyThBopqkhKqLLeKuNwjUA4CGRbW1ZXLdQhkbIcdOhbfmUfVibP1Nxao+l64XkeADdrLIFwfiZOw==
-  dependencies:
-    "@babel/plugin-proposal-class-properties" "^7.10.1"
-    "@babel/plugin-proposal-nullish-coalescing-operator" "^7.10.1"
-    "@babel/plugin-proposal-optional-chaining" "^7.10.3"
-    "@babel/plugin-syntax-dynamic-import" "^7.8.3"
-    "@babel/plugin-transform-runtime" "^7.10.3"
-    "@babel/plugin-transform-spread" "^7.10.1"
-    "@babel/preset-env" "^7.10.3"
-    "@babel/preset-react" "^7.10.1"
-    "@babel/runtime" "^7.10.3"
-    babel-plugin-dynamic-import-node "^2.3.3"
-    babel-plugin-macros "^2.8.0"
-    babel-plugin-transform-react-remove-prop-types "^0.4.24"
-    gatsby-core-utils "^1.3.8"
 
 babel-preset-gatsby@^0.5.4:
   version "0.5.4"
@@ -6695,7 +6676,7 @@ gatsby-cli@^2.12.67:
     yargs "^15.3.1"
     yurnalist "^1.1.2"
 
-gatsby-core-utils@^1.3.14, gatsby-core-utils@^1.3.8:
+gatsby-core-utils@^1.3.14:
   version "1.3.14"
   resolved "https://registry.yarnpkg.com/gatsby-core-utils/-/gatsby-core-utils-1.3.14.tgz#a830412a9edb87544bc0d1ad9c2556d33aa0d157"
   integrity sha512-jfC+x5rrYUfl70MHRLsOtsXqdlqIbQGVDKXrvp6IPIUP8TKU6XIpYktF0Yd4ldJIWmGZTa062RWUOd2DFBHVSw==
@@ -7088,7 +7069,7 @@ gatsby-telemetry@^1.3.23:
     node-fetch "2.6.0"
     uuid "3.4.0"
 
-gatsby-theme-apollo-core@^3.0.14:
+gatsby-theme-apollo-core@^3.0.17:
   version "3.0.17"
   resolved "https://registry.yarnpkg.com/gatsby-theme-apollo-core/-/gatsby-theme-apollo-core-3.0.17.tgz#edafae434b3892afc05e29bdd4b3c315a6f3e72d"
   integrity sha512-5KakkFXMmy6zM8fi3RaOtraRkOhe9vN0Q5K0y3b/ZsPoSyh5tzpjkhnB+0s0GlqwMd7qNFLCJjpnFKZY8zzL2w==
@@ -7108,10 +7089,10 @@ gatsby-theme-apollo-core@^3.0.14:
     react-helmet "^5.2.0"
     react-use "^9.11.0"
 
-gatsby-theme-apollo-docs@4.2.9:
-  version "4.2.9"
-  resolved "https://registry.yarnpkg.com/gatsby-theme-apollo-docs/-/gatsby-theme-apollo-docs-4.2.9.tgz#c78a4ccd22774ec2a72e7d07db44f3cae23304f8"
-  integrity sha512-5MxSlwpOZkZX7Iks9F9WUlzJ+B4yf2/hwUUBGGGTCD3CVl3Dvdv6yrurCz0hUjqxQ94+wfuT0BFvI0tXx0AxkA==
+gatsby-theme-apollo-docs@^4.3.5:
+  version "4.3.5"
+  resolved "https://registry.yarnpkg.com/gatsby-theme-apollo-docs/-/gatsby-theme-apollo-docs-4.3.5.tgz#33bc12b4952ddb22f8eeef3ba803899fbcee1301"
+  integrity sha512-ZxoLt4SlXR6SS8laPMGAYpRWDRsz227QBzJySlQPxywkQO8W3ImPHUEmi4wDRlaFc+TPwm2bK1I/QsRQQ4DEDw==
   dependencies:
     "@mdx-js/mdx" "^1.1.0"
     "@mdx-js/react" "^1.0.27"
@@ -7127,7 +7108,7 @@ gatsby-theme-apollo-docs@4.2.9:
     gatsby-remark-rewrite-relative-links "^1.0.8"
     gatsby-source-filesystem "^2.0.29"
     gatsby-source-git "^1.0.1"
-    gatsby-theme-apollo-core "^3.0.14"
+    gatsby-theme-apollo-core "^3.0.17"
     gatsby-transformer-remark "^2.6.30"
     js-yaml "^3.13.1"
     prismjs "^1.15.0"

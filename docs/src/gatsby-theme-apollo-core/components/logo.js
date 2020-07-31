@@ -10,7 +10,7 @@ const query = graphql`
   query {
     logoImage: file(relativePath: { eq: "full-logo.png" }) {
       childImageSharp {
-        fixed(width: 120, height: 39) {
+        fixed(width: 191, height: 39) {
           ...GatsbyImageSharpFixed_noBase64 # suffixed with _noBase64 to prevent the blur-up on the logo
         }
       }
