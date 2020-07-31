@@ -56,7 +56,12 @@ func handleMsgSetRecord(ctx sdk.Context, keeper Keeper, msg types.MsgSetRecord) 
 
 	// Check signatures.
 	resourceSignBytes, _ := record.GetSignBytes()
-	record.ID = record.GetCID()
+	cid, err := record.GetCID()
+	if err != nil {
+		return sdk.ErrInternal("Invalid record JSON").Result()
+	}
+
+	record.ID = cid
 
 	if exists := keeper.HasRecord(ctx, record.ID); exists {
 		// Immutable record already exists. No-op.
