@@ -30,9 +30,6 @@ const DefaultLogNumLines = 50
 // MaxLogNumLines is the max number of log lines that can be tailed.
 const MaxLogNumLines = 1000
 
-// WrnTypeReference => Reference.
-const WrnTypeReference = "reference"
-
 // Resolver is the GQL query resolver.
 type Resolver struct {
 	baseApp       *bam.BaseApp

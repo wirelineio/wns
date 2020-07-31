@@ -95,8 +95,10 @@ func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.R
 		switch value.(type) {
 		case interface{}:
 			if obj, ok := value.(map[string]interface{}); ok {
-				if typeAttr, ok := obj["type"]; ok && typeAttr.(string) == WrnTypeReference {
-					ids = append(ids, obj["id"].(string))
+				if _, ok := obj["/"]; ok && len(obj) == 1 {
+					if _, ok := obj["/"].(string); ok {
+						ids = append(ids, obj["/"].(string))
+					}
 				}
 			}
 		}
@@ -134,9 +136,11 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 			kvPair.Value.Boolean = &val
 		case interface{}:
 			if obj, ok := value.(map[string]interface{}); ok {
-				if valueType, ok := obj["type"]; ok && valueType.(string) == WrnTypeReference {
-					kvPair.Value.Reference = &Reference{
-						ID: obj["id"].(string),
+				if _, ok := obj["/"]; ok && len(obj) == 1 {
+					if _, ok := obj["/"].(string); ok {
+						kvPair.Value.Reference = &Reference{
+							ID: obj["/"].(string),
+						}
 					}
 				} else {
 					bytes, err := json.Marshal(obj)
@@ -260,10 +264,17 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput, 
 
 		if attr.Value.Reference != nil {
 			obj, ok := recAttrVal.(map[string]interface{})
-			if !ok || obj["type"].(string) != WrnTypeReference {
+			if !ok {
+				// Attr value is not an object.
 				return false
 			}
-			recAttrValRefID := obj["id"].(string)
+
+			if _, ok := obj["/"].(string); !ok {
+				// Attr value is not a reference.
+				return false
+			}
+
+			recAttrValRefID := obj["/"].(string)
 			if recAttrValRefID != attr.Value.Reference.ID {
 				return false
 			}
