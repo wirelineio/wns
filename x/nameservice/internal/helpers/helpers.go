@@ -5,12 +5,13 @@
 package helpers
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 
-	cid "github.com/ipfs/go-cid"
+	cbor "github.com/ipfs/go-ipld-cbor"
 	mh "github.com/multiformats/go-multihash"
 	"github.com/tendermint/tendermint/crypto"
 	"golang.org/x/crypto/ripemd160"
@@ -39,20 +40,13 @@ func UnMarshalMapFromJSONBytes(bytes []byte) map[string]interface{} {
 }
 
 // GetCid gets the content ID.
-func GetCid(content []byte) string {
-	pref := cid.Prefix{
-		Version:  0,
-		Codec:    cid.DagCBOR,
-		MhType:   mh.SHA2_256,
-		MhLength: -1,
-	}
-
-	cid, err := pref.Sum(content)
+func GetCid(content []byte) (string, error) {
+	node, err := cbor.FromJSON(bytes.NewReader(content), mh.SHA2_256, -1)
 	if err != nil {
-		panic("CID generation error.")
+		return "", err
 	}
 
-	return cid.String()
+	return node.Cid().String(), nil
 }
 
 // GetAddressFromPubKey gets an address from the public key.

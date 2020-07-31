@@ -156,7 +156,13 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 
 		valueType := reflect.ValueOf(value)
 		if valueType.Kind() == reflect.Slice {
-			// TODO(ashwin): Handle arrays.
+			bytes, err := json.Marshal(value)
+			if err != nil {
+				return nil, err
+			}
+
+			jsonStr := string(bytes)
+			kvPair.Value.JSON = &jsonStr
 		}
 
 		kvPairs = append(kvPairs, kvPair)

@@ -357,5 +357,10 @@ func requestSignature(attributes map[string]interface{}, name string) (types.ID,
 		return "", nil, nil, nil, err
 	}
 
-	return record.GetCID(), sigBytes, signedJSON, pubKey, nil
+	cid, err := record.GetCID()
+	if err != nil {
+		return "", nil, nil, nil, err
+	}
+
+	return cid, sigBytes, signedJSON, pubKey, nil
 }

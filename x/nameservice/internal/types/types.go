@@ -109,8 +109,13 @@ func (r *Record) GetSignBytes() ([]byte, []byte) {
 }
 
 // GetCID gets the record CID.
-func (r *Record) GetCID() ID {
-	return ID(helpers.GetCid(r.CanonicalJSON()))
+func (r *Record) GetCID() (ID, error) {
+	id, err := helpers.GetCid(r.CanonicalJSON())
+	if err != nil {
+		return "", err
+	}
+
+	return ID(id), nil
 }
 
 // HasExpired returns true if the record has expired.
