@@ -3,7 +3,7 @@
 //
 
 import React from 'react';
-import SharedSidebar from '@dxos/docs-theme/dist/src/components/sidebar';
+import SharedSidebar from '@dxos/docs-theme/dist/src/components/Sidebar';
 import Logo from './logo';
 
 const Sidebar = props =>
