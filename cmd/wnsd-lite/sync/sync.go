@@ -62,6 +62,13 @@ func Start(ctx *Context) {
 
 	go dumpConnectionStatsOnTimer(ctx)
 
+	if ctx.config.SyncTimeoutMins > 0 {
+		ctx.log.Infoln("Sync timeout ON:", ctx.config.SyncTimeoutMins)
+		go exitOnSyncTimeout(ctx)
+	} else {
+		ctx.log.Infoln("Sync timeout OFF.")
+	}
+
 	if ctx.config.Endpoint != "" {
 		go discoverRPCNodesOnTimer(ctx)
 		ctx.log.Infoln("RPC endpoint discovery ON:", ctx.config.Endpoint)
@@ -346,6 +353,21 @@ func dumpConnectionStatsOnTimer(ctx *Context) {
 	for {
 		time.Sleep(DumpRPCNodeStatsFrequencyMillis * time.Millisecond)
 		dumpConnectionStats(ctx)
+	}
+}
+
+func exitOnSyncTimeout(ctx *Context) {
+	prevHeight := ctx.keeper.GetStatusRecord().LastSyncedHeight
+
+	for {
+		time.Sleep(time.Duration(ctx.config.SyncTimeoutMins) * time.Minute)
+		currentHeight := ctx.keeper.GetStatusRecord().LastSyncedHeight
+		if currentHeight <= prevHeight {
+			// No progress for quite some time. Quit node.
+			ctx.log.Fatalln("Sync timed out at height:", currentHeight)
+		}
+
+		prevHeight = currentHeight
 	}
 }
 
