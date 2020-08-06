@@ -42,39 +42,10 @@ func getMaxBondAmount(ctx sdk.Context, keeper Keeper) (sdk.Coins, error) {
 
 // Handle MsgCreateBond.
 func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond) sdk.Result {
-	ownerAddress := msg.Signer
-
-	// Check if account has funds.
-	if !keeper.CoinKeeper.HasCoins(ctx, ownerAddress, msg.Coins) {
-		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
-	}
-
-	// Generate bond ID.
-	account := keeper.AccountKeeper.GetAccount(ctx, ownerAddress)
-	bondID := types.BondID{
-		Address:  ownerAddress,
-		AccNum:   account.GetAccountNumber(),
-		Sequence: account.GetSequence(),
-	}.Generate()
-
-	maxBondAmount, err := getMaxBondAmount(ctx, keeper)
+	bond, err := keeper.CreateBond(ctx, msg.Signer, msg.Coins)
 	if err != nil {
-		return sdk.ErrInternal("Invalid max bond amount.").Result()
+		return err.Result()
 	}
-
-	bond := types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins}
-	if bond.Balance.IsAnyGT(maxBondAmount) {
-		return sdk.ErrInternal("Max bond amount exceeded.").Result()
-	}
-
-	// Move funds into the bond account module.
-	sdkErr := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, bond.Balance)
-	if err != nil {
-		return sdkErr.Result()
-	}
-
-	// Save bond in store.
-	keeper.SaveBond(ctx, bond)
 
 	return sdk.Result{
 		Data:   []byte(bond.ID),
@@ -84,41 +55,10 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 
 // Handle handleMsgRefillBond.
 func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond) sdk.Result {
-
-	if !keeper.HasBond(ctx, msg.ID) {
-		return sdk.ErrInternal("Bond not found.").Result()
-	}
-
-	ownerAddress := msg.Signer
-	bond := keeper.GetBond(ctx, msg.ID)
-	if bond.Owner != ownerAddress.String() {
-		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
-	}
-
-	// Check if account has funds.
-	if !keeper.CoinKeeper.HasCoins(ctx, ownerAddress, msg.Coins) {
-		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
-	}
-
-	maxBondAmount, err := getMaxBondAmount(ctx, keeper)
+	bond, err := keeper.RefillBond(ctx, msg.ID, msg.Signer, msg.Coins)
 	if err != nil {
-		return sdk.ErrInternal("Invalid max bond amount.").Result()
+		return err.Result()
 	}
-
-	updatedBalance := bond.Balance.Add(msg.Coins)
-	if updatedBalance.IsAnyGT(maxBondAmount) {
-		return sdk.ErrInternal("Max bond amount exceeded.").Result()
-	}
-
-	// Move funds into the bond account module.
-	sdkErr := keeper.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, msg.Coins)
-	if err != nil {
-		return sdkErr.Result()
-	}
-
-	// Update bond balance and save.
-	bond.Balance = updatedBalance
-	keeper.SaveBond(ctx, bond)
 
 	return sdk.Result{
 		Data:   []byte(bond.ID),
@@ -128,31 +68,10 @@ func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond
 
 // Handle handleMsgWithdrawBond.
 func handleMsgWithdrawBond(ctx sdk.Context, keeper Keeper, msg types.MsgWithdrawBond) sdk.Result {
-
-	if !keeper.HasBond(ctx, msg.ID) {
-		return sdk.ErrInternal("Bond not found.").Result()
-	}
-
-	ownerAddress := msg.Signer
-	bond := keeper.GetBond(ctx, msg.ID)
-	if bond.Owner != ownerAddress.String() {
-		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
-	}
-
-	updatedBalance, isNeg := bond.Balance.SafeSub(msg.Coins)
-	if isNeg {
-		return sdk.ErrInsufficientCoins("Insufficient bond balance.").Result()
-	}
-
-	// Move funds from the bond into the account.
-	err := keeper.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, msg.Coins)
+	bond, err := keeper.WithdrawBond(ctx, msg.ID, msg.Signer, msg.Coins)
 	if err != nil {
 		return err.Result()
 	}
-
-	// Update bond balance and save.
-	bond.Balance = updatedBalance
-	keeper.SaveBond(ctx, bond)
 
 	return sdk.Result{
 		Data:   []byte(bond.ID),
@@ -162,31 +81,10 @@ func handleMsgWithdrawBond(ctx sdk.Context, keeper Keeper, msg types.MsgWithdraw
 
 // Handle handleMsgCancelBond.
 func handleMsgCancelBond(ctx sdk.Context, keeper Keeper, msg types.MsgCancelBond) sdk.Result {
-
-	if !keeper.HasBond(ctx, msg.ID) {
-		return sdk.ErrInternal("Bond not found.").Result()
-	}
-
-	ownerAddress := msg.Signer
-	bond := keeper.GetBond(ctx, msg.ID)
-	if bond.Owner != ownerAddress.String() {
-		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
-	}
-
-	// Check if bond is used in other modules.
-	for _, usageKeeper := range keeper.UsageKeepers {
-		if usageKeeper.UsesBond(ctx, msg.ID) {
-			return sdk.ErrUnauthorized(fmt.Sprintf("Bond is used by the '%s' module.", usageKeeper.ModuleName())).Result()
-		}
-	}
-
-	// Move funds from the bond into the account.
-	err := keeper.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, bond.Balance)
+	bond, err := keeper.CancelBond(ctx, msg.ID, msg.Signer)
 	if err != nil {
 		return err.Result()
 	}
-
-	keeper.DeleteBond(ctx, bond)
 
 	return sdk.Result{
 		Data:   []byte(bond.ID),
