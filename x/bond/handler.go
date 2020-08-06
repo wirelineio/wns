@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/wirelineio/wns/x/bond/internal/helpers"
 	"github.com/wirelineio/wns/x/bond/internal/types"
 )
 
@@ -52,7 +51,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 
 	// Generate bond ID.
 	account := keeper.AccountKeeper.GetAccount(ctx, ownerAddress)
-	bondID := helpers.BondID{
+	bondID := types.BondID{
 		Address:  ownerAddress,
 		AccNum:   account.GetAccountNumber(),
 		Sequence: account.GetSequence(),
