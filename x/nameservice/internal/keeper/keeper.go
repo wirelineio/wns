@@ -496,18 +496,13 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 // TryTakeRecordRent tries to take rent from the record bond.
 func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	bondObj := k.BondKeeper.GetBond(ctx, record.BondID)
-	coins, err := sdk.ParseCoins(k.RecordRent(ctx))
-	if err != nil {
-		panic("Invalid record rent.")
-	}
-
-	rent, err := sdk.ConvertCoin(coins[0], bond.MicroWire)
+	rent, err := sdk.ParseCoins(k.RecordRent(ctx))
 	if err != nil {
 		panic("Invalid record rent.")
 	}
 
 	// Try deducting rent from bond.
-	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(rent)
 	if isNeg {
 		// Insufficient funds, mark record as deleted.
 		record.Deleted = true
@@ -518,7 +513,7 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	}
 
 	// Move funds from bond module to record rent module.
-	err = k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, sdk.NewCoins(rent))
+	err = k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, rent)
 	if err != nil {
 		panic("Error withdrawing rent.")
 	}

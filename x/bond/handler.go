@@ -38,12 +38,7 @@ func getMaxBondAmount(ctx sdk.Context, keeper Keeper) (sdk.Coins, error) {
 		return nil, err
 	}
 
-	maxBondAmountMicroWire, err := sdk.ConvertCoin(maxBondAmount, types.MicroWire)
-	if err != nil {
-		return nil, err
-	}
-
-	return sdk.NewCoins(maxBondAmountMicroWire), nil
+	return sdk.NewCoins(maxBondAmount), nil
 }
 
 // Handle MsgCreateBond.

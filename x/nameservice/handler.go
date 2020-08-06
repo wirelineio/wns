@@ -130,25 +130,20 @@ func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenew
 	}
 
 	bondObj := keeper.BondKeeper.GetBond(ctx, record.BondID)
-	coins, err := sdk.ParseCoins(keeper.RecordRent(ctx))
-	if err != nil {
-		return sdk.ErrInvalidCoins("Invalid record rent.")
-	}
-
-	rent, err := sdk.ConvertCoin(coins[0], bond.MicroWire)
+	rent, err := sdk.ParseCoins(keeper.RecordRent(ctx))
 	if err != nil {
 		return sdk.ErrInvalidCoins("Invalid record rent.")
 	}
 
 	// Deduct rent from bond.
-	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(rent)
 	if isNeg {
 		// Check if bond has sufficient funds.
 		return sdk.ErrInsufficientCoins("Insufficient funds.")
 	}
 
 	// Move funds from bond module to record rent module.
-	err = keeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, sdk.NewCoins(rent))
+	err = keeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, rent)
 	if err != nil {
 		return sdk.ErrInternal("Error withdrawing rent.")
 	}

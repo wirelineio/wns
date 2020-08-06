@@ -15,11 +15,6 @@ const (
 	StoreKey   = types.StoreKey
 )
 
-const (
-	MicroWire = types.MicroWire
-	MilliWire = types.MilliWire
-)
-
 var (
 	DefaultParamspace = keeper.DefaultParamspace
 	NewKeeper         = keeper.NewKeeper
