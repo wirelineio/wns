@@ -7,13 +7,8 @@ package types
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-)
-
-// Bond params default values.
-const (
-	// DefaultMaxBondAmount is the default maximum amount a bond can hold.
-	DefaultMaxBondAmount string = "10wire"
 )
 
 // nolint - Keys for parameter access
@@ -30,7 +25,6 @@ type Params struct {
 
 // NewParams creates a new Params instance
 func NewParams(maxBondAmount string) Params {
-
 	return Params{
 		MaxBondAmount: maxBondAmount,
 	}
@@ -45,7 +39,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return NewParams(DefaultMaxBondAmount)
+	return NewParams("")
 }
 
 // String returns a human readable string representation of the parameters.
@@ -56,8 +50,9 @@ func (p Params) String() string {
 
 // Validate a set of params.
 func (p Params) Validate() error {
-	if p.MaxBondAmount == "" {
-		return fmt.Errorf("bond parameter MaxBondAmount can't be an empty string")
+	_, err := sdk.ParseCoins(p.MaxBondAmount)
+	if err != nil {
+		return err
 	}
 
 	return nil

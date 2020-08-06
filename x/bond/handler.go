@@ -32,12 +32,12 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 func getMaxBondAmount(ctx sdk.Context, keeper Keeper) (sdk.Coins, error) {
-	maxBondAmount, err := sdk.ParseCoin(keeper.MaxBondAmount(ctx))
+	maxBondAmount, err := sdk.ParseCoins(keeper.MaxBondAmount(ctx))
 	if err != nil {
 		return nil, err
 	}
 
-	return sdk.NewCoins(maxBondAmount), nil
+	return maxBondAmount, nil
 }
 
 // Handle MsgCreateBond.
@@ -57,13 +57,13 @@ func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond
 		Sequence: account.GetSequence(),
 	}.Generate()
 
-	maxBondAmountMicroWire, err := getMaxBondAmount(ctx, keeper)
+	maxBondAmount, err := getMaxBondAmount(ctx, keeper)
 	if err != nil {
 		return sdk.ErrInternal("Invalid max bond amount.").Result()
 	}
 
 	bond := types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: msg.Coins}
-	if bond.Balance.IsAnyGT(maxBondAmountMicroWire) {
+	if bond.Balance.IsAnyGT(maxBondAmount) {
 		return sdk.ErrInternal("Max bond amount exceeded.").Result()
 	}
 
@@ -100,13 +100,13 @@ func handleMsgRefillBond(ctx sdk.Context, keeper Keeper, msg types.MsgRefillBond
 		return sdk.ErrInsufficientCoins("Insufficient funds.").Result()
 	}
 
-	maxBondAmountMicroWire, err := getMaxBondAmount(ctx, keeper)
+	maxBondAmount, err := getMaxBondAmount(ctx, keeper)
 	if err != nil {
 		return sdk.ErrInternal("Invalid max bond amount.").Result()
 	}
 
 	updatedBalance := bond.Balance.Add(msg.Coins)
-	if updatedBalance.IsAnyGT(maxBondAmountMicroWire) {
+	if updatedBalance.IsAnyGT(maxBondAmount) {
 		return sdk.ErrInternal("Max bond amount exceeded.").Result()
 	}
 
