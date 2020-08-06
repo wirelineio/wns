@@ -41,6 +41,7 @@ type Config struct {
 	InitFromNode        bool
 	InitFromGenesisFile bool
 	Endpoint            string
+	SyncTimeoutMins     int
 }
 
 // RPCNodeHandler is used to call an RPC endpoint and maintains basic stats.

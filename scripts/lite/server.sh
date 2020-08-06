@@ -7,6 +7,7 @@ WNS_NODE_ADDRESS="tcp://localhost:26657"
 WNS_GQL_ENDPOINT=""
 RESET=
 SCRIPT_DIR="$(dirname "$0")"
+SYNC_TIMEOUT=10
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -45,6 +46,11 @@ while [[ $# -gt 0 ]]; do
     shift
     shift
     ;;
+    --sync-timeout)
+    SYNC_TIMEOUT="$2"
+    shift
+    shift
+    ;;
     *)
     POSITIONAL+=("$1")
     shift
@@ -70,6 +76,7 @@ function start_server ()
     --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" \
     --node "${WNS_NODE_ADDRESS}" \
     --endpoint "${WNS_GQL_ENDPOINT}" \
+    --sync-timeout ${SYNC_TIMEOUT} \
     --log-file "${LOG}" \
     --log-level debug > "${LOG}" 2>&1 &
 
