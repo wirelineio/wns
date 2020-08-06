@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	set "github.com/deckarep/golang-set"
 	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
@@ -50,6 +51,7 @@ var PrefixCIDToNamesIndex = []byte{0xe0}
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	AccountKeeper auth.AccountKeeper
+	SupplyKeeper  supply.Keeper
 	RecordKeeper  RecordKeeper
 	BondKeeper    bond.Keeper
 
@@ -61,9 +63,10 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		AccountKeeper: accountKeeper,
+		SupplyKeeper:  supplyKeeper,
 		RecordKeeper:  recordKeeper,
 		BondKeeper:    bondKeeper,
 		storeKey:      storeKey,
@@ -376,8 +379,13 @@ func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []type
 	return records
 }
 
-// BondHasAssociatedRecords returns true if the bond has associated records.
-func (k RecordKeeper) BondHasAssociatedRecords(ctx sdk.Context, bondID bond.ID) bool {
+// ModuleName returns the module name.
+func (k RecordKeeper) ModuleName() string {
+	return types.ModuleName
+}
+
+// UsesBond returns true if the bond has associated records.
+func (k RecordKeeper) UsesBond(ctx sdk.Context, bondID bond.ID) bool {
 	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
 	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
@@ -510,7 +518,7 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	}
 
 	// Move funds from bond module to record rent module.
-	err = k.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, sdk.NewCoins(rent))
+	err = k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, sdk.NewCoins(rent))
 	if err != nil {
 		panic("Error withdrawing rent.")
 	}
@@ -581,21 +589,6 @@ func (k Keeper) updateBlockChangesetForNameAuthority(ctx sdk.Context, name strin
 	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
 	changeset.NameAuthorities = append(changeset.NameAuthorities, name)
 	k.saveBlockChangeset(ctx, changeset)
-}
-
-// ClearRecords - Deletes all records and indexes.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) ClearRecords(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// Note: Clear everything, records and indexes.
-	itr := store.Iterator(nil, nil)
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		store.Delete(itr.Key())
-	}
-
-	// Clear bonds.
-	k.BondKeeper.Clear(ctx)
 }
 
 // HasNameAuthority - checks if a name/authority exists.

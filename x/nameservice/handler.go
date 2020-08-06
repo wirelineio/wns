@@ -40,8 +40,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgReassociateRecords(ctx, keeper, msg)
 		case types.MsgRenewRecord:
 			return handleMsgRenewRecord(ctx, keeper, msg)
-		case types.MsgClearRecords:
-			return handleMsgClearRecords(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -150,7 +148,7 @@ func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenew
 	}
 
 	// Move funds from bond module to record rent module.
-	err = keeper.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, sdk.NewCoins(rent))
+	err = keeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, sdk.NewCoins(rent))
 	if err != nil {
 		return sdk.ErrInternal("Error withdrawing rent.")
 	}
@@ -172,13 +170,6 @@ func processRecord(ctx sdk.Context, keeper Keeper, record *types.Record, isRenew
 	}
 
 	return nil
-}
-
-// Handle MsgClearRecords.
-func handleMsgClearRecords(ctx sdk.Context, keeper Keeper, msg types.MsgClearRecords) sdk.Result {
-	// keeper.ClearRecords(ctx)
-
-	return sdk.Result{}
 }
 
 // Handle MsgAssociateBond.

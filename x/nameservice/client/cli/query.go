@@ -35,6 +35,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdGetResource(storeKey, cdc),
 		GetCmdQueryByBond(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
+		GetCmdBalance(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
 }
@@ -228,6 +229,29 @@ $ %s query nameservice params
 			var params types.Params
 			cdc.MustUnmarshalJSON(bz, &params)
 			return cliCtx.PrintOutput(params)
+		},
+	}
+}
+
+// GetCmdBalance queries the bond module account balance.
+func GetCmdBalance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "balance",
+		Short: "Get record rent module account balance.",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/balance", queryRoute), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
 		},
 	}
 }

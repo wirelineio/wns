@@ -23,7 +23,6 @@ type BondID struct {
 func (bondID BondID) Generate() string {
 	hasher := sha256.New()
 	str := fmt.Sprintf("%s:%d:%d", bondID.Address.String(), bondID.AccNum, bondID.Sequence)
-	// fmt.Println("BondID str", str)
 	hasher.Write([]byte(str))
 	return hex.EncodeToString(hasher.Sum(nil))
 }

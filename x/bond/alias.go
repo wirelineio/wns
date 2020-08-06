@@ -10,10 +10,9 @@ import (
 )
 
 const (
-	ModuleName                  = types.ModuleName
-	RecordRentModuleAccountName = types.RecordRentModuleAccountName
-	RouterKey                   = types.RouterKey
-	StoreKey                    = types.StoreKey
+	ModuleName = types.ModuleName
+	RouterKey  = types.RouterKey
+	StoreKey   = types.StoreKey
 )
 
 const (
@@ -32,8 +31,9 @@ var (
 )
 
 type (
-	ID            = types.ID
-	Bond          = types.Bond
-	Keeper        = keeper.Keeper
-	MsgCreateBond = types.MsgCreateBond
+	ID              = types.ID
+	Bond            = types.Bond
+	Keeper          = keeper.Keeper
+	BondUsageKeeper = types.BondUsageKeeper
+	MsgCreateBond   = types.MsgCreateBond
 )

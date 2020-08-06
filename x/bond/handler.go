@@ -25,8 +25,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgWithdrawBond(ctx, keeper, msg)
 		case types.MsgCancelBond:
 			return handleMsgCancelBond(ctx, keeper, msg)
-		case types.MsgClear:
-			return handleMsgClear(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized bond Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -181,9 +179,11 @@ func handleMsgCancelBond(ctx sdk.Context, keeper Keeper, msg types.MsgCancelBond
 		return sdk.ErrUnauthorized("Bond owner mismatch.").Result()
 	}
 
-	// Check if bond is associated with any records.
-	if keeper.RecordKeeper.BondHasAssociatedRecords(ctx, msg.ID) {
-		return sdk.ErrUnauthorized("Bond has associated records.").Result()
+	// Check if bond is used in other modules.
+	for _, usageKeeper := range keeper.UsageKeepers {
+		if usageKeeper.UsesBond(ctx, msg.ID) {
+			return sdk.ErrUnauthorized(fmt.Sprintf("Bond is used by the '%s' module.", usageKeeper.ModuleName())).Result()
+		}
 	}
 
 	// Move funds from the bond into the account.
@@ -198,11 +198,4 @@ func handleMsgCancelBond(ctx sdk.Context, keeper Keeper, msg types.MsgCancelBond
 		Data:   []byte(bond.ID),
 		Events: ctx.EventManager().Events(),
 	}
-}
-
-// Handle handleMsgClear.
-func handleMsgClear(ctx sdk.Context, keeper Keeper, msg types.MsgClear) sdk.Result {
-	// keeper.Clear(ctx)
-
-	return sdk.Result{}
 }

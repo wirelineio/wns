@@ -41,7 +41,6 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdDissociateBond(cdc),
 		GetCmdDissociateRecords(cdc),
 		GetCmdReassociateRecords(cdc),
-		GetCmdClearRecords(cdc),
 
 		GetCmdReserveName(cdc),
 		GetCmdSetName(cdc),
@@ -171,31 +170,6 @@ func GetCmdReassociateRecords(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			msg := types.NewMsgReassociateRecords(args[0], args[1], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdClearRecords is the CLI command for clearing all records.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func GetCmdClearRecords(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "clear",
-		Short: "Clear records.",
-		Args:  cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			msg := types.NewMsgClearRecords(cliCtx.GetFromAddress())
 			err := msg.ValidateBasic()
 			if err != nil {
 				return err

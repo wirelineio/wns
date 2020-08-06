@@ -27,7 +27,9 @@ type Keeper struct {
 	AccountKeeper auth.AccountKeeper
 	CoinKeeper    bank.Keeper
 	SupplyKeeper  supply.Keeper
-	RecordKeeper  types.RecordKeeper
+
+	// Track bond usage in other cosmos-sdk modules (more like a usage tracker).
+	UsageKeepers []types.BondUsageKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -38,12 +40,12 @@ type Keeper struct {
 
 // NewKeeper creates new instances of the bond Keeper
 func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper,
-	recordKeeper types.RecordKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+	usageKeepers []types.BondUsageKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		AccountKeeper: accountKeeper,
 		CoinKeeper:    coinKeeper,
 		SupplyKeeper:  supplyKeeper,
-		RecordKeeper:  recordKeeper,
+		UsageKeepers:  usageKeepers,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
@@ -154,16 +156,4 @@ func (k Keeper) MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*t
 	}
 
 	return bonds
-}
-
-// Clear - Deletes all entries and indexes.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) Clear(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// Note: Clear everything, entries and indexes.
-	itr := store.Iterator(nil, nil)
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		store.Delete(itr.Key())
-	}
 }

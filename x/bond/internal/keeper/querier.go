@@ -98,7 +98,7 @@ func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keep
 
 func queryBalance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	balances := map[string]sdk.Coins{}
-	accountNames := []string{types.ModuleName, types.RecordRentModuleAccountName}
+	accountNames := []string{types.ModuleName}
 
 	for _, accountName := range accountNames {
 		moduleAddress := keeper.SupplyKeeper.GetModuleAddress(accountName)
