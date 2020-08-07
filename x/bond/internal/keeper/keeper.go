@@ -26,12 +26,12 @@ var prefixOwnerToBondsIndex = []byte{0x01}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	AccountKeeper auth.AccountKeeper
-	CoinKeeper    bank.Keeper
-	SupplyKeeper  supply.Keeper
+	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
+	supplyKeeper  supply.Keeper
 
 	// Track bond usage in other cosmos-sdk modules (more like a usage tracker).
-	UsageKeepers []types.BondUsageKeeper
+	usageKeepers []types.BondUsageKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -41,13 +41,13 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the bond Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper,
+func NewKeeper(accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, supplyKeeper supply.Keeper,
 	usageKeepers []types.BondUsageKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
-		AccountKeeper: accountKeeper,
-		CoinKeeper:    coinKeeper,
-		SupplyKeeper:  supplyKeeper,
-		UsageKeepers:  usageKeepers,
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
+		supplyKeeper:  supplyKeeper,
+		usageKeepers:  usageKeepers,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
@@ -163,12 +163,12 @@ func (k Keeper) MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*t
 // CreateBond creates a new bond.
 func (k Keeper) CreateBond(ctx sdk.Context, ownerAddress sdk.AccAddress, coins sdk.Coins) (*types.Bond, sdk.Error) {
 	// Check if account has funds.
-	if !k.CoinKeeper.HasCoins(ctx, ownerAddress, coins) {
+	if !k.bankKeeper.HasCoins(ctx, ownerAddress, coins) {
 		return nil, sdk.ErrInsufficientCoins("Insufficient funds.")
 	}
 
 	// Generate bond ID.
-	account := k.AccountKeeper.GetAccount(ctx, ownerAddress)
+	account := k.accountKeeper.GetAccount(ctx, ownerAddress)
 	bondID := types.BondID{
 		Address:  ownerAddress,
 		AccNum:   account.GetAccountNumber(),
@@ -186,7 +186,7 @@ func (k Keeper) CreateBond(ctx sdk.Context, ownerAddress sdk.AccAddress, coins s
 	}
 
 	// Move funds into the bond account module.
-	sdkErr := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, bond.Balance)
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, bond.Balance)
 	if err != nil {
 		return nil, sdkErr
 	}
@@ -209,7 +209,7 @@ func (k Keeper) RefillBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAdd
 	}
 
 	// Check if account has funds.
-	if !k.CoinKeeper.HasCoins(ctx, ownerAddress, coins) {
+	if !k.bankKeeper.HasCoins(ctx, ownerAddress, coins) {
 		return nil, sdk.ErrInsufficientCoins("Insufficient funds.")
 	}
 
@@ -224,7 +224,7 @@ func (k Keeper) RefillBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAdd
 	}
 
 	// Move funds into the bond account module.
-	sdkErr := k.SupplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, coins)
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, coins)
 	if err != nil {
 		return nil, sdkErr
 	}
@@ -253,7 +253,7 @@ func (k Keeper) WithdrawBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccA
 	}
 
 	// Move funds from the bond into the account.
-	err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, coins)
+	err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, coins)
 	if err != nil {
 		return nil, err
 	}
@@ -277,14 +277,14 @@ func (k Keeper) CancelBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAdd
 	}
 
 	// Check if bond is used in other modules.
-	for _, usageKeeper := range k.UsageKeepers {
+	for _, usageKeeper := range k.usageKeepers {
 		if usageKeeper.UsesBond(ctx, id) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Bond in use by the '%s' module.", usageKeeper.ModuleName()))
 		}
 	}
 
 	// Move funds from the bond into the account.
-	err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, bond.Balance)
+	err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, bond.Balance)
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +292,22 @@ func (k Keeper) CancelBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAdd
 	k.DeleteBond(ctx, bond)
 
 	return &bond, nil
+}
+
+// GetBondModuleBalances gets the bond module account(s) balances.
+func (k Keeper) GetBondModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
+	balances := map[string]sdk.Coins{}
+	accountNames := []string{types.ModuleName}
+
+	for _, accountName := range accountNames {
+		moduleAddress := k.supplyKeeper.GetModuleAddress(accountName)
+		moduleAccount := k.accountKeeper.GetAccount(ctx, moduleAddress)
+		if moduleAccount != nil {
+			balances[accountName] = moduleAccount.GetCoins()
+		}
+	}
+
+	return balances
 }
 
 func (k Keeper) getMaxBondAmount(ctx sdk.Context) (sdk.Coins, error) {

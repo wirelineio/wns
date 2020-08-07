@@ -81,6 +81,9 @@ type RecordKeeper struct {
 	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
 }
 
+// Record keeper implements the bond usage keeper interface.
+var _ bond.BondUsageKeeper = (*RecordKeeper)(nil)
+
 // NewRecordKeeper creates new instances of the nameservice RecordKeeper
 func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
 	return RecordKeeper{

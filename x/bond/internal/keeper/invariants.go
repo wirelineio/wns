@@ -19,7 +19,7 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 // ModuleAccountInvariant checks that the 'bond' module account balance is non-negative.
 func ModuleAccountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		moduleAccount := k.SupplyKeeper.GetModuleAccount(ctx, types.ModuleName)
+		moduleAccount := k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 		if moduleAccount.GetCoins().IsAnyNegative() {
 			return sdk.FormatInvariant(
 					types.ModuleName,

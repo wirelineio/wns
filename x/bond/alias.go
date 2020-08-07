@@ -30,5 +30,4 @@ type (
 	Bond            = types.Bond
 	Keeper          = keeper.Keeper
 	BondUsageKeeper = types.BondUsageKeeper
-	MsgCreateBond   = types.MsgCreateBond
 )
