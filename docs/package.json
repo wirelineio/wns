@@ -13,12 +13,14 @@
   "scripts": {
     "clean": "rimraf .cache && rimraf public",
     "dev": "gatsby develop --port 8003",
-    "postinstall": "cp -f ./src/gatsby-theme-apollo-docs/components/social-card.js ./node_modules/gatsby-theme-apollo-docs/src/components/social-card.js",
+    "moveSocialCard": "cp -f ./src/gatsby-theme-apollo-docs/components/social-card.js ./node_modules/gatsby-theme-apollo-docs/src/components/social-card.js",
+    "moveSocialCardBackground": "cp -f ./node_modules/@dxos/docs-theme/src/assets/img/social-bg.jpg ./node_modules/gatsby-theme-apollo-docs/src/assets/social-bg.jpg",
+    "postinstall": "yarn moveSocialCard && yarn moveSocialCardBackground",
     "build": "yarn clean && gatsby build --prefix-paths && mkdir -p wns && mv public/* wns && mv wns public/",
     "test": "jest --rootDir ./content --passWithNoTests"
   },
   "dependencies": {
-    "@dxos/docs-theme": "^1.0.0-beta.16",
+    "@dxos/docs-theme": "^1.0.0-beta.19",
     "gatsby": "^2.17.11",
     "gatsby-plugin-sharp": "^2.6.14",
     "gatsby-source-filesystem": "^2.3.14",
