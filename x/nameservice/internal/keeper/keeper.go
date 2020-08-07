@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	set "github.com/deckarep/golang-set"
 	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/bond"
@@ -49,9 +50,10 @@ var PrefixCIDToNamesIndex = []byte{0xe0}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	AccountKeeper auth.AccountKeeper
-	RecordKeeper  RecordKeeper
-	BondKeeper    bond.Keeper
+	accountKeeper auth.AccountKeeper
+	supplyKeeper  supply.Keeper
+	recordKeeper  RecordKeeper
+	bondKeeper    bond.BondClientKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -61,11 +63,12 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.BondClientKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
-		AccountKeeper: accountKeeper,
-		RecordKeeper:  recordKeeper,
-		BondKeeper:    bondKeeper,
+		accountKeeper: accountKeeper,
+		supplyKeeper:  supplyKeeper,
+		recordKeeper:  recordKeeper,
+		bondKeeper:    bondKeeper,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
@@ -77,6 +80,9 @@ type RecordKeeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
 }
+
+// Record keeper implements the bond usage keeper interface.
+var _ bond.BondUsageKeeper = (*RecordKeeper)(nil)
 
 // NewRecordKeeper creates new instances of the nameservice RecordKeeper
 func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
@@ -376,8 +382,13 @@ func (k RecordKeeper) QueryRecordsByBond(ctx sdk.Context, bondID bond.ID) []type
 	return records
 }
 
-// BondHasAssociatedRecords returns true if the bond has associated records.
-func (k RecordKeeper) BondHasAssociatedRecords(ctx sdk.Context, bondID bond.ID) bool {
+// ModuleName returns the module name.
+func (k RecordKeeper) ModuleName() string {
+	return types.ModuleName
+}
+
+// UsesBond returns true if the bond has associated records.
+func (k RecordKeeper) UsesBond(ctx sdk.Context, bondID bond.ID) bool {
 	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
 	store := ctx.KVStore(k.storeKey)
 	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
@@ -472,7 +483,7 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 		record := k.GetRecord(ctx, cid)
 
 		// If record doesn't have an associated bond or if bond no longer exists, mark it deleted.
-		if record.BondID == "" || !k.BondKeeper.HasBond(ctx, record.BondID) {
+		if record.BondID == "" || !k.bondKeeper.HasBond(ctx, record.BondID) {
 			record.Deleted = true
 			k.PutRecord(ctx, record)
 			k.DeleteRecordExpiryQueue(ctx, record)
@@ -487,20 +498,13 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 
 // TryTakeRecordRent tries to take rent from the record bond.
 func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
-	bondObj := k.BondKeeper.GetBond(ctx, record.BondID)
-	coins, err := sdk.ParseCoins(k.RecordRent(ctx))
+	rent, err := sdk.ParseCoins(k.RecordRent(ctx))
 	if err != nil {
 		panic("Invalid record rent.")
 	}
 
-	rent, err := sdk.ConvertCoin(coins[0], bond.MicroWire)
-	if err != nil {
-		panic("Invalid record rent.")
-	}
-
-	// Try deducting rent from bond.
-	updatedBalance, isNeg := bondObj.Balance.SafeSub(sdk.NewCoins(rent))
-	if isNeg {
+	sdkErr := k.bondKeeper.TransferCoinsToModuleAccount(ctx, record.BondID, types.RecordRentModuleAccountName, rent)
+	if sdkErr != nil {
 		// Insufficient funds, mark record as deleted.
 		record.Deleted = true
 		k.PutRecord(ctx, record)
@@ -508,16 +512,6 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 
 		return
 	}
-
-	// Move funds from bond module to record rent module.
-	err = k.BondKeeper.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, bond.RecordRentModuleAccountName, sdk.NewCoins(rent))
-	if err != nil {
-		panic("Error withdrawing rent.")
-	}
-
-	// Update bond balance.
-	bondObj.Balance = updatedBalance
-	k.BondKeeper.SaveBond(ctx, bondObj)
 
 	// Delete old expiry queue entry, create new one.
 	k.DeleteRecordExpiryQueue(ctx, record)
@@ -583,21 +577,6 @@ func (k Keeper) updateBlockChangesetForNameAuthority(ctx sdk.Context, name strin
 	k.saveBlockChangeset(ctx, changeset)
 }
 
-// ClearRecords - Deletes all records and indexes.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) ClearRecords(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// Note: Clear everything, records and indexes.
-	itr := store.Iterator(nil, nil)
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		store.Delete(itr.Key())
-	}
-
-	// Clear bonds.
-	k.BondKeeper.Clear(ctx)
-}
-
 // HasNameAuthority - checks if a name/authority exists.
 func (k Keeper) HasNameAuthority(ctx sdk.Context, name string) bool {
 	return HasNameAuthority(ctx.KVStore(k.storeKey), name)
@@ -650,6 +629,22 @@ func recordObjToRecord(store sdk.KVStore, codec *amino.Codec, obj types.RecordOb
 	}
 
 	return record
+}
+
+// GetModuleBalances gets the nameservice module account(s) balances.
+func (k Keeper) GetModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
+	balances := map[string]sdk.Coins{}
+	accountNames := []string{types.RecordRentModuleAccountName}
+
+	for _, accountName := range accountNames {
+		moduleAddress := k.supplyKeeper.GetModuleAddress(accountName)
+		moduleAccount := k.accountKeeper.GetAccount(ctx, moduleAddress)
+		if moduleAccount != nil {
+			balances[accountName] = moduleAccount.GetCoins()
+		}
+	}
+
+	return balances
 }
 
 func setToSlice(set set.Set) []string {

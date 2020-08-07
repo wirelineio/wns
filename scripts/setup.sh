@@ -104,8 +104,7 @@ function init_node ()
   # Change the staking unit.
   sed -i $SED_ARGS "s/stake/${DENOM}/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
 
-  # Change max bond amount from 10wire to 1000wire for easier local testing.
-  sed -i $SED_ARGS "s/10wire/10000wire/g" "${WNS_SERVER_CONFIG_DIR}/config/genesis.json"
+  # TODO(ashwin): Patch genesis.json with max bond amount?
 }
 
 function init_root ()

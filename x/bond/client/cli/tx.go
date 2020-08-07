@@ -31,7 +31,6 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdRefillBond(cdc),
 		GetCmdWithdrawFromBond(cdc),
 		GetCmdCancelBond(cdc),
-		GetCmdClear(cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -53,12 +52,7 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			uwire, err := sdk.ConvertCoin(coin, types.MicroWire)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgCreateBond(uwire.Denom, uwire.Amount.Int64(), cliCtx.GetFromAddress())
+			msg := types.NewMsgCreateBond(coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -88,12 +82,7 @@ func GetCmdRefillBond(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			uwire, err := sdk.ConvertCoin(coin, types.MicroWire)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgRefillBond(bondID, uwire.Denom, uwire.Amount.Int64(), cliCtx.GetFromAddress())
+			msg := types.NewMsgRefillBond(bondID, coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -147,38 +136,8 @@ func GetCmdWithdrawFromBond(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			uwire, err := sdk.ConvertCoin(coin, types.MicroWire)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgWithdrawBond(bondID, uwire.Denom, uwire.Amount.Int64(), cliCtx.GetFromAddress())
+			msg := types.NewMsgWithdrawBond(bondID, coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-
-	return cmd
-}
-
-// GetCmdClear is the CLI command for clearing all entries.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func GetCmdClear(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "clear",
-		Short: "Clear entries.",
-		Args:  cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			msg := types.NewMsgClear(cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
 			if err != nil {
 				return err
 			}

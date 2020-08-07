@@ -5,6 +5,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -24,10 +26,12 @@ var prefixOwnerToBondsIndex = []byte{0x01}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	AccountKeeper auth.AccountKeeper
-	CoinKeeper    bank.Keeper
-	SupplyKeeper  supply.Keeper
-	RecordKeeper  types.RecordKeeper
+	accountKeeper auth.AccountKeeper
+	bankKeeper    bank.Keeper
+	supplyKeeper  supply.Keeper
+
+	// Track bond usage in other cosmos-sdk modules (more like a usage tracker).
+	usageKeepers []types.BondUsageKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -36,14 +40,25 @@ type Keeper struct {
 	paramstore params.Subspace
 }
 
+// BondClientKeeper is the subset of functionality exposed to other modules.
+type BondClientKeeper interface {
+	HasBond(ctx sdk.Context, id types.ID) bool
+	GetBond(ctx sdk.Context, id types.ID) types.Bond
+	MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*types.Bond
+	TransferCoinsToModuleAccount(ctx sdk.Context, id types.ID, moduleAccount string, coins sdk.Coins) sdk.Error
+	TranserCoinsToAccount(ctx sdk.Context, id types.ID, account sdk.AccAddress, coins sdk.Coins) sdk.Error
+}
+
+var _ BondClientKeeper = (*Keeper)(nil)
+
 // NewKeeper creates new instances of the bond Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, coinKeeper bank.Keeper, supplyKeeper supply.Keeper,
-	recordKeeper types.RecordKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, supplyKeeper supply.Keeper,
+	usageKeepers []types.BondUsageKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
-		AccountKeeper: accountKeeper,
-		CoinKeeper:    coinKeeper,
-		SupplyKeeper:  supplyKeeper,
-		RecordKeeper:  recordKeeper,
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
+		supplyKeeper:  supplyKeeper,
+		usageKeepers:  usageKeepers,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
@@ -156,14 +171,194 @@ func (k Keeper) MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*t
 	return bonds
 }
 
-// Clear - Deletes all entries and indexes.
-// NOTE: FOR LOCAL TESTING PURPOSES ONLY!
-func (k Keeper) Clear(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	// Note: Clear everything, entries and indexes.
-	itr := store.Iterator(nil, nil)
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		store.Delete(itr.Key())
+// CreateBond creates a new bond.
+func (k Keeper) CreateBond(ctx sdk.Context, ownerAddress sdk.AccAddress, coins sdk.Coins) (*types.Bond, sdk.Error) {
+	// Check if account has funds.
+	if !k.bankKeeper.HasCoins(ctx, ownerAddress, coins) {
+		return nil, sdk.ErrInsufficientCoins("Insufficient funds.")
 	}
+
+	// Generate bond ID.
+	account := k.accountKeeper.GetAccount(ctx, ownerAddress)
+	bondID := types.BondID{
+		Address:  ownerAddress,
+		AccNum:   account.GetAccountNumber(),
+		Sequence: account.GetSequence(),
+	}.Generate()
+
+	maxBondAmount, err := k.getMaxBondAmount(ctx)
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid max bond amount.")
+	}
+
+	bond := types.Bond{ID: types.ID(bondID), Owner: ownerAddress.String(), Balance: coins}
+	if bond.Balance.IsAnyGT(maxBondAmount) {
+		return nil, sdk.ErrInternal("Max bond amount exceeded.")
+	}
+
+	// Move funds into the bond account module.
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, bond.Balance)
+	if err != nil {
+		return nil, sdkErr
+	}
+
+	// Save bond in store.
+	k.SaveBond(ctx, bond)
+
+	return &bond, nil
+}
+
+// RefillBond refills an existing bond.
+func (k Keeper) RefillBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAddress, coins sdk.Coins) (*types.Bond, sdk.Error) {
+	if !k.HasBond(ctx, id) {
+		return nil, sdk.ErrInternal("Bond not found.")
+	}
+
+	bond := k.GetBond(ctx, id)
+	if bond.Owner != ownerAddress.String() {
+		return nil, sdk.ErrUnauthorized("Bond owner mismatch.")
+	}
+
+	// Check if account has funds.
+	if !k.bankKeeper.HasCoins(ctx, ownerAddress, coins) {
+		return nil, sdk.ErrInsufficientCoins("Insufficient funds.")
+	}
+
+	maxBondAmount, err := k.getMaxBondAmount(ctx)
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid max bond amount.")
+	}
+
+	updatedBalance := bond.Balance.Add(coins)
+	if updatedBalance.IsAnyGT(maxBondAmount) {
+		return nil, sdk.ErrInternal("Max bond amount exceeded.")
+	}
+
+	// Move funds into the bond account module.
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, coins)
+	if err != nil {
+		return nil, sdkErr
+	}
+
+	// Update bond balance and save.
+	bond.Balance = updatedBalance
+	k.SaveBond(ctx, bond)
+
+	return &bond, nil
+}
+
+// WithdrawBond withdraws funds from a bond.
+func (k Keeper) WithdrawBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAddress, coins sdk.Coins) (*types.Bond, sdk.Error) {
+	if !k.HasBond(ctx, id) {
+		return nil, sdk.ErrInternal("Bond not found.")
+	}
+
+	bond := k.GetBond(ctx, id)
+	if bond.Owner != ownerAddress.String() {
+		return nil, sdk.ErrUnauthorized("Bond owner mismatch.")
+	}
+
+	updatedBalance, isNeg := bond.Balance.SafeSub(coins)
+	if isNeg {
+		return nil, sdk.ErrInsufficientCoins("Insufficient bond balance.")
+	}
+
+	// Move funds from the bond into the account.
+	err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, coins)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update bond balance and save.
+	bond.Balance = updatedBalance
+	k.SaveBond(ctx, bond)
+
+	return &bond, nil
+}
+
+// CancelBond cancels a bond, returning funds to the owner.
+func (k Keeper) CancelBond(ctx sdk.Context, id types.ID, ownerAddress sdk.AccAddress) (*types.Bond, sdk.Error) {
+	if !k.HasBond(ctx, id) {
+		return nil, sdk.ErrInternal("Bond not found.")
+	}
+
+	bond := k.GetBond(ctx, id)
+	if bond.Owner != ownerAddress.String() {
+		return nil, sdk.ErrUnauthorized("Bond owner mismatch.")
+	}
+
+	// Check if bond is used in other modules.
+	for _, usageKeeper := range k.usageKeepers {
+		if usageKeeper.UsesBond(ctx, id) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Bond in use by the '%s' module.", usageKeeper.ModuleName()))
+		}
+	}
+
+	// Move funds from the bond into the account.
+	err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, ownerAddress, bond.Balance)
+	if err != nil {
+		return nil, err
+	}
+
+	k.DeleteBond(ctx, bond)
+
+	return &bond, nil
+}
+
+// GetBondModuleBalances gets the bond module account(s) balances.
+func (k Keeper) GetBondModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
+	balances := map[string]sdk.Coins{}
+	accountNames := []string{types.ModuleName}
+
+	for _, accountName := range accountNames {
+		moduleAddress := k.supplyKeeper.GetModuleAddress(accountName)
+		moduleAccount := k.accountKeeper.GetAccount(ctx, moduleAddress)
+		if moduleAccount != nil {
+			balances[accountName] = moduleAccount.GetCoins()
+		}
+	}
+
+	return balances
+}
+
+// TransferCoinsToModuleAccount noves funds from the bonds module account to another module account.
+func (k Keeper) TransferCoinsToModuleAccount(ctx sdk.Context, id types.ID, moduleAccount string, coins sdk.Coins) sdk.Error {
+	if !k.HasBond(ctx, id) {
+		return sdk.ErrUnauthorized("Bond not found.")
+	}
+
+	bondObj := k.GetBond(ctx, id)
+
+	// Deduct rent from bond.
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(coins)
+	if isNeg {
+		// Check if bond has sufficient funds.
+		return sdk.ErrInsufficientCoins("Insufficient funds.")
+	}
+
+	// Move funds from bond module to record rent module.
+	err := k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, moduleAccount, coins)
+	if err != nil {
+		return sdk.ErrInternal("Error transfering funds.")
+	}
+
+	// Update bond balance.
+	bondObj.Balance = updatedBalance
+	k.SaveBond(ctx, bondObj)
+
+	return nil
+}
+
+// TranserCoinsToAccount moves coins from the bond to an account.
+func (k Keeper) TranserCoinsToAccount(ctx sdk.Context, id types.ID, account sdk.AccAddress, coins sdk.Coins) sdk.Error {
+	return sdk.ErrInternal("Not implemented.")
+}
+
+func (k Keeper) getMaxBondAmount(ctx sdk.Context) (sdk.Coins, error) {
+	maxBondAmount, err := sdk.ParseCoins(k.MaxBondAmount(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	return maxBondAmount, nil
 }

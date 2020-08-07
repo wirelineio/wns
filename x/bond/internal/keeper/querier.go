@@ -97,17 +97,7 @@ func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keep
 }
 
 func queryBalance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	balances := map[string]sdk.Coins{}
-	accountNames := []string{types.ModuleName, types.RecordRentModuleAccountName}
-
-	for _, accountName := range accountNames {
-		moduleAddress := keeper.SupplyKeeper.GetModuleAddress(accountName)
-		moduleAccount := keeper.AccountKeeper.GetAccount(ctx, moduleAddress)
-		if moduleAccount != nil {
-			balances[accountName] = moduleAccount.GetCoins()
-		}
-	}
-
+	balances := keeper.GetBondModuleBalances(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, balances)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
