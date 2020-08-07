@@ -152,7 +152,7 @@ func resolveName(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 func queryRecordsByBond(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
 
 	id := bond.ID(strings.Join(path, "/"))
-	records := keeper.RecordKeeper.QueryRecordsByBond(ctx, id)
+	records := keeper.recordKeeper.QueryRecordsByBond(ctx, id)
 
 	bz, err2 := json.MarshalIndent(records, "", "  ")
 	if err2 != nil {
@@ -174,17 +174,7 @@ func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keep
 }
 
 func queryBalance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	balances := map[string]sdk.Coins{}
-	accountNames := []string{types.RecordRentModuleAccountName}
-
-	for _, accountName := range accountNames {
-		moduleAddress := keeper.SupplyKeeper.GetModuleAddress(accountName)
-		moduleAccount := keeper.AccountKeeper.GetAccount(ctx, moduleAddress)
-		if moduleAccount != nil {
-			balances[accountName] = moduleAccount.GetCoins()
-		}
-	}
-
+	balances := keeper.GetModuleBalances(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, balances)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

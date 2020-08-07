@@ -38,7 +38,7 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 	}
 
 	// Reserve name with signer as owner.
-	account := k.AccountKeeper.GetAccount(ctx, msg.Signer)
+	account := k.accountKeeper.GetAccount(ctx, msg.Signer)
 	if account == nil {
 		return "", sdk.ErrUnknownAddress("Account not found.")
 	}

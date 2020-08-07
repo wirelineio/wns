@@ -35,6 +35,7 @@ type Resolver struct {
 	baseApp       *bam.BaseApp
 	codec         *codec.Codec
 	keeper        nameservice.Keeper
+	bondKeeper    bond.Keeper
 	accountKeeper auth.AccountKeeper
 	logFile       string
 }
@@ -332,8 +333,8 @@ func (r *queryResolver) GetBond(ctx context.Context, id string) (*Bond, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 
 	dbID := bond.ID(id)
-	if r.keeper.BondKeeper.HasBond(sdkContext, dbID) {
-		bondObj := r.keeper.BondKeeper.GetBond(sdkContext, dbID)
+	if r.bondKeeper.HasBond(sdkContext, dbID) {
+		bondObj := r.bondKeeper.GetBond(sdkContext, dbID)
 		return getGQLBond(ctx, r, &bondObj)
 	}
 
@@ -344,7 +345,7 @@ func (r *queryResolver) QueryBonds(ctx context.Context, attributes []*KeyValueIn
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Bond{}
 
-	var bonds = r.keeper.BondKeeper.MatchBonds(sdkContext, func(bondObj *bond.Bond) bool {
+	var bonds = r.bondKeeper.MatchBonds(sdkContext, func(bondObj *bond.Bond) bool {
 		return matchBondOnAttributes(bondObj, attributes)
 	})
 

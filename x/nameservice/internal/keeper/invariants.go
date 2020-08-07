@@ -19,7 +19,7 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 // ModuleAccountInvariant checks that the 'bond' module account balance is non-negative.
 func ModuleAccountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		moduleAccount := k.SupplyKeeper.GetModuleAccount(ctx, types.RecordRentModuleAccountName)
+		moduleAccount := k.supplyKeeper.GetModuleAccount(ctx, types.RecordRentModuleAccountName)
 		if moduleAccount.GetCoins().IsAnyNegative() {
 			return sdk.FormatInvariant(
 					types.ModuleName,
@@ -47,7 +47,7 @@ func RecordInvariants(k Keeper) sdk.Invariant {
 				k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 				record := obj.ToRecord()
 
-				if record.BondID != "" && !k.BondKeeper.HasBond(ctx, record.BondID) {
+				if record.BondID != "" && !k.bondKeeper.HasBond(ctx, record.BondID) {
 					return sdk.FormatInvariant(types.ModuleName, "record-bond", fmt.Sprintf("Bond not found for record ID: '%s'.", record.ID)), true
 				}
 			}

@@ -50,10 +50,10 @@ var PrefixCIDToNamesIndex = []byte{0xe0}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	AccountKeeper auth.AccountKeeper
-	SupplyKeeper  supply.Keeper
-	RecordKeeper  RecordKeeper
-	BondKeeper    bond.BondClientKeeper
+	accountKeeper auth.AccountKeeper
+	supplyKeeper  supply.Keeper
+	recordKeeper  RecordKeeper
+	bondKeeper    bond.BondClientKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -65,10 +65,10 @@ type Keeper struct {
 // NewKeeper creates new instances of the nameservice Keeper
 func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.BondClientKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
-		AccountKeeper: accountKeeper,
-		SupplyKeeper:  supplyKeeper,
-		RecordKeeper:  recordKeeper,
-		BondKeeper:    bondKeeper,
+		accountKeeper: accountKeeper,
+		supplyKeeper:  supplyKeeper,
+		recordKeeper:  recordKeeper,
+		bondKeeper:    bondKeeper,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
@@ -483,7 +483,7 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 		record := k.GetRecord(ctx, cid)
 
 		// If record doesn't have an associated bond or if bond no longer exists, mark it deleted.
-		if record.BondID == "" || !k.BondKeeper.HasBond(ctx, record.BondID) {
+		if record.BondID == "" || !k.bondKeeper.HasBond(ctx, record.BondID) {
 			record.Deleted = true
 			k.PutRecord(ctx, record)
 			k.DeleteRecordExpiryQueue(ctx, record)
@@ -498,7 +498,7 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 
 // TryTakeRecordRent tries to take rent from the record bond.
 func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
-	bondObj := k.BondKeeper.GetBond(ctx, record.BondID)
+	bondObj := k.bondKeeper.GetBond(ctx, record.BondID)
 	rent, err := sdk.ParseCoins(k.RecordRent(ctx))
 	if err != nil {
 		panic("Invalid record rent.")
@@ -516,14 +516,14 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	}
 
 	// Move funds from bond module to record rent module.
-	err = k.SupplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, rent)
+	err = k.supplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, rent)
 	if err != nil {
 		panic("Error withdrawing rent.")
 	}
 
 	// Update bond balance.
 	bondObj.Balance = updatedBalance
-	k.BondKeeper.SaveBond(ctx, bondObj)
+	k.bondKeeper.SaveBond(ctx, bondObj)
 
 	// Delete old expiry queue entry, create new one.
 	k.DeleteRecordExpiryQueue(ctx, record)
@@ -641,6 +641,22 @@ func recordObjToRecord(store sdk.KVStore, codec *amino.Codec, obj types.RecordOb
 	}
 
 	return record
+}
+
+// GetModuleBalances gets the nameservice module account(s) balances.
+func (k Keeper) GetModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
+	balances := map[string]sdk.Coins{}
+	accountNames := []string{types.RecordRentModuleAccountName}
+
+	for _, accountName := range accountNames {
+		moduleAddress := k.supplyKeeper.GetModuleAddress(accountName)
+		moduleAccount := k.accountKeeper.GetAccount(ctx, moduleAddress)
+		if moduleAccount != nil {
+			balances[accountName] = moduleAccount.GetCoins()
+		}
+	}
+
+	return balances
 }
 
 func setToSlice(set set.Set) []string {

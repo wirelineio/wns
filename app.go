@@ -334,7 +334,7 @@ func NewNameServiceApp(
 		}
 	}
 
-	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.accountKeeper)
+	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.bondKeeper, app.accountKeeper)
 
 	return app
 }
