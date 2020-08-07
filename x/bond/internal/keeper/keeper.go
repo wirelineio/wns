@@ -44,8 +44,9 @@ type Keeper struct {
 type BondClientKeeper interface {
 	HasBond(ctx sdk.Context, id types.ID) bool
 	GetBond(ctx sdk.Context, id types.ID) types.Bond
-	SaveBond(ctx sdk.Context, bond types.Bond)
 	MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*types.Bond
+	TransferCoinsToModuleAccount(ctx sdk.Context, id types.ID, moduleAccount string, coins sdk.Coins) sdk.Error
+	TranserCoinsToAccount(ctx sdk.Context, id types.ID, account sdk.AccAddress, coins sdk.Coins) sdk.Error
 }
 
 var _ BondClientKeeper = (*Keeper)(nil)
@@ -318,6 +319,39 @@ func (k Keeper) GetBondModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 	}
 
 	return balances
+}
+
+// TransferCoinsToModuleAccount noves funds from the bonds module account to another module account.
+func (k Keeper) TransferCoinsToModuleAccount(ctx sdk.Context, id types.ID, moduleAccount string, coins sdk.Coins) sdk.Error {
+	if !k.HasBond(ctx, id) {
+		return sdk.ErrUnauthorized("Bond not found.")
+	}
+
+	bondObj := k.GetBond(ctx, id)
+
+	// Deduct rent from bond.
+	updatedBalance, isNeg := bondObj.Balance.SafeSub(coins)
+	if isNeg {
+		// Check if bond has sufficient funds.
+		return sdk.ErrInsufficientCoins("Insufficient funds.")
+	}
+
+	// Move funds from bond module to record rent module.
+	err := k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, moduleAccount, coins)
+	if err != nil {
+		return sdk.ErrInternal("Error transfering funds.")
+	}
+
+	// Update bond balance.
+	bondObj.Balance = updatedBalance
+	k.SaveBond(ctx, bondObj)
+
+	return nil
+}
+
+// TranserCoinsToAccount moves coins from the bond to an account.
+func (k Keeper) TranserCoinsToAccount(ctx sdk.Context, id types.ID, account sdk.AccAddress, coins sdk.Coins) sdk.Error {
+	return sdk.ErrInternal("Not implemented.")
 }
 
 func (k Keeper) getMaxBondAmount(ctx sdk.Context) (sdk.Coins, error) {

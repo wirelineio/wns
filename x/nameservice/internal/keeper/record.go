@@ -83,33 +83,15 @@ func (k Keeper) ProcessRenewRecord(ctx sdk.Context, msg types.MsgRenewRecord) (*
 }
 
 func (k Keeper) processRecord(ctx sdk.Context, record *types.Record, isRenewal bool) sdk.Error {
-	// Check that the record has an associated bond.
-	if !k.bondKeeper.HasBond(ctx, record.BondID) {
-		return sdk.ErrUnauthorized("Bond not found.")
-	}
-
-	bondObj := k.bondKeeper.GetBond(ctx, record.BondID)
 	rent, err := sdk.ParseCoins(k.RecordRent(ctx))
 	if err != nil {
 		return sdk.ErrInvalidCoins("Invalid record rent.")
 	}
 
-	// Deduct rent from bond.
-	updatedBalance, isNeg := bondObj.Balance.SafeSub(rent)
-	if isNeg {
-		// Check if bond has sufficient funds.
-		return sdk.ErrInsufficientCoins("Insufficient funds.")
+	sdkErr := k.bondKeeper.TransferCoinsToModuleAccount(ctx, record.BondID, types.RecordRentModuleAccountName, rent)
+	if sdkErr != nil {
+		return sdkErr
 	}
-
-	// Move funds from bond module to record rent module.
-	err = k.supplyKeeper.SendCoinsFromModuleToModule(ctx, bond.ModuleName, types.RecordRentModuleAccountName, rent)
-	if err != nil {
-		return sdk.ErrInternal("Error withdrawing rent.")
-	}
-
-	// Update bond balance.
-	bondObj.Balance = updatedBalance
-	k.bondKeeper.SaveBond(ctx, bondObj)
 
 	record.CreateTime = ctx.BlockHeader().Time
 	record.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordExpiryTime(ctx))
