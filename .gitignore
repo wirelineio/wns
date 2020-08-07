@@ -17,3 +17,4 @@ build
 .out/
 .cache
 public
+node_modules
