@@ -262,7 +262,7 @@ func NewNameServiceApp(
 		app.accountKeeper,
 		app.supplyKeeper,
 		app.recordKeeper,
-		app.bondKeeper,
+		bond.BondClientKeeper(app.bondKeeper),
 		keys[ns.StoreKey],
 		app.cdc,
 		nsSubspace,

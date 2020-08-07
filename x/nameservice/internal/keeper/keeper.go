@@ -53,7 +53,7 @@ type Keeper struct {
 	AccountKeeper auth.AccountKeeper
 	SupplyKeeper  supply.Keeper
 	RecordKeeper  RecordKeeper
-	BondKeeper    bond.Keeper
+	BondKeeper    bond.BondClientKeeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -63,7 +63,7 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.BondClientKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		AccountKeeper: accountKeeper,
 		SupplyKeeper:  supplyKeeper,

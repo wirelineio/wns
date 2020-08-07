@@ -40,6 +40,16 @@ type Keeper struct {
 	paramstore params.Subspace
 }
 
+// BondClientKeeper is the subset of functionality exposed to other modules.
+type BondClientKeeper interface {
+	HasBond(ctx sdk.Context, id types.ID) bool
+	GetBond(ctx sdk.Context, id types.ID) types.Bond
+	SaveBond(ctx sdk.Context, bond types.Bond)
+	MatchBonds(ctx sdk.Context, matchFn func(*types.Bond) bool) []*types.Bond
+}
+
+var _ BondClientKeeper = (*Keeper)(nil)
+
 // NewKeeper creates new instances of the bond Keeper
 func NewKeeper(accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, supplyKeeper supply.Keeper,
 	usageKeepers []types.BondUsageKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {

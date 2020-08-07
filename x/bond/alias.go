@@ -26,8 +26,9 @@ var (
 )
 
 type (
-	ID              = types.ID
-	Bond            = types.Bond
-	Keeper          = keeper.Keeper
-	BondUsageKeeper = types.BondUsageKeeper
+	ID               = types.ID
+	Bond             = types.Bond
+	Keeper           = keeper.Keeper
+	BondUsageKeeper  = types.BondUsageKeeper
+	BondClientKeeper = keeper.BondClientKeeper
 )
