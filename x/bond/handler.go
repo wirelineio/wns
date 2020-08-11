@@ -31,15 +31,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 	}
 }
 
-func getMaxBondAmount(ctx sdk.Context, keeper Keeper) (sdk.Coins, error) {
-	maxBondAmount, err := sdk.ParseCoins(keeper.MaxBondAmount(ctx))
-	if err != nil {
-		return nil, err
-	}
-
-	return maxBondAmount, nil
-}
-
 // Handle MsgCreateBond.
 func handleMsgCreateBond(ctx sdk.Context, keeper Keeper, msg types.MsgCreateBond) sdk.Result {
 	bond, err := keeper.CreateBond(ctx, msg.Signer, msg.Coins)

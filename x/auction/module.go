@@ -1,8 +1,8 @@
 //
-// Copyright 2019 Wireline, Inc.
+// Copyright 2020 Wireline, Inc.
 //
 
-package bond
+package auction
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/wirelineio/wns/x/bond/client/cli"
+	"github.com/wirelineio/wns/x/auction/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
