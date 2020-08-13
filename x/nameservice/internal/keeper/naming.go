@@ -28,27 +28,73 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 		return "", sdk.ErrInternal("Invalid name.")
 	}
 
-	if strings.Contains(name, ".") {
-		return "", sdk.ErrInternal(("Invalid name (dot is currently not allowed in root authority names)."))
-	}
-
 	// Check if name already reserved.
 	if k.HasNameAuthority(ctx, name) {
 		return "", sdk.ErrInternal("Name already exists.")
 	}
 
+	if strings.Contains(name, ".") {
+		return k.ProcessReserveSubAuthority(ctx, name, msg)
+	}
+
 	// Reserve name with signer as owner.
-	account := k.accountKeeper.GetAccount(ctx, msg.Signer)
-	if account == nil {
-		return "", sdk.ErrUnknownAddress("Account not found.")
+	sdkErr := k.createAuthority(ctx, name, msg.Signer)
+	if sdkErr != nil {
+		return "", sdkErr
+	}
+
+	return name, nil
+}
+
+func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddress) sdk.Error {
+	ownerAccount := k.accountKeeper.GetAccount(ctx, owner)
+	if ownerAccount == nil {
+		return sdk.ErrUnknownAddress("Account not found.")
+	}
+
+	pubKey := ownerAccount.GetPubKey()
+	if pubKey == nil {
+		return sdk.ErrInvalidPubKey("Account public key not set.")
 	}
 
 	k.SetNameAuthority(
 		ctx,
 		name,
-		msg.Signer.String(),
-		helpers.BytesToBase64(account.GetPubKey().Bytes()),
+		owner.String(),
+		helpers.BytesToBase64(pubKey.Bytes()),
 	)
+
+	return nil
+}
+
+// ProcessReserveSubAuthority reserves a sub-authority.
+func (k Keeper) ProcessReserveSubAuthority(ctx sdk.Context, name string, msg types.MsgReserveAuthority) (string, sdk.Error) {
+	// Get parent authority name.
+	names := strings.Split(name, ".")
+	parent := strings.Join(names[1:], ".")
+
+	// Check if parent authority exists.
+	parentAuthority := k.GetNameAuthority(ctx, parent)
+	if parentAuthority == nil {
+		return name, sdk.ErrInternal("Parent authority not found.")
+	}
+
+	// Sub-authority creator needs to be the owner of the parent authority.
+	if parentAuthority.OwnerAddress != msg.Signer.String() {
+		return name, sdk.ErrUnauthorized("Access denied.")
+	}
+
+	// Sub-authority owner defaults to parent authority owner.
+	subAuthorityOwner := msg.Signer
+	if !msg.Owner.Empty() {
+		// Override sub-authority owner if provided in message.
+		subAuthorityOwner = msg.Owner
+	}
+
+	sdkErr := k.createAuthority(ctx, name, subAuthorityOwner)
+	if sdkErr != nil {
+		return "", sdkErr
+	}
 
 	return name, nil
 }
