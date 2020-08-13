@@ -212,13 +212,20 @@ func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
 		Use:   "reserve-name [name]",
 		Short: "Reserve name.",
 		Args:  cobra.ExactArgs(1),
+
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			msg := types.NewMsgReserveAuthority(args[0], cliCtx.GetFromAddress())
-			err := msg.ValidateBasic()
+			owner := viper.GetString("owner")
+			ownerAddress, err := sdk.AccAddressFromBech32(owner)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgReserveAuthority(args[0], cliCtx.GetFromAddress(), ownerAddress)
+			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
@@ -226,6 +233,8 @@ func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().String("owner", "", "Owner address, if creating a sub-authority.")
 
 	return cmd
 }

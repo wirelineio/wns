@@ -10,13 +10,17 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 type MsgReserveAuthority struct {
 	Name   string         `json:"name"`
 	Signer sdk.AccAddress `json:"signer"`
+
+	// Owner (instead of Signer) is only used when creating a sub-authority.
+	Owner sdk.AccAddress `json:"owner"`
 }
 
 // NewMsgReserveAuthority is the constructor function for MsgReserveAuthority.
-func NewMsgReserveAuthority(name string, signer sdk.AccAddress) MsgReserveAuthority {
+func NewMsgReserveAuthority(name string, signer sdk.AccAddress, owner sdk.AccAddress) MsgReserveAuthority {
 	return MsgReserveAuthority{
 		Name:   name,
 		Signer: signer,
+		Owner:  owner,
 	}
 }
 
