@@ -18,7 +18,7 @@ import (
 
 // GetTxCmd returns transaction commands for this module.
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	nameserviceTxCmd := &cobra.Command{
+	bondTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Bond transaction subcommands",
 		DisableFlagParsing:         true,
@@ -26,14 +26,14 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	nameserviceTxCmd.AddCommand(client.PostCommands(
+	bondTxCmd.AddCommand(client.PostCommands(
 		GetCmdCreateBond(cdc),
 		GetCmdRefillBond(cdc),
 		GetCmdWithdrawFromBond(cdc),
 		GetCmdCancelBond(cdc),
 	)...)
 
-	return nameserviceTxCmd
+	return bondTxCmd
 }
 
 // GetCmdCreateBond is the CLI command for creating a bond.

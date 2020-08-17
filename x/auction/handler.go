@@ -27,7 +27,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle MsgCreateAuction.
 func handleMsgCreateAuction(ctx sdk.Context, keeper Keeper, msg types.MsgCreateAuction) sdk.Result {
-	auction, err := keeper.CreateAuction(ctx, msg.Signer, msg.Coins)
+	auction, err := keeper.CreateAuction(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
