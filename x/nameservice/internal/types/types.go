@@ -14,6 +14,14 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 )
 
+type AutorityStatus int8
+
+const (
+	AuthorityActive       AutorityStatus = 1
+	AuthorityExpired      AutorityStatus = 2
+	AuthorityUnderAuction AutorityStatus = 3
+)
+
 // ID for records.
 type ID string
 
@@ -200,6 +208,8 @@ type NameAuthority struct {
 
 	// Block height at which name/authority was created.
 	Height int64 `json:"height"`
+
+	Status AutorityStatus `json:"status"`
 }
 
 // NameRecordEntry is a naming record entry for a WRN.
