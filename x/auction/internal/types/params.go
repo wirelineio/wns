@@ -14,16 +14,16 @@ var _ params.ParamSet = (*Params)(nil)
 // Params defines the parameters for the auction module.
 type Params struct {
 	// Duration of commits phase in seconds.
-	CommitsDuration int64 `json:"commitsDuration"`
+	CommitsDuration int64 `json:"commits_duration"`
 
 	// Duration of reveals phase in seconds.
-	RevealsDuration int64 `json:"revealsDuration"`
+	RevealsDuration int64 `json:"reveals_duration"`
 
 	// Commit and reveal fees.
-	CommitFee sdk.Coin `json:"commitFee"`
-	RevealFee sdk.Coin `json:"revealFee"`
+	CommitFee sdk.Coin `json:"commit_fee"`
+	RevealFee sdk.Coin `json:"reveal_fee"`
 
-	MinimumBid sdk.Coin `json:"minimumBid"`
+	MinimumBid sdk.Coin `json:"minimum_bid"`
 }
 
 // NewParams creates a new Params instance
