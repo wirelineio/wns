@@ -40,6 +40,9 @@ type Auction struct {
 	ID     ID   `json:"id,omitempty"`
 	Status int8 `json:"status,omitempty"`
 
+	// Creator of the auction.
+	OwnerAddress sdk.AccAddress `json:"ownerAddress,omitempty"`
+
 	// Auction create time.
 	CreateTime time.Time `json:"createTime,omitempty"`
 

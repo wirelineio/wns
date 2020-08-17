@@ -6,7 +6,6 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/types/time"
 )
 
 // RouterKey is the module name router key
@@ -14,26 +13,23 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 // MsgCreateAuction defines a create auction message.
 type MsgCreateAuction struct {
-	CommitsEndTime int64          `json:"commitsEndTime,omitempty"`
-	RevealsEndTime int64          `json:"revealsEndTime,omitempty"`
-	CommitFee      sdk.Coin       `json:"commitFee,omitempty"`
-	RevealFee      sdk.Coin       `json:"revealFee,omitempty"`
-	MinimumBid     sdk.Coin       `json:"minimumBid,omitempty"`
-	Signer         sdk.AccAddress `json:"signer"`
+	CommitsDuration int64          `json:"commitsDuration,omitempty"`
+	RevealsDuration int64          `json:"revealsDuration,omitempty"`
+	CommitFee       sdk.Coin       `json:"commitFee,omitempty"`
+	RevealFee       sdk.Coin       `json:"revealFee,omitempty"`
+	MinimumBid      sdk.Coin       `json:"minimumBid,omitempty"`
+	Signer          sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgCreateAuction is the constructor function for MsgCreateAuction.
-func NewMsgCreateAuction(commitsEndTime int64, revealsEndTime int64,
-	commitFee sdk.Coin, revealFee sdk.Coin, minimumBid sdk.Coin,
-	signer sdk.AccAddress) MsgCreateAuction {
-
+func NewMsgCreateAuction(params Params, signer sdk.AccAddress) MsgCreateAuction {
 	return MsgCreateAuction{
-		CommitsEndTime: commitsEndTime,
-		RevealsEndTime: revealsEndTime,
-		CommitFee:      commitFee,
-		RevealFee:      revealFee,
-		MinimumBid:     minimumBid,
-		Signer:         signer,
+		CommitsDuration: params.CommitsDuration,
+		RevealsDuration: params.RevealsDuration,
+		CommitFee:       params.CommitFee,
+		RevealFee:       params.RevealFee,
+		MinimumBid:      params.MinimumBid,
+		Signer:          signer,
 	}
 }
 
@@ -49,17 +45,12 @@ func (msg MsgCreateAuction) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress(msg.Signer.String())
 	}
 
-	now := time.Now().Unix()
-	if msg.CommitsEndTime < now {
-		return sdk.ErrInternal("Commit phase end time can't be in the past.")
+	if msg.CommitsDuration <= 0 {
+		return sdk.ErrInternal("Commit phase duration invalid.")
 	}
 
-	if msg.RevealsEndTime < now {
-		return sdk.ErrInternal("Reveal phase end time can't be in the past.")
-	}
-
-	if msg.RevealsEndTime <= msg.CommitsEndTime {
-		return sdk.ErrInternal("Reveal phase end time must be greater than commit phase end time.")
+	if msg.RevealsDuration <= 0 {
+		return sdk.ErrInternal("Reveal phase duration invalid.")
 	}
 
 	if !msg.MinimumBid.IsPositive() {

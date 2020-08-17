@@ -5,6 +5,8 @@
 package keeper
 
 import (
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -65,7 +67,7 @@ func getAuctionIndexKey(id types.ID) []byte {
 }
 
 // Generates Owner -> Auctions index key.
-func getOwnerToAuctionsIndexKey(owner string, auctionID types.ID) []byte {
+func getOwnerToAuctionsIndexKey(owner sdk.AccAddress, auctionID types.ID) []byte {
 	return append(append(prefixOwnerToAuctionsIndex, []byte(owner)...), []byte(auctionID)...)
 }
 
@@ -77,7 +79,7 @@ func (k Keeper) SaveAuction(ctx sdk.Context, auction types.Auction) {
 	store.Set(getAuctionIndexKey(auction.ID), k.cdc.MustMarshalBinaryBare(auction))
 
 	// Owner -> [Auction] index.
-	store.Set(getOwnerToAuctionsIndexKey(auction.Owner, auction.ID), []byte{})
+	store.Set(getOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID), []byte{})
 }
 
 // HasAuction - checks if a auction by the given ID exists.
@@ -90,7 +92,7 @@ func (k Keeper) HasAuction(ctx sdk.Context, id types.ID) bool {
 func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.Auction) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(getAuctionIndexKey(auction.ID))
-	store.Delete(getOwnerToAuctionsIndexKey(auction.Owner, auction.ID))
+	store.Delete(getOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID))
 }
 
 // GetAuction - gets a record from the store.
@@ -166,34 +168,47 @@ func (k Keeper) MatchAuctions(ctx sdk.Context, matchFn func(*types.Auction) bool
 }
 
 // CreateAuction creates a new auction.
-func (k Keeper) CreateAuction(ctx sdk.Context, ownerAddress sdk.AccAddress, coins sdk.Coins) (*types.Auction, sdk.Error) {
-	// Check if account has funds.
-	if !k.bankKeeper.HasCoins(ctx, ownerAddress, coins) {
-		return nil, sdk.ErrInsufficientCoins("Insufficient funds.")
+func (k Keeper) CreateAuction(ctx sdk.Context, msg types.MsgCreateAuction) (*types.Auction, sdk.Error) {
+	// Might be called from another module directly, always validate.
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, err
 	}
 
 	// Generate auction ID.
-	account := k.accountKeeper.GetAccount(ctx, ownerAddress)
+	account := k.accountKeeper.GetAccount(ctx, msg.Signer)
+	if account == nil {
+		return nil, sdk.ErrInvalidAddress("Account not found.")
+	}
+
 	auctionID := types.AuctionID{
-		Address:  ownerAddress,
+		Address:  msg.Signer,
 		AccNum:   account.GetAccountNumber(),
 		Sequence: account.GetSequence(),
 	}.Generate()
 
-	maxAuctionAmount, err := k.getMaxAuctionAmount(ctx)
-	if err != nil {
-		return nil, sdk.ErrInternal("Invalid max auction amount.")
-	}
-
-	auction := types.Auction{ID: types.ID(auctionID), Owner: ownerAddress.String(), Balance: coins}
-	if auction.Balance.IsAnyGT(maxAuctionAmount) {
-		return nil, sdk.ErrInternal("Max auction amount exceeded.")
-	}
-
-	// Move funds into the auction account module.
-	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, ownerAddress, types.ModuleName, auction.Balance)
+	// Take fees from account.
+	totalFee := msg.CommitFee.Add(msg.RevealFee)
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.Signer, types.ModuleName, sdk.NewCoins(totalFee))
 	if err != nil {
 		return nil, sdkErr
+	}
+
+	// Compute timestamps.
+	now := ctx.BlockTime()
+	commitsEndTime := now.Add(time.Duration(msg.CommitsDuration) * time.Second)
+	revealsEndTime := now.Add(time.Duration(msg.CommitsDuration+msg.RevealsDuration) * time.Second)
+
+	auction := types.Auction{
+		ID:             types.ID(auctionID),
+		Status:         types.AuctionStatusCommitPhase,
+		OwnerAddress:   msg.Signer,
+		CreateTime:     now,
+		CommitsEndTime: commitsEndTime,
+		RevealsEndTime: revealsEndTime,
+		CommitFee:      msg.CommitFee,
+		RevealFee:      msg.RevealFee,
+		MinimumBid:     msg.MinimumBid,
 	}
 
 	// Save auction in store.
@@ -216,13 +231,4 @@ func (k Keeper) GetAuctionModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 	}
 
 	return balances
-}
-
-func (k Keeper) getMaxAuctionAmount(ctx sdk.Context) (sdk.Coins, error) {
-	maxAuctionAmount, err := sdk.ParseCoins(k.MaxAuctionAmount(ctx))
-	if err != nil {
-		return nil, err
-	}
-
-	return maxAuctionAmount, nil
 }

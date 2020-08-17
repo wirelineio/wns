@@ -20,17 +20,9 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// MaxAuctionAmount - get the max auction amount.
-func (k Keeper) MaxAuctionAmount(ctx sdk.Context) (res string) {
-	k.paramstore.Get(ctx, types.KeyMaxAuctionAmount, &res)
-	return
-}
-
 // GetParams - Get all parameteras as types.Params.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	return types.NewParams(
-		k.MaxAuctionAmount(ctx),
-	)
+	return types.NewParams()
 }
 
 // SetParams - set the params.
