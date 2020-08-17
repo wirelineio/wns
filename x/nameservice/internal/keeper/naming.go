@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -38,7 +39,7 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 	}
 
 	// Reserve name with signer as owner.
-	sdkErr := k.createAuthority(ctx, name, msg.Signer)
+	sdkErr := k.createAuthority(ctx, name, msg.Signer, true)
 	if sdkErr != nil {
 		return "", sdkErr
 	}
@@ -46,7 +47,7 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 	return name, nil
 }
 
-func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddress) sdk.Error {
+func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddress, isRoot bool) sdk.Error {
 	ownerAccount := k.accountKeeper.GetAccount(ctx, owner)
 	if ownerAccount == nil {
 		return sdk.ErrUnknownAddress("Account not found.")
@@ -57,15 +58,56 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		return sdk.ErrInvalidPubKey("Account public key not set.")
 	}
 
-	k.SetNameAuthority(
-		ctx,
-		name,
-		owner.String(),
-		helpers.BytesToBase64(pubKey.Bytes()),
+	auctionID := auction.ID("")
+	status := types.AuthorityActive
 
-		// TODO(ashwin): Set based on root/sub-auth, also based on auction status.
-		types.AuthorityActive,
-	)
+	// Create auction if root authority and name auctions are enabled.
+	if isRoot && k.NameAuctionsEnabled(ctx) {
+		commitFee, err := sdk.ParseCoin(k.NameAuctionCommitFee(ctx))
+		if err != nil {
+			return sdk.ErrInvalidCoins("Invalid name auction commit fee.")
+		}
+
+		revealFee, err := sdk.ParseCoin(k.NameAuctionRevealFee(ctx))
+		if err != nil {
+			return sdk.ErrInvalidCoins("Invalid name auction reveal fee.")
+		}
+
+		minimumBid, err := sdk.ParseCoin(k.NameAuctionMinimumBid(ctx))
+		if err != nil {
+			return sdk.ErrInvalidCoins("Invalid name auction minimum bid.")
+		}
+
+		// Create an auction.
+		msg := auction.NewMsgCreateAuction(auction.Params{
+			CommitsDuration: k.NameAuctionCommitsDuration(ctx),
+			RevealsDuration: k.NameAuctionRevealsDuration(ctx),
+			CommitFee:       commitFee,
+			RevealFee:       revealFee,
+			MinimumBid:      minimumBid,
+		}, owner)
+
+		// TODO(ashwin): Perhaps consume extra gas for auction creation.
+		auction, sdkErr := k.auctionKeeper.CreateAuction(ctx, msg)
+		if sdkErr != nil {
+			return sdkErr
+		}
+
+		// TODO(ashwin): Create auction ID -> name authority index.
+
+		status = types.AuthorityUnderAuction
+		auctionID = auction.ID
+	}
+
+	authority := types.NameAuthority{
+		Height:         ctx.BlockHeight(),
+		OwnerAddress:   owner.String(),
+		OwnerPublicKey: helpers.BytesToBase64(pubKey.Bytes()),
+		Status:         status,
+		AuctionID:      auctionID,
+	}
+
+	k.SetNameAuthority(ctx, name, authority)
 
 	return nil
 }
@@ -94,7 +136,7 @@ func (k Keeper) ProcessReserveSubAuthority(ctx sdk.Context, name string, msg typ
 		subAuthorityOwner = msg.Owner
 	}
 
-	sdkErr := k.createAuthority(ctx, name, subAuthorityOwner)
+	sdkErr := k.createAuthority(ctx, name, subAuthorityOwner, false)
 	if sdkErr != nil {
 		return "", sdkErr
 	}

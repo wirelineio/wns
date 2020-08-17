@@ -5,6 +5,8 @@
 package types
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,8 +15,8 @@ const RouterKey = ModuleName // this was defined in your key.go file
 
 // MsgCreateAuction defines a create auction message.
 type MsgCreateAuction struct {
-	CommitsDuration int64          `json:"commitsDuration,omitempty"`
-	RevealsDuration int64          `json:"revealsDuration,omitempty"`
+	CommitsDuration time.Duration  `json:"commitsDuration,omitempty"`
+	RevealsDuration time.Duration  `json:"revealsDuration,omitempty"`
 	CommitFee       sdk.Coin       `json:"commitFee,omitempty"`
 	RevealFee       sdk.Coin       `json:"revealFee,omitempty"`
 	MinimumBid      sdk.Coin       `json:"minimumBid,omitempty"`

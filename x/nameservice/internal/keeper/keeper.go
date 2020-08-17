@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	set "github.com/deckarep/golang-set"
 	"github.com/tendermint/go-amino"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -54,6 +55,7 @@ type Keeper struct {
 	supplyKeeper  supply.Keeper
 	recordKeeper  RecordKeeper
 	bondKeeper    bond.BondClientKeeper
+	auctionKeeper auction.Keeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
@@ -63,12 +65,13 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
-func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.BondClientKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, recordKeeper RecordKeeper, bondKeeper bond.BondClientKeeper, auctionKeeper auction.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		accountKeeper: accountKeeper,
 		supplyKeeper:  supplyKeeper,
 		recordKeeper:  recordKeeper,
 		bondKeeper:    bondKeeper,
+		auctionKeeper: auctionKeeper,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
@@ -396,6 +399,12 @@ func (k RecordKeeper) UsesBond(ctx sdk.Context, bondID bond.ID) bool {
 	return itr.Valid()
 }
 
+// UsesAuction returns true if the auction is used for an name authority.
+func (k RecordKeeper) UsesAuction(ctx sdk.Context, auctionID auction.ID) bool {
+	// TODO(ashwin): Implement auction ID -> NameAuthority index.
+	return false
+}
+
 // getRecordExpiryQueueTimeKey gets the prefix for the record expiry queue.
 func getRecordExpiryQueueTimeKey(timestamp time.Time) []byte {
 	timeBytes := sdk.FormatTimeBytes(timestamp)
@@ -588,15 +597,9 @@ func HasNameAuthority(store sdk.KVStore, name string) bool {
 }
 
 // SetNameAuthority creates the NameAutority record.
-func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, ownerAddress string, ownerPublicKey string, status types.AutorityStatus) {
+func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, authority types.NameAuthority) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(
-		types.NameAuthority{
-			OwnerAddress:   ownerAddress,
-			OwnerPublicKey: ownerPublicKey,
-			Height:         ctx.BlockHeight(),
-			Status:         status,
-		}))
+	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(authority))
 	k.updateBlockChangesetForNameAuthority(ctx, name)
 }
 
