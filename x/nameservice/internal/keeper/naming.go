@@ -62,6 +62,9 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		name,
 		owner.String(),
 		helpers.BytesToBase64(pubKey.Bytes()),
+
+		// TODO(ashwin): Set based on root/sub-auth, also based on auction status.
+		types.AuthorityActive,
 	)
 
 	return nil
