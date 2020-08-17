@@ -20,4 +20,6 @@ func init() {
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCreateAuction{}, "auction/CreateAuction", nil)
+	cdc.RegisterConcrete(MsgCommitBid{}, "auction/CommitBid", nil)
+	cdc.RegisterConcrete(MsgRevealBid{}, "auction/RevealBid", nil)
 }

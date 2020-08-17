@@ -73,10 +73,12 @@ type Bid struct {
 	AuctionID     ID          `json:"auctionId,omitempty"`
 	BidderAddress sdk.Address `json:"bidderAddress,omitempty"`
 	Status        int8        `json:"status,omitempty"`
-	BidAmount     sdk.Coin    `json:"bidAmount,omitempty"`
 	AuctionFee    sdk.Coin    `json:"auctionFee,omitempty"`
+	CommitHash    string      `json:"commitHash,omitempty"`
 	CommitTime    time.Time   `json:"commitTime,omitempty"`
+	Reveal        string      `json:"reveal,omitempty"`
 	RevealTime    time.Time   `json:"revealTime,omitempty"`
+	BidAmount     sdk.Coin    `json:"bidAmount,omitempty"`
 }
 
 // AuctionID simplifies generation of auction IDs.
