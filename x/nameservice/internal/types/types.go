@@ -10,6 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	canonicalJson "github.com/gibson042/canonicaljson-go"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 )
@@ -210,6 +211,8 @@ type NameAuthority struct {
 	Height int64 `json:"height"`
 
 	Status AutorityStatus `json:"status"`
+
+	AuctionID auction.ID `json:"auctionID"`
 }
 
 // NameRecordEntry is a naming record entry for a WRN.

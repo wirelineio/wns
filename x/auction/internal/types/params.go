@@ -5,6 +5,8 @@
 package types
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
@@ -14,10 +16,10 @@ var _ params.ParamSet = (*Params)(nil)
 // Params defines the parameters for the auction module.
 type Params struct {
 	// Duration of commits phase in seconds.
-	CommitsDuration int64 `json:"commits_duration"`
+	CommitsDuration time.Duration `json:"commits_duration"`
 
 	// Duration of reveals phase in seconds.
-	RevealsDuration int64 `json:"reveals_duration"`
+	RevealsDuration time.Duration `json:"reveals_duration"`
 
 	// Commit and reveal fees.
 	CommitFee sdk.Coin `json:"commit_fee"`

@@ -23,6 +23,8 @@ var (
 	RegisterCodec     = types.RegisterCodec
 
 	RegisterInvariants = keeper.RegisterInvariants
+
+	NewMsgCreateAuction = types.NewMsgCreateAuction
 )
 
 type (
@@ -31,4 +33,5 @@ type (
 	Keeper              = keeper.Keeper
 	AuctionUsageKeeper  = types.AuctionUsageKeeper
 	AuctionClientKeeper = keeper.AuctionClientKeeper
+	Params              = types.Params
 )

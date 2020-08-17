@@ -33,6 +33,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/supply"
 
 	"github.com/wirelineio/wns/gql"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
 	ns "github.com/wirelineio/wns/x/nameservice"
 
@@ -65,6 +66,7 @@ var (
 
 		ns.AppModule{},
 		bond.AppModule{},
+		auction.AppModule{},
 	)
 
 	// Account permissions (https://github.com/cosmos/cosmos-sdk/blob/master/x/supply/spec/01_concepts.md).
@@ -77,6 +79,7 @@ var (
 		gov.ModuleName:                 {supply.Burner},
 		bond.ModuleName:                nil,
 		ns.RecordRentModuleAccountName: nil,
+		auction.ModuleName:             nil,
 	}
 )
 
@@ -113,6 +116,7 @@ type nameServiceApp struct {
 	recordKeeper   ns.RecordKeeper
 	bondKeeper     bond.Keeper
 	nsKeeper       ns.Keeper
+	auctionKeeper  auction.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -133,7 +137,7 @@ func NewNameServiceApp(
 
 	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, distr.StoreKey, slashing.StoreKey, mint.StoreKey, gov.StoreKey, params.StoreKey,
-		ns.StoreKey, bond.StoreKey)
+		ns.StoreKey, bond.StoreKey, auction.StoreKey)
 
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -159,6 +163,7 @@ func NewNameServiceApp(
 	crisisSubspace := app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 	nsSubspace := app.paramsKeeper.Subspace(ns.DefaultParamspace)
 	bondSubspace := app.paramsKeeper.Subspace(bond.DefaultParamspace)
+	auctionSubspace := app.paramsKeeper.Subspace(auction.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -258,11 +263,22 @@ func NewNameServiceApp(
 		bondSubspace,
 	)
 
+	app.auctionKeeper = auction.NewKeeper(
+		app.accountKeeper,
+		app.bankKeeper,
+		app.supplyKeeper,
+		[]auction.AuctionUsageKeeper{app.recordKeeper},
+		keys[auction.StoreKey],
+		app.cdc,
+		auctionSubspace,
+	)
+
 	app.nsKeeper = ns.NewKeeper(
 		app.accountKeeper,
 		app.supplyKeeper,
 		app.recordKeeper,
 		bond.BondClientKeeper(app.bondKeeper),
+		app.auctionKeeper,
 		keys[ns.StoreKey],
 		app.cdc,
 		nsSubspace,
@@ -275,6 +291,7 @@ func NewNameServiceApp(
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
 		bond.NewAppModule(app.bondKeeper),
+		auction.NewAppModule(app.auctionKeeper),
 		ns.NewAppModule(app.nsKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
@@ -300,6 +317,7 @@ func NewNameServiceApp(
 		mint.ModuleName,
 		gov.ModuleName,
 		bond.ModuleName,
+		auction.ModuleName,
 		ns.ModuleName,
 		supply.ModuleName,
 		crisis.ModuleName,
