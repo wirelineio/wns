@@ -75,7 +75,7 @@ type Auction struct {
 type Bid struct {
 	AuctionID     ID        `json:"auctionId,omitempty"`
 	BidderAddress string    `json:"bidderAddress,omitempty"`
-	Status        int8      `json:"status,omitempty"`
+	Status        string    `json:"status,omitempty"`
 	AuctionFee    sdk.Coin  `json:"auctionFee,omitempty"`
 	CommitHash    string    `json:"commitHash,omitempty"`
 	CommitTime    time.Time `json:"commitTime,omitempty"`

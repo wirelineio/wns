@@ -24,6 +24,9 @@ var prefixIDToAuctionIndex = []byte{0x00}
 // prefixOwnerToAuctionsIndex is the prefix for the Owner -> [Auction] index in the KVStore.
 var prefixOwnerToAuctionsIndex = []byte{0x01}
 
+// prefixAuctionBidsIndex is the prefix for the (auction, bidder) -> Bid index in the KVStore.
+var prefixAuctionBidsIndex = []byte{0x02}
+
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	accountKeeper auth.AccountKeeper
@@ -71,6 +74,10 @@ func getOwnerToAuctionsIndexKey(owner string, auctionID types.ID) []byte {
 	return append(append(prefixOwnerToAuctionsIndex, []byte(owner)...), []byte(auctionID)...)
 }
 
+func getBidIndexKey(auctionID types.ID, bidder string) []byte {
+	return append(append(prefixAuctionBidsIndex, []byte(auctionID)...), []byte(bidder)...)
+}
+
 // SaveAuction - saves a auction to the store.
 func (k Keeper) SaveAuction(ctx sdk.Context, auction types.Auction) {
 	store := ctx.KVStore(k.storeKey)
@@ -82,10 +89,20 @@ func (k Keeper) SaveAuction(ctx sdk.Context, auction types.Auction) {
 	store.Set(getOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID), []byte{})
 }
 
+func (k Keeper) SaveBid(ctx sdk.Context, bid types.Bid) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(getBidIndexKey(bid.AuctionID, bid.BidderAddress), k.cdc.MustMarshalBinaryBare(bid))
+}
+
 // HasAuction - checks if a auction by the given ID exists.
 func (k Keeper) HasAuction(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(getAuctionIndexKey(id))
+}
+
+func (k Keeper) HasBid(ctx sdk.Context, id types.ID, bidder string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(getBidIndexKey(id, bidder))
 }
 
 // DeleteAuction - deletes the auction.
@@ -101,6 +118,16 @@ func (k Keeper) GetAuction(ctx sdk.Context, id types.ID) types.Auction {
 
 	bz := store.Get(getAuctionIndexKey(id))
 	var obj types.Auction
+	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+
+	return obj
+}
+
+func (k Keeper) GetBid(ctx sdk.Context, id types.ID, bidder string) types.Bid {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(getBidIndexKey(id, bidder))
+	var obj types.Bid
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
 	return obj
@@ -187,13 +214,6 @@ func (k Keeper) CreateAuction(ctx sdk.Context, msg types.MsgCreateAuction) (*typ
 		Sequence: account.GetSequence(),
 	}.Generate()
 
-	// Take fees from account.
-	totalFee := msg.CommitFee.Add(msg.RevealFee)
-	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.Signer, types.ModuleName, sdk.NewCoins(totalFee))
-	if err != nil {
-		return nil, sdkErr
-	}
-
 	// Compute timestamps.
 	now := ctx.BlockTime()
 	commitsEndTime := now.Add(time.Duration(msg.CommitsDuration) * time.Second)
@@ -213,6 +233,54 @@ func (k Keeper) CreateAuction(ctx sdk.Context, msg types.MsgCreateAuction) (*typ
 
 	// Save auction in store.
 	k.SaveAuction(ctx, auction)
+
+	return &auction, nil
+}
+
+// CommitBid commits a bid for an auction.
+func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Auction, sdk.Error) {
+	if !k.HasAuction(ctx, msg.AuctionID) {
+		return nil, sdk.ErrInternal("Auction not found.")
+	}
+
+	auction := k.GetAuction(ctx, msg.AuctionID)
+	if auction.Status != types.AuctionStatusCommitPhase {
+		return nil, sdk.ErrInternal("Auction is not in commit phase.")
+	}
+
+	// Check if enough fees provided, and take auction fees.
+	totalFee := auction.CommitFee.Add(auction.RevealFee)
+	if msg.AuctionFee.IsLT(totalFee) {
+		return nil, sdk.ErrInternal("Auction fee is too low.")
+	}
+
+	// Take auction fees from account.
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.Signer, types.ModuleName, sdk.NewCoins(totalFee))
+	if sdkErr != nil {
+		return nil, sdkErr
+	}
+
+	// Check if an old bid already exists, if so, return old bids auction fee (update bid scenario).
+	bidder := msg.Signer.String()
+	if k.HasBid(ctx, msg.AuctionID, bidder) {
+		oldBid := k.GetBid(ctx, msg.AuctionID, bidder)
+		sdkErr := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, msg.Signer, sdk.NewCoins(oldBid.AuctionFee))
+		if sdkErr != nil {
+			return nil, sdkErr
+		}
+	}
+
+	// Save new bid.
+	bid := types.Bid{
+		AuctionID:     msg.AuctionID,
+		AuctionFee:    totalFee,
+		BidderAddress: bidder,
+		CommitHash:    msg.CommitHash,
+		Status:        types.BidStatusCommitted,
+		CommitTime:    ctx.BlockTime(),
+	}
+
+	k.SaveBid(ctx, bid)
 
 	return &auction, nil
 }
