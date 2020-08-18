@@ -132,7 +132,7 @@ func (msg MsgCommitBid) GetSigners() []sdk.AccAddress {
 // MsgRevealBid defines a reveal bid message.
 type MsgRevealBid struct {
 	AuctionID ID             `json:"auctionId,omitempty"`
-	Reveal    string         `json:"commit,omitempty"`
+	Reveal    string         `json:"reveal,omitempty"`
 	Signer    sdk.AccAddress `json:"signer"`
 }
 
@@ -163,7 +163,7 @@ func (msg MsgRevealBid) ValidateBasic() sdk.Error {
 	}
 
 	if msg.Reveal == "" {
-		return sdk.ErrInternal("Invalid commit hash.")
+		return sdk.ErrInternal("Invalid reveal data.")
 	}
 
 	return nil
