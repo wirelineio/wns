@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/99designs/gqlgen v0.8.1
 	github.com/cosmos/cosmos-sdk v0.37.0
+	github.com/cosmos/go-bip39 v0.0.0-20180618194314-52158e4697b8
 	github.com/deckarep/golang-set v1.7.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/gibson042/canonicaljson-go v1.0.3

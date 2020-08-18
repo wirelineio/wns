@@ -16,20 +16,20 @@ import (
 // Auction status values.
 const (
 	// Auction is in commit phase.
-	AuctionStatusCommitPhase = 0x1
+	AuctionStatusCommitPhase = "commit"
 
 	// Auction is in reveal phase.
-	AuctionStatusRevealPhase = 0x2
+	AuctionStatusRevealPhase = "reveal"
 
 	// Auction finished (i.e. winner selected).
-	AuctionStatusFinished = 0xf
+	AuctionStatusFinished = "finish"
 )
 
 // Bid status values.
 const (
-	BidStatusCommitted = 0x1
-	BidStatusRevealed  = 0x2
-	BidStatusExpired   = 0x3
+	BidStatusCommitted = "commit"
+	BidStatusRevealed  = "reveal"
+	BidStatusExpired   = "expired"
 )
 
 // ID for auctions.
@@ -37,11 +37,11 @@ type ID string
 
 // Auction is a 2nd price sealed-bid on-chain auction.
 type Auction struct {
-	ID     ID   `json:"id,omitempty"`
-	Status int8 `json:"status,omitempty"`
+	ID     ID     `json:"id,omitempty"`
+	Status string `json:"status,omitempty"`
 
 	// Creator of the auction.
-	OwnerAddress sdk.AccAddress `json:"ownerAddress,omitempty"`
+	OwnerAddress string `json:"ownerAddress,omitempty"`
 
 	// Auction create time.
 	CreateTime time.Time `json:"createTime,omitempty"`
@@ -61,27 +61,27 @@ type Auction struct {
 	MinimumBid sdk.Coin `json:"minimumBid,omitempty"`
 
 	// Winner address.
-	WinnerAddress sdk.Address `json:"winnerAddress,omitempty"`
+	WinnerAddress string `json:"winnerAddress,omitempty"`
 
 	// Winning bid, i.e. highest bid.
 	WinnerBid sdk.Coin `json:"winnerBid,omitempty"`
 
 	// Amount winner actually pays, i.e. 2nd highest bid.
 	// As it's a 2nd price auction.
-	WinnerPrice sdk.Address `json:"winnerPrice,omitempty"`
+	WinnerPrice string `json:"winnerPrice,omitempty"`
 }
 
 // Bid represents a sealed bid (commit) made during the auction.
 type Bid struct {
-	AuctionID     ID          `json:"auctionId,omitempty"`
-	BidderAddress sdk.Address `json:"bidderAddress,omitempty"`
-	Status        int8        `json:"status,omitempty"`
-	AuctionFee    sdk.Coin    `json:"auctionFee,omitempty"`
-	CommitHash    string      `json:"commitHash,omitempty"`
-	CommitTime    time.Time   `json:"commitTime,omitempty"`
-	Reveal        string      `json:"reveal,omitempty"`
-	RevealTime    time.Time   `json:"revealTime,omitempty"`
-	BidAmount     sdk.Coin    `json:"bidAmount,omitempty"`
+	AuctionID     ID        `json:"auctionId,omitempty"`
+	BidderAddress string    `json:"bidderAddress,omitempty"`
+	Status        int8      `json:"status,omitempty"`
+	AuctionFee    sdk.Coin  `json:"auctionFee,omitempty"`
+	CommitHash    string    `json:"commitHash,omitempty"`
+	CommitTime    time.Time `json:"commitTime,omitempty"`
+	Reveal        string    `json:"reveal,omitempty"`
+	RevealTime    time.Time `json:"revealTime,omitempty"`
+	BidAmount     sdk.Coin  `json:"bidAmount,omitempty"`
 }
 
 // AuctionID simplifies generation of auction IDs.

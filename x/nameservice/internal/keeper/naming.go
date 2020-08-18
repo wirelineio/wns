@@ -144,7 +144,7 @@ func (k Keeper) ProcessReserveSubAuthority(ctx sdk.Context, name string, msg typ
 	return name, nil
 }
 
-func (k Keeper) checkWRN(ctx sdk.Context, signer sdk.AccAddress, inputWRN string) sdk.Error {
+func (k Keeper) checkWRNAccess(ctx sdk.Context, signer sdk.AccAddress, inputWRN string) sdk.Error {
 	parsedWRN, err := url.Parse(inputWRN)
 	if err != nil {
 		return sdk.ErrInternal("Invalid WRN.")
@@ -166,12 +166,16 @@ func (k Keeper) checkWRN(ctx sdk.Context, signer sdk.AccAddress, inputWRN string
 		return sdk.ErrUnauthorized("Access denied.")
 	}
 
+	if authority.Status != types.AuthorityActive {
+		return sdk.ErrUnauthorized("Authority is not active.")
+	}
+
 	return nil
 }
 
 // ProcessSetName creates a WRN -> Record ID mapping.
 func (k Keeper) ProcessSetName(ctx sdk.Context, msg types.MsgSetName) sdk.Error {
-	err := k.checkWRN(ctx, msg.Signer, msg.WRN)
+	err := k.checkWRNAccess(ctx, msg.Signer, msg.WRN)
 	if err != nil {
 		return err
 	}
@@ -189,7 +193,7 @@ func (k Keeper) ProcessSetName(ctx sdk.Context, msg types.MsgSetName) sdk.Error 
 
 // ProcessDeleteName removes a WRN -> Record ID mapping.
 func (k Keeper) ProcessDeleteName(ctx sdk.Context, msg types.MsgDeleteName) sdk.Error {
-	err := k.checkWRN(ctx, msg.Signer, msg.WRN)
+	err := k.checkWRNAccess(ctx, msg.Signer, msg.WRN)
 	if err != nil {
 		return err
 	}
