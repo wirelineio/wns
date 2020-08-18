@@ -302,7 +302,7 @@ func NewNameServiceApp(
 	)
 
 	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName, mint.ModuleName)
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, ns.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, auction.ModuleName, ns.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	// NOTE: The genutils moodule must occur after staking so that pools are

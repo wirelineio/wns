@@ -300,3 +300,19 @@ func (k Keeper) GetAuctionModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 
 	return balances
 }
+
+func (k Keeper) EndBlockerProcessAuctions(ctx sdk.Context) {
+	// TODO(ashwin): Delete auctions/bids older than 100 blocks.
+
+	// Transition auction state from commit to reveal, reveal to finished.
+
+	// If auction has ended, pick a winner from revealed bids.
+	// Note: Lock funds during reveal, else mark bid as failed.
+
+	// For winner: Burn most of bid amount (above minimum bid), send reveal fee back to bidder if bid was revealed.
+	// For others: Send bid amount back to them, reveal fee only if bid was revealed.
+
+	// TODO(ashwin): Split module accounts into different ones, based on purpose.
+	// 1. Collected auction fees.
+	// 2. Locked bid amounts.
+}
