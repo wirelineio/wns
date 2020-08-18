@@ -1,0 +1,37 @@
+---
+title: Records
+description: WNS Records
+---
+
+TODO(burdon): Move canonical reference here.
+
+## Record Types
+
+- WNS is a decentralized database that contains typed record.
+- Each record has a type field which conforms to a defined set of Record Schema (defined as protocol buffers).
+    - ISSUE: Today we don't have type-specific protobuf definitions (just defacto key-value properties).
+    - ISSUE: Is this a flat namespace (e.g., 'service') or user extensible? (ANSWER: Today it's flat).
+    - ISSUE: Where are these protobufs defined (ANSWER: Today in WNS code; extensible only by WNS developers/governance).
+- There are a small subset of these types.
+    - TODO: List them in a table (service, bot, app, pad, kube, protocol, etc.)
+    - The purpose of the `type` is to designate platform-specific characteristics of components within the network.
+      (i.e., it is not arbitrarily extensible).
+
+The following sections describe the different platform record types.
+
+### Protocols
+
+- Protocol records contain protocol buffer type and service definitions and other meta data.
+- These describe data and service interfaces that determine how components within the network interoperate.
+
+### Services
+
+- The Service schema contains a `protocols` field that is an array of WRN references that reference Protocol records.
+  Example: The BotFactory service defines a service protocol for spawning bots.
+- Services records may also contain fields that define other aspects of the service
+  (E.g., identity, contracts, SLAs, etc.)
+- Service run within a KUBE container, which provides access to other network services and capabilities
+  (E.g., identity/crypto wallets).
+  NOTE: Services are roughly analogous to the Kubernetes concept of a (Pod)[https://kubernetes.io/docs/concepts/workloads/pods/].
+  A KUBE Node is a virtual machine that is equivalent to a Kubernetes (Node)[https://kubernetes.io/docs/concepts/architecture/nodes/].
+  Devices that support KUBE Nodes are also known as KUBEs; these devices may be physical (e.g., Pi, NUC) or virtual (e.g., KUBE machine).
