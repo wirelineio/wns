@@ -18,6 +18,7 @@ import (
 const (
 	ListAuctions    = "list"
 	GetAuction      = "get"
+	GetBid          = "get-bid"
 	QueryByOwner    = "query-by-owner"
 	QueryParameters = "parameters"
 	Balance         = "balance"
@@ -31,6 +32,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return listAuctions(ctx, path[1:], req, keeper)
 		case GetAuction:
 			return getAuction(ctx, path[1:], req, keeper)
+		case GetBid:
+			return getBid(ctx, path[1:], req, keeper)
 		case QueryByOwner:
 			return queryAuctionsByOwner(ctx, path[1:], req, keeper)
 		case QueryParameters:
@@ -66,6 +69,25 @@ func getAuction(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 	auction := keeper.GetAuction(ctx, id)
 
 	bz, err2 := json.MarshalIndent(auction, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func getBid(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	id := types.ID(path[0])
+	bidder := path[1]
+
+	if !keeper.HasBid(ctx, types.ID(id), bidder) {
+		return nil, sdk.ErrUnknownRequest("Bid not found.")
+	}
+
+	bid := keeper.GetBid(ctx, types.ID(id), bidder)
+
+	bz, err2 := json.MarshalIndent(bid, "", "  ")
 	if err2 != nil {
 		panic("Could not marshal result to JSON.")
 	}
