@@ -112,8 +112,8 @@ func GetCmdGetAuction(queryRoute string, cdc *codec.Codec) *cobra.Command {
 // GetCmdListByBidder queries auctions by bidder.
 func GetCmdListByBidder(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "query-by-bidder [address]",
-		Short: "Query auctions by bidder.",
+		Use:   "query-by-owner [address]",
+		Short: "Query auctions by owner/creator.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			viper.Set("trust-node", true)
@@ -121,7 +121,7 @@ func GetCmdListByBidder(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 			address := args[0]
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/query-by-bidder/%s", queryRoute, address), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/query-by-owner/%s", queryRoute, address), nil)
 			if err != nil {
 				return err
 			}
