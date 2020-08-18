@@ -5,6 +5,7 @@
 package cli
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 
@@ -34,6 +35,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	// TODO(ashwin): Add Tx commands.
 	auctionTxCmd.AddCommand(client.PostCommands(
 		GetCmdCommitBid(cdc),
+		GetCmdRevealBid(cdc),
 	)...)
 
 	return auctionTxCmd
@@ -82,9 +84,43 @@ func GetCmdCommitBid(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Save reveal file.
-			ioutil.WriteFile(fmt.Sprintf("%s.json", commitHash), []byte(content), 0600)
+			ioutil.WriteFile(fmt.Sprintf("%s.json", commitHash), content, 0600)
 
 			msg := types.NewMsgCommitBid(auctionID, commitHash, auctionFee, cliCtx.GetFromAddress())
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	return cmd
+}
+
+// GetCmdRevealBid is the CLI command for revealing a bid.
+func GetCmdRevealBid(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reveal-bid [auction-id] [reveal-file-path]",
+		Short: "Reveal bid.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			auctionID := args[0]
+			revealFilePath := args[1]
+
+			revealBytes, err := ioutil.ReadFile(revealFilePath)
+			if err != nil {
+				return err
+			}
+
+			// TODO(ashwin): Before revealing, check if auction is in reveal phase.
+
+			msg := types.NewMsgRevealBid(auctionID, hex.EncodeToString(revealBytes), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

@@ -13,16 +13,16 @@ import (
 )
 
 // GenerateHash returns the hash of the canonicalized JSON input.
-func GenerateHash(json map[string]interface{}) (string, string, error) {
+func GenerateHash(json map[string]interface{}) (string, []byte, error) {
 	content, err := canonicalJson.Marshal(json)
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 
 	cid, err := cbor.FromJSON(bytes.NewReader(content), mh.SHA2_256, -1)
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 
-	return cid.String(), string(content), nil
+	return cid.String(), content, nil
 }
