@@ -67,7 +67,7 @@ func getAuctionIndexKey(id types.ID) []byte {
 }
 
 // Generates Owner -> Auctions index key.
-func getOwnerToAuctionsIndexKey(owner sdk.AccAddress, auctionID types.ID) []byte {
+func getOwnerToAuctionsIndexKey(owner string, auctionID types.ID) []byte {
 	return append(append(prefixOwnerToAuctionsIndex, []byte(owner)...), []byte(auctionID)...)
 }
 
@@ -202,7 +202,7 @@ func (k Keeper) CreateAuction(ctx sdk.Context, msg types.MsgCreateAuction) (*typ
 	auction := types.Auction{
 		ID:             types.ID(auctionID),
 		Status:         types.AuctionStatusCommitPhase,
-		OwnerAddress:   msg.Signer,
+		OwnerAddress:   msg.Signer.String(),
 		CreateTime:     now,
 		CommitsEndTime: commitsEndTime,
 		RevealsEndTime: revealsEndTime,

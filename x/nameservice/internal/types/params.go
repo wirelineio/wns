@@ -19,7 +19,7 @@ const (
 	// DefaultRecordExpiryTime is the default record expiry time (1 year).
 	DefaultRecordExpiryTime time.Duration = time.Hour * 24 * 365
 
-	DefaultNameAuctionsEnabled               = false
+	DefaultNameAuctionsEnabled               = true
 	DefaultCommitsDuration     time.Duration = time.Hour * 24
 	DefaultRevealsDuration     time.Duration = time.Hour * 24
 	DefaultCommitFee           string        = "1000000uwire"

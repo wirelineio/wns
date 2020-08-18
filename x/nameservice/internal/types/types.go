@@ -15,12 +15,12 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 )
 
-type AutorityStatus int8
+type AutorityStatus string
 
 const (
-	AuthorityActive       AutorityStatus = 1
-	AuthorityExpired      AutorityStatus = 2
-	AuthorityUnderAuction AutorityStatus = 3
+	AuthorityActive       AutorityStatus = "active"
+	AuthorityExpired      AutorityStatus = "expired"
+	AuthorityUnderAuction AutorityStatus = "auction"
 )
 
 // ID for records.
