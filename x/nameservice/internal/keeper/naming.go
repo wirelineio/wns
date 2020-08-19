@@ -10,10 +10,229 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
+
+func GetCIDToNamesIndexKey(id types.ID) []byte {
+	return append(PrefixCIDToNamesIndex, []byte(id)...)
+}
+
+// Generates name -> NameAuthority index key.
+func GetNameAuthorityIndexKey(name string) []byte {
+	return append(PrefixNameAuthorityRecordIndex, []byte(name)...)
+}
+
+// Generates WRN -> NameRecord index key.
+func GetNameRecordIndexKey(wrn string) []byte {
+	return append(PrefixWRNToNameRecordIndex, []byte(wrn)...)
+}
+
+// HasNameAuthority - checks if a name/authority exists.
+func (k Keeper) HasNameAuthority(ctx sdk.Context, name string) bool {
+	return HasNameAuthority(ctx.KVStore(k.storeKey), name)
+}
+
+// HasNameAuthority - checks if a name authority entry exists.
+func HasNameAuthority(store sdk.KVStore, name string) bool {
+	return store.Has(GetNameAuthorityIndexKey(name))
+}
+
+// SetNameAuthority creates the NameAutority record.
+func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, authority types.NameAuthority) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(authority))
+	k.updateBlockChangesetForNameAuthority(ctx, name)
+}
+
+// GetNameAuthority - gets a name authority from the store.
+func GetNameAuthority(store sdk.KVStore, codec *amino.Codec, name string) *types.NameAuthority {
+	authorityKey := GetNameAuthorityIndexKey(name)
+	if !store.Has(authorityKey) {
+		return nil
+	}
+
+	bz := store.Get(authorityKey)
+	var obj types.NameAuthority
+	codec.MustUnmarshalBinaryBare(bz, &obj)
+
+	return &obj
+}
+
+// GetNameAuthority - gets a name authority from the store.
+func (k Keeper) GetNameAuthority(ctx sdk.Context, name string) *types.NameAuthority {
+	return GetNameAuthority(ctx.KVStore(k.storeKey), k.cdc, name)
+}
+
+// AddRecordToNameMapping adds a name to the record ID -> []names index.
+func AddRecordToNameMapping(store sdk.KVStore, codec *amino.Codec, id types.ID, wrn string) {
+	reverseNameIndexKey := GetCIDToNamesIndexKey(id)
+
+	var names []string
+	if store.Has(reverseNameIndexKey) {
+		codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+	}
+
+	nameSet := sliceToSet(names)
+	nameSet.Add(wrn)
+	store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(setToSlice(nameSet)))
+}
+
+// RemoveRecordToNameMapping removes a name from the record ID -> []names index.
+func RemoveRecordToNameMapping(store sdk.KVStore, codec *amino.Codec, id types.ID, wrn string) {
+	reverseNameIndexKey := GetCIDToNamesIndexKey(id)
+
+	var names []string
+	codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
+	nameSet := sliceToSet(names)
+	nameSet.Remove(wrn)
+
+	if nameSet.Cardinality() == 0 {
+		// Delete as storing empty slice throws error from baseapp.
+		store.Delete(reverseNameIndexKey)
+	} else {
+		store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(setToSlice(nameSet)))
+	}
+}
+
+// SetNameRecord - sets a name record.
+func SetNameRecord(store sdk.KVStore, codec *amino.Codec, wrn string, id types.ID, height int64) {
+	nameRecordIndexKey := GetNameRecordIndexKey(wrn)
+
+	var nameRecord types.NameRecord
+	if store.Has(nameRecordIndexKey) {
+		bz := store.Get(nameRecordIndexKey)
+		codec.MustUnmarshalBinaryBare(bz, &nameRecord)
+		nameRecord.History = append(nameRecord.History, nameRecord.NameRecordEntry)
+
+		// Update old CID -> []Name index.
+		if nameRecord.NameRecordEntry.ID != "" {
+			RemoveRecordToNameMapping(store, codec, nameRecord.NameRecordEntry.ID, wrn)
+		}
+	}
+
+	nameRecord.NameRecordEntry = types.NameRecordEntry{
+		ID:     id,
+		Height: height,
+	}
+
+	store.Set(nameRecordIndexKey, codec.MustMarshalBinaryBare(nameRecord))
+
+	// Update new CID -> []Name index.
+	if id != "" {
+		AddRecordToNameMapping(store, codec, id, wrn)
+	}
+}
+
+// SetNameRecord - sets a name record.
+func (k Keeper) SetNameRecord(ctx sdk.Context, wrn string, id types.ID) {
+	SetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn, id, ctx.BlockHeight())
+
+	// Update changeset for name.
+	k.updateBlockChangesetForName(ctx, wrn)
+}
+
+// HasNameRecord - checks if a name record exists.
+func (k Keeper) HasNameRecord(ctx sdk.Context, wrn string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(GetNameRecordIndexKey(wrn))
+}
+
+// GetNameRecord - gets a name record from the store.
+func GetNameRecord(store sdk.KVStore, codec *amino.Codec, wrn string) *types.NameRecord {
+	nameRecordKey := GetNameRecordIndexKey(wrn)
+	if !store.Has(nameRecordKey) {
+		return nil
+	}
+
+	bz := store.Get(nameRecordKey)
+	var obj types.NameRecord
+	codec.MustUnmarshalBinaryBare(bz, &obj)
+
+	return &obj
+}
+
+// GetNameRecord - gets a name record from the store.
+func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) *types.NameRecord {
+	return GetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn)
+}
+
+// ListNameAuthorityRecords - get all name authority records.
+func (k Keeper) ListNameAuthorityRecords(ctx sdk.Context) map[string]types.NameAuthority {
+	nameAuthorityRecords := make(map[string]types.NameAuthority)
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, PrefixNameAuthorityRecordIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var record types.NameAuthority
+			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+			nameAuthorityRecords[string(itr.Key()[len(PrefixNameAuthorityRecordIndex):])] = record
+		}
+	}
+
+	return nameAuthorityRecords
+}
+
+// ListNameRecords - get all name records.
+func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
+	nameRecords := make(map[string]types.NameRecord)
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, PrefixWRNToNameRecordIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var record types.NameRecord
+			k.cdc.MustUnmarshalBinaryBare(bz, &record)
+			nameRecords[string(itr.Key()[len(PrefixWRNToNameRecordIndex):])] = record
+		}
+	}
+
+	return nameRecords
+}
+
+// ResolveWRN resolves a WRN to a record.
+func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
+	return ResolveWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
+}
+
+// ResolveWRN resolves a WRN to a record.
+func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
+	nameKey := GetNameRecordIndexKey(wrn)
+
+	if store.Has(nameKey) {
+		bz := store.Get(nameKey)
+		var obj types.NameRecord
+		codec.MustUnmarshalBinaryBare(bz, &obj)
+
+		recordExists := HasRecord(store, obj.ID)
+		if !recordExists || obj.ID == "" {
+			return nil
+		}
+
+		record := GetRecord(store, codec, obj.ID)
+		return &record
+	}
+
+	return nil
+}
+
+// UsesAuction returns true if the auction is used for an name authority.
+func (k RecordKeeper) UsesAuction(ctx sdk.Context, auctionID auction.ID) bool {
+	// TODO(ashwin): Implement auction ID -> NameAuthority index.
+	return false
+}
+
+// NotifyAuction is called on auction state change.
+func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
+	// TODO(ashwin): Update authority status based on auction status/winner.
+}
 
 // ProcessReserveAuthority reserves a name authority.
 func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAuthority) (string, sdk.Error) {
