@@ -16,6 +16,9 @@ import (
 	"github.com/wirelineio/wns/x/auction/internal/types"
 )
 
+// CompletedAuctionDeleteTimeout => Completed auctions are deleted after this timeout (after reveals end time).
+const CompletedAuctionDeleteTimeout time.Duration = time.Hour * 24
+
 // prefixIDToAuctionIndex is the prefix for ID -> Auction index in the KVStore.
 // Note: This is the primary index in the system.
 // Note: Golang doesn't support const arrays.
@@ -75,7 +78,11 @@ func getOwnerToAuctionsIndexKey(owner string, auctionID types.ID) []byte {
 }
 
 func getBidIndexKey(auctionID types.ID, bidder string) []byte {
-	return append(append(prefixAuctionBidsIndex, []byte(auctionID)...), []byte(bidder)...)
+	return append(getAuctionBidsIndexPrefix(auctionID), []byte(bidder)...)
+}
+
+func getAuctionBidsIndexPrefix(auctionID types.ID) []byte {
+	return append(append(prefixAuctionBidsIndex, []byte(auctionID)...))
 }
 
 // SaveAuction - saves a auction to the store.
@@ -288,7 +295,7 @@ func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Aucti
 // GetAuctionModuleBalances gets the auction module account(s) balances.
 func (k Keeper) GetAuctionModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 	balances := map[string]sdk.Coins{}
-	accountNames := []string{types.ModuleName}
+	accountNames := []string{types.ModuleName, types.AuctionBurnModuleAccountName}
 
 	for _, accountName := range accountNames {
 		moduleAddress := k.supplyKeeper.GetModuleAddress(accountName)
@@ -302,17 +309,143 @@ func (k Keeper) GetAuctionModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 }
 
 func (k Keeper) EndBlockerProcessAuctions(ctx sdk.Context) {
-	// TODO(ashwin): Delete auctions/bids older than 100 blocks.
+	// Transition auction state (commit, reveal, expired, completed).
+	k.processAuctionPhases(ctx)
 
-	// Transition auction state from commit to reveal, reveal to finished.
+	// Delete stale auctions.
+	k.deleteCompletedAuctions(ctx)
+}
 
-	// If auction has ended, pick a winner from revealed bids.
+func (k Keeper) processAuctionPhases(ctx sdk.Context) {
+	auctions := k.MatchAuctions(ctx, func(_ *types.Auction) bool {
+		return true
+	})
+
+	for _, auction := range auctions {
+		// Commit -> Reveal state.
+		if auction.Status == types.AuctionStatusCommitPhase && ctx.BlockTime().After(auction.CommitsEndTime) {
+			auction.Status = types.AuctionStatusRevealPhase
+		}
+
+		// Reveal -> Expired state.
+		if auction.Status == types.AuctionStatusRevealPhase && ctx.BlockTime().After(auction.RevealsEndTime) {
+			auction.Status = types.AuctionStatusExpired
+		}
+
+		k.SaveAuction(ctx, *auction)
+
+		// If auction has expired, pick a winner from revealed bids.
+		if auction.Status == types.AuctionStatusExpired {
+			k.pickAuctionWinner(ctx, auction)
+		}
+	}
+}
+
+// Delete completed stale auctions.
+func (k Keeper) deleteCompletedAuctions(ctx sdk.Context) {
+	auctions := k.MatchAuctions(ctx, func(auction *types.Auction) bool {
+		return auction.Status == types.AuctionStatusCompleted
+	})
+
+	for _, auction := range auctions {
+		auctionDeleteTime := auction.RevealsEndTime.Add(CompletedAuctionDeleteTimeout)
+		if auction.Status == types.AuctionStatusCompleted && ctx.BlockTime().After(auctionDeleteTime) {
+			// TODO(ashwin): Delete auction and bids.
+		}
+	}
+}
+
+// GetBids gets the auction bids.
+func (k Keeper) GetBids(ctx sdk.Context, id types.ID) []*types.Bid {
+	var bids []*types.Bid
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, getAuctionBidsIndexPrefix(id))
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.Bid
+			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+			bids = append(bids, &obj)
+		}
+	}
+
+	return bids
+}
+
+func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
+	// Pick a winner from revealed bids.
 	// Note: Lock funds during reveal, else mark bid as failed.
 
-	// For winner: Burn most of bid amount (above minimum bid), send reveal fee back to bidder if bid was revealed.
-	// For others: Send bid amount back to them, reveal fee only if bid was revealed.
+	var highestBid *types.Bid
+	var secondHighestBid *types.Bid
 
-	// TODO(ashwin): Split module accounts into different ones, based on purpose.
-	// 1. Collected auction fees.
-	// 2. Locked bid amounts.
+	bids := k.GetBids(ctx, auction.ID)
+	for _, bid := range bids {
+		// Only consider revealed bids.
+		if bid.Status != types.BidStatusRevealed {
+			continue
+		}
+
+		// Init first and second highest bids.
+		if highestBid == nil {
+			highestBid = bid
+			secondHighestBid = bid
+
+			continue
+		}
+
+		if highestBid.BidAmount.IsLT(bid.BidAmount) {
+			secondHighestBid = highestBid
+			highestBid = bid
+		} else if secondHighestBid.BidAmount.IsLT(bid.BidAmount) {
+			secondHighestBid = bid
+		}
+	}
+
+	// Highest bid is the winner, but pays second highest bid price.
+	auction.Status = types.AuctionStatusCompleted
+
+	if highestBid != nil {
+		auction.WinnerAddress = highestBid.BidderAddress
+		auction.WinnerBid = highestBid.BidAmount
+		auction.WinnerPrice = secondHighestBid.BidAmount
+	}
+
+	k.SaveAuction(ctx, *auction)
+
+	for _, bid := range bids {
+		bidderAddress, err := sdk.AccAddressFromBech32(bid.BidderAddress)
+		if err != nil {
+			panic("Invalid bidder address.")
+		}
+
+		if bid.Status == types.BidStatusRevealed {
+			// Send reveal fee back to bidders that've revealed the bid.
+			k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(auction.RevealFee))
+		}
+
+		// Send back locked bid amount to all bidders.
+		k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(auction.RevealFee))
+	}
+
+	if auction.WinnerAddress != "" {
+		winnerAddress, err := sdk.AccAddressFromBech32(auction.WinnerAddress)
+		if err != nil {
+			panic("Invalid winner address.")
+		}
+
+		// Take 2nd price from winner.
+		k.supplyKeeper.SendCoinsFromAccountToModule(ctx, winnerAddress, types.ModuleName, sdk.NewCoins(auction.WinnerPrice))
+
+		// Burn anything over the min. bid amount.
+		amountToBurn := auction.WinnerPrice.Sub(auction.MinimumBid)
+		if amountToBurn.IsNegative() {
+			panic("Auction coins to burn cannot be negative.")
+		}
+
+		// Use auction burn module account instead of actually burning coins to better keep track of supply.
+		k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.AuctionBurnModuleAccountName, sdk.NewCoins(amountToBurn))
+	}
 }

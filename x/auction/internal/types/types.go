@@ -21,15 +21,17 @@ const (
 	// Auction is in reveal phase.
 	AuctionStatusRevealPhase = "reveal"
 
-	// Auction finished (i.e. winner selected).
-	AuctionStatusFinished = "finish"
+	// Auction has ended (no reveals allowed).
+	AuctionStatusExpired = "expired"
+
+	// Auction has completed (winner selected).
+	AuctionStatusCompleted = "completed"
 )
 
 // Bid status values.
 const (
 	BidStatusCommitted = "commit"
 	BidStatusRevealed  = "reveal"
-	BidStatusExpired   = "expired"
 )
 
 // ID for auctions.
@@ -68,7 +70,7 @@ type Auction struct {
 
 	// Amount winner actually pays, i.e. 2nd highest bid.
 	// As it's a 2nd price auction.
-	WinnerPrice string `json:"winnerPrice,omitempty"`
+	WinnerPrice sdk.Coin `json:"winnerPrice,omitempty"`
 }
 
 // Bid represents a sealed bid (commit) made during the auction.
