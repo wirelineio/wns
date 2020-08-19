@@ -11,6 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/go-amino"
+	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
@@ -75,9 +76,9 @@ func AddRecordToNameMapping(store sdk.KVStore, codec *amino.Codec, id types.ID, 
 		codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
 	}
 
-	nameSet := sliceToSet(names)
+	nameSet := wnsUtils.SliceToSet(names)
 	nameSet.Add(wrn)
-	store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(setToSlice(nameSet)))
+	store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(wnsUtils.SetToSlice(nameSet)))
 }
 
 // RemoveRecordToNameMapping removes a name from the record ID -> []names index.
@@ -86,14 +87,14 @@ func RemoveRecordToNameMapping(store sdk.KVStore, codec *amino.Codec, id types.I
 
 	var names []string
 	codec.MustUnmarshalBinaryBare(store.Get(reverseNameIndexKey), &names)
-	nameSet := sliceToSet(names)
+	nameSet := wnsUtils.SliceToSet(names)
 	nameSet.Remove(wrn)
 
 	if nameSet.Cardinality() == 0 {
 		// Delete as storing empty slice throws error from baseapp.
 		store.Delete(reverseNameIndexKey)
 	} else {
-		store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(setToSlice(nameSet)))
+		store.Set(reverseNameIndexKey, codec.MustMarshalBinaryBare(wnsUtils.SetToSlice(nameSet)))
 	}
 }
 
