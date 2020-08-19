@@ -6,11 +6,12 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
 func GetBlockChangesetIndexKey(height int64) []byte {
-	return append(PrefixBlockChangesetIndex, int64ToBytes(height)...)
+	return append(PrefixBlockChangesetIndex, wnsUtils.Int64ToBytes(height)...)
 }
 
 func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.BlockChangeset {

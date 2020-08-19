@@ -6,7 +6,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/binary"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-	set "github.com/deckarep/golang-set"
 	"github.com/tendermint/go-amino"
 	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
@@ -387,34 +385,4 @@ func (k Keeper) GetModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 	}
 
 	return balances
-}
-
-func int64ToBytes(num int64) []byte {
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, num)
-	return buf.Bytes()
-}
-
-func setToSlice(set set.Set) []string {
-	names := []string{}
-
-	for name := range set.Iter() {
-		if name, ok := name.(string); ok && name != "" {
-			names = append(names, name)
-		}
-	}
-
-	return names
-}
-
-func sliceToSet(names []string) set.Set {
-	set := set.NewThreadUnsafeSet()
-
-	for _, name := range names {
-		if name != "" {
-			set.Add(name)
-		}
-	}
-
-	return set
 }
