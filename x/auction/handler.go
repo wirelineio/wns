@@ -20,6 +20,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgCreateAuction(ctx, keeper, msg)
 		case types.MsgCommitBid:
 			return handleMsgCommitBid(ctx, keeper, msg)
+		case types.MsgRevealBid:
+			return handleMsgRevealBid(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized auction Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -43,6 +45,19 @@ func handleMsgCreateAuction(ctx sdk.Context, keeper Keeper, msg types.MsgCreateA
 // Handle MsgCommitBid.
 func handleMsgCommitBid(ctx sdk.Context, keeper Keeper, msg types.MsgCommitBid) sdk.Result {
 	auction, err := keeper.CommitBid(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{
+		Data:   []byte(auction.ID),
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgRevealBid.
+func handleMsgRevealBid(ctx sdk.Context, keeper Keeper, msg types.MsgRevealBid) sdk.Result {
+	auction, err := keeper.RevealBid(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}

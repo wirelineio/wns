@@ -5,6 +5,8 @@
 package keeper
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/auction/internal/types"
 )
 
@@ -292,6 +295,86 @@ func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Aucti
 	return &auction, nil
 }
 
+// RevealBid reeals a bid comitted earlier.
+func (k Keeper) RevealBid(ctx sdk.Context, msg types.MsgRevealBid) (*types.Auction, sdk.Error) {
+	if !k.HasAuction(ctx, msg.AuctionID) {
+		return nil, sdk.ErrInternal("Auction not found.")
+	}
+
+	auction := k.GetAuction(ctx, msg.AuctionID)
+	if auction.Status != types.AuctionStatusRevealPhase {
+		return nil, sdk.ErrInternal("Auction is not in reveal phase.")
+	}
+
+	if !k.HasBid(ctx, msg.AuctionID, msg.Signer.String()) {
+		return nil, sdk.ErrInternal("Bid not found.")
+	}
+
+	bid := k.GetBid(ctx, auction.ID, msg.Signer.String())
+	if bid.Status != types.BidStatusCommitted {
+		return nil, sdk.ErrInternal("Bid not in committed state.")
+	}
+
+	revealBytes, err := hex.DecodeString(msg.Reveal)
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid reveal string.")
+	}
+
+	cid, err := wnsUtils.CIDFromJSONBytes(revealBytes)
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid reveal JSON.")
+	}
+
+	if bid.CommitHash != cid {
+		return nil, sdk.ErrInternal("Commit hash mismatch.")
+	}
+
+	var reveal map[string]interface{}
+	err = json.Unmarshal(revealBytes, &reveal)
+	if err != nil {
+		return nil, sdk.ErrInternal("Reveal JSON unmarshal error.")
+	}
+
+	chainID, err := wnsUtils.GetAttributeAsString(reveal, "chainId")
+	if err != nil || chainID != ctx.ChainID() {
+		return nil, sdk.ErrInternal("Invalid reveal chainID.")
+	}
+
+	auctionID, err := wnsUtils.GetAttributeAsString(reveal, "auctionId")
+	if err != nil || types.ID(auctionID) != msg.AuctionID {
+		return nil, sdk.ErrInternal("Invalid reveal auction ID.")
+	}
+
+	bidAmountStr, err := wnsUtils.GetAttributeAsString(reveal, "bidAmount")
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid reveal bid amount.")
+	}
+
+	bidAmount, err := sdk.ParseCoin(bidAmountStr)
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid reveal bid amount.")
+	}
+
+	if bidAmount.IsLT(auction.MinimumBid) {
+		return nil, sdk.ErrInternal("Bid is lower than minimum bid.")
+	}
+
+	// Lock bid amount.
+	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.Signer, types.ModuleName, sdk.NewCoins(bidAmount))
+	if sdkErr != nil {
+		return nil, sdkErr
+	}
+
+	// Update bid.
+	bid.BidAmount = bidAmount
+	bid.Reveal = msg.Reveal
+	bid.RevealTime = ctx.BlockTime()
+	bid.Status = types.BidStatusRevealed
+	k.SaveBid(ctx, bid)
+
+	return &auction, nil
+}
+
 // GetAuctionModuleBalances gets the auction module account(s) balances.
 func (k Keeper) GetAuctionModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 	balances := map[string]sdk.Coins{}
@@ -430,6 +513,7 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(auction.RevealFee))
 	}
 
+	// Process winner account (if nobody bids, there won't be a winner).
 	if auction.WinnerAddress != "" {
 		winnerAddress, err := sdk.AccAddressFromBech32(auction.WinnerAddress)
 		if err != nil {
