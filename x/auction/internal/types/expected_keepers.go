@@ -13,4 +13,5 @@ import (
 type AuctionUsageKeeper interface {
 	ModuleName() string
 	UsesAuction(ctx sdk.Context, auctionID ID) bool
+	NotifyAuction(ctx sdk.Context, auctionID ID)
 }

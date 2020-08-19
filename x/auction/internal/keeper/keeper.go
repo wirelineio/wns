@@ -532,4 +532,9 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		// Use auction burn module account instead of actually burning coins to better keep track of supply.
 		k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.AuctionBurnModuleAccountName, sdk.NewCoins(amountToBurn))
 	}
+
+	// Notify other modules (hook).
+	for _, keeper := range k.usageKeepers {
+		keeper.NotifyAuction(ctx, auction.ID)
+	}
 }
