@@ -248,7 +248,18 @@ func NewNameServiceApp(
 
 	app.crisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName)
 
+	app.auctionKeeper = auction.NewKeeper(
+		app.accountKeeper,
+		app.bankKeeper,
+		app.supplyKeeper,
+		[]auction.AuctionUsageKeeper{app.recordKeeper},
+		keys[auction.StoreKey],
+		app.cdc,
+		auctionSubspace,
+	)
+
 	app.recordKeeper = ns.NewRecordKeeper(
+		app.auctionKeeper,
 		keys[ns.StoreKey],
 		app.cdc,
 	)
@@ -261,16 +272,6 @@ func NewNameServiceApp(
 		keys[bond.StoreKey],
 		app.cdc,
 		bondSubspace,
-	)
-
-	app.auctionKeeper = auction.NewKeeper(
-		app.accountKeeper,
-		app.bankKeeper,
-		app.supplyKeeper,
-		[]auction.AuctionUsageKeeper{app.recordKeeper},
-		keys[auction.StoreKey],
-		app.cdc,
-		auctionSubspace,
 	)
 
 	app.nsKeeper = ns.NewKeeper(

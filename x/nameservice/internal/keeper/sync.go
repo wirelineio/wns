@@ -6,6 +6,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/go-amino"
 	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
@@ -14,13 +15,13 @@ func GetBlockChangesetIndexKey(height int64) []byte {
 	return append(PrefixBlockChangesetIndex, wnsUtils.Int64ToBytes(height)...)
 }
 
-func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.BlockChangeset {
-	store := ctx.KVStore(k.storeKey)
+func getOrCreateBlockChangeset(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, height int64) *types.BlockChangeset {
+
 	bz := store.Get(GetBlockChangesetIndexKey(height))
 
 	if bz != nil {
 		var changeset types.BlockChangeset
-		k.cdc.MustUnmarshalBinaryBare(bz, &changeset)
+		codec.MustUnmarshalBinaryBare(bz, &changeset)
 
 		return &changeset
 	}
@@ -32,10 +33,17 @@ func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.
 	}
 }
 
-func (k Keeper) saveBlockChangeset(ctx sdk.Context, changeset *types.BlockChangeset) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinaryBare(*changeset)
+func (k Keeper) getOrCreateBlockChangeset(ctx sdk.Context, height int64) *types.BlockChangeset {
+	return getOrCreateBlockChangeset(ctx, ctx.KVStore(k.storeKey), k.cdc, height)
+}
+
+func saveBlockChangeset(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, changeset *types.BlockChangeset) {
+	bz := codec.MustMarshalBinaryBare(*changeset)
 	store.Set(GetBlockChangesetIndexKey(changeset.Height), bz)
+}
+
+func (k Keeper) saveBlockChangeset(ctx sdk.Context, changeset *types.BlockChangeset) {
+	saveBlockChangeset(ctx, ctx.KVStore(k.storeKey), k.cdc, changeset)
 }
 
 func (k Keeper) updateBlockChangesetForRecord(ctx sdk.Context, id types.ID) {
@@ -54,4 +62,10 @@ func (k Keeper) updateBlockChangesetForNameAuthority(ctx sdk.Context, name strin
 	changeset := k.getOrCreateBlockChangeset(ctx, ctx.BlockHeight())
 	changeset.NameAuthorities = append(changeset.NameAuthorities, name)
 	k.saveBlockChangeset(ctx, changeset)
+}
+
+func updateBlockChangesetForNameAuthority(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, name string) {
+	changeset := getOrCreateBlockChangeset(ctx, store, codec, ctx.BlockHeight())
+	changeset.NameAuthorities = append(changeset.NameAuthorities, name)
+	saveBlockChangeset(ctx, store, codec, changeset)
 }
