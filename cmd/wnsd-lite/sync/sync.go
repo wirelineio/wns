@@ -203,19 +203,27 @@ func (rpc *RPCNodeHandler) syncNameRecords(ctx *Context, height int64, names []s
 		if nameRecord.ID != "" {
 			// Set name.
 			ns.AddRecordToNameMapping(ctx.cache, ctx.codec, nameRecord.ID, name)
+
+			// Same name might have pointed to another record earlier, should be in history.
+			// Delete that mapping.
+			removeOldNameMapping(ctx, name, nameRecord)
 		} else {
 			// Delete name. ID of old record should be in history.
-			historyCount := len(nameRecord.History)
-			if historyCount > 0 {
-				oldNameEntry := nameRecord.History[historyCount-1]
-				if oldNameEntry.ID != "" {
-					ns.RemoveRecordToNameMapping(ctx.cache, ctx.codec, oldNameEntry.ID, name)
-				}
-			}
+			removeOldNameMapping(ctx, name, nameRecord)
 		}
 	}
 
 	return nil
+}
+
+func removeOldNameMapping(ctx *Context, name string, nameRecord *ns.NameRecord) {
+	historyCount := len(nameRecord.History)
+	if historyCount > 0 {
+		oldNameEntry := nameRecord.History[historyCount-1]
+		if oldNameEntry.ID != "" {
+			ns.RemoveRecordToNameMapping(ctx.cache, ctx.codec, oldNameEntry.ID, name)
+		}
+	}
 }
 
 func waitAfterSync(chainCurrentHeight int64, lastSyncedHeight int64) {
