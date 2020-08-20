@@ -255,17 +255,23 @@ func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
 	authority := GetNameAuthority(store, k.cdc, name)
 	auctionObj := k.auctionKeeper.GetAuction(ctx, auctionID)
 
-	if auctionObj.Status == auction.AuctionStatusCompleted && auctionObj.WinnerAddress != "" {
+	if auctionObj.Status == auction.AuctionStatusCompleted {
 		store := ctx.KVStore(k.storeKey)
 
-		// Forget about this auction now, we don't need it.
-		removeAuctionToAuthorityMapping(store, auctionID)
+		if auctionObj.WinnerAddress != "" {
+			// Mark authority owner and change status to active.
+			authority.OwnerAddress = auctionObj.WinnerAddress
+			authority.Status = types.AuthorityActive
+		} else {
+			// Mark as expired.
+			authority.Status = types.AuthorityExpired
+		}
 
-		// Mark authority owner and change status to active.
-		authority.OwnerAddress = auctionObj.WinnerAddress
-		authority.Status = types.AuthorityActive
 		authority.AuctionID = ""
 		SetNameAuthority(ctx, store, k.cdc, name, *authority)
+
+		// Forget about this auction now, we no longer need it.
+		removeAuctionToAuthorityMapping(store, auctionID)
 	}
 }
 
