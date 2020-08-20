@@ -36,8 +36,8 @@ var PrefixBondIDToRecordsIndex = []byte{0x03}
 // PrefixBlockChangesetIndex is the prefix for the block changeset index.
 var PrefixBlockChangesetIndex = []byte{0x04}
 
-// PrefixAuctionToAuthorityRecordIndex is the prefix for the auction ID -> NameAuthority index.
-var PrefixAuctionToAuthorityRecordIndex = []byte{0x05}
+// PrefixAuctionToAuthorityNameIndex is the prefix for the auction ID -> authority name index.
+var PrefixAuctionToAuthorityNameIndex = []byte{0x05}
 
 // PrefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
 var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
@@ -81,8 +81,9 @@ func NewKeeper(accountKeeper auth.AccountKeeper, supplyKeeper supply.Keeper, rec
 
 // RecordKeeper exposes the bare minimal read-only API for other modules.
 type RecordKeeper struct {
-	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
-	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
+	auctionKeeper auction.Keeper
+	storeKey      sdk.StoreKey // Unexposed key to access store from sdk.Context
+	cdc           *codec.Codec // The wire codec for binary encoding/decoding.
 }
 
 // Record keeper implements the bond usage keeper interface.
@@ -90,10 +91,11 @@ var _ bond.BondUsageKeeper = (*RecordKeeper)(nil)
 var _ auction.AuctionUsageKeeper = (*RecordKeeper)(nil)
 
 // NewRecordKeeper creates new instances of the nameservice RecordKeeper
-func NewRecordKeeper(storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
+func NewRecordKeeper(auctionKeeper auction.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) RecordKeeper {
 	return RecordKeeper{
-		storeKey: storeKey,
-		cdc:      cdc,
+		auctionKeeper: auctionKeeper,
+		storeKey:      storeKey,
+		cdc:           cdc,
 	}
 }
 

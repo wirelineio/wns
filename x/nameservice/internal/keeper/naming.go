@@ -11,6 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto"
 	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
@@ -24,6 +25,10 @@ func GetCIDToNamesIndexKey(id types.ID) []byte {
 // Generates name -> NameAuthority index key.
 func GetNameAuthorityIndexKey(name string) []byte {
 	return append(PrefixNameAuthorityRecordIndex, []byte(name)...)
+}
+
+func GetAuctionToAuthorityIndexKey(auctionID auction.ID) []byte {
+	return append(PrefixAuctionToAuthorityNameIndex, []byte(auctionID)...)
 }
 
 // Generates WRN -> NameRecord index key.
@@ -41,11 +46,14 @@ func HasNameAuthority(store sdk.KVStore, name string) bool {
 	return store.Has(GetNameAuthorityIndexKey(name))
 }
 
+func SetNameAuthority(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, name string, authority types.NameAuthority) {
+	store.Set(GetNameAuthorityIndexKey(name), codec.MustMarshalBinaryBare(authority))
+	updateBlockChangesetForNameAuthority(ctx, store, codec, name)
+}
+
 // SetNameAuthority creates the NameAutority record.
 func (k Keeper) SetNameAuthority(ctx sdk.Context, name string, authority types.NameAuthority) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(GetNameAuthorityIndexKey(name), k.cdc.MustMarshalBinaryBare(authority))
-	k.updateBlockChangesetForNameAuthority(ctx, name)
+	SetNameAuthority(ctx, ctx.KVStore(k.storeKey), k.cdc, name, authority)
 }
 
 // GetNameAuthority - gets a name authority from the store.
@@ -226,13 +234,39 @@ func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record
 
 // UsesAuction returns true if the auction is used for an name authority.
 func (k RecordKeeper) UsesAuction(ctx sdk.Context, auctionID auction.ID) bool {
-	// TODO(ashwin): Implement auction ID -> NameAuthority index.
-	return false
+	return k.GetAuctionToAuthorityMapping(ctx, auctionID) != ""
 }
 
 // NotifyAuction is called on auction state change.
 func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
-	// TODO(ashwin): Update authority status based on auction status/winner.
+	// Update authority status based on auction status/winner.
+	name := k.GetAuctionToAuthorityMapping(ctx, auctionID)
+	if name == "" {
+		// We don't know about this auction, ignore.
+		return
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	if !HasNameAuthority(store, name) {
+		// We don't know about this authority, ignore.
+		return
+	}
+
+	authority := GetNameAuthority(store, k.cdc, name)
+	auctionObj := k.auctionKeeper.GetAuction(ctx, auctionID)
+
+	if auctionObj.Status == auction.AuctionStatusCompleted && auctionObj.WinnerAddress != "" {
+		store := ctx.KVStore(k.storeKey)
+
+		// Forget about this auction now, we don't need it.
+		removeAuctionToAuthorityMapping(store, auctionID)
+
+		// Mark authority owner and change status to active.
+		authority.OwnerAddress = auctionObj.WinnerAddress
+		authority.Status = types.AuthorityActive
+		authority.AuctionID = ""
+		SetNameAuthority(ctx, store, k.cdc, name, *authority)
+	}
 }
 
 // ProcessReserveAuthority reserves a name authority.
@@ -267,15 +301,38 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 	return name, nil
 }
 
+func (k Keeper) AddAuctionToAuthorityMapping(ctx sdk.Context, auctionID auction.ID, name string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(GetAuctionToAuthorityIndexKey(auctionID), k.cdc.MustMarshalBinaryBare(name))
+}
+
+func removeAuctionToAuthorityMapping(store sdk.KVStore, auctionID auction.ID) {
+	store.Delete(GetAuctionToAuthorityIndexKey(auctionID))
+}
+
+func (k Keeper) RemoveAuctionToAuthorityMapping(ctx sdk.Context, auctionID auction.ID) {
+	removeAuctionToAuthorityMapping(ctx.KVStore(k.storeKey), auctionID)
+}
+
+func (k RecordKeeper) GetAuctionToAuthorityMapping(ctx sdk.Context, auctionID auction.ID) string {
+	store := ctx.KVStore(k.storeKey)
+
+	auctionToAuthorityIndexKey := GetAuctionToAuthorityIndexKey(auctionID)
+	if store.Has(auctionToAuthorityIndexKey) {
+		bz := store.Get(auctionToAuthorityIndexKey)
+		var name string
+		k.cdc.MustUnmarshalBinaryBare(bz, &name)
+
+		return name
+	}
+
+	return ""
+}
+
 func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddress, isRoot bool) sdk.Error {
 	ownerAccount := k.accountKeeper.GetAccount(ctx, owner)
 	if ownerAccount == nil {
 		return sdk.ErrUnknownAddress("Account not found.")
-	}
-
-	pubKey := ownerAccount.GetPubKey()
-	if pubKey == nil {
-		return sdk.ErrInvalidPubKey("Account public key not set.")
 	}
 
 	auctionID := auction.ID("")
@@ -313,18 +370,23 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 			return sdkErr
 		}
 
-		// TODO(ashwin): Create auction ID -> name authority index.
+		// Create auction ID -> authority name index.
+		k.AddAuctionToAuthorityMapping(ctx, auction.ID, name)
 
 		status = types.AuthorityUnderAuction
 		auctionID = auction.ID
 	}
 
 	authority := types.NameAuthority{
-		Height:         ctx.BlockHeight(),
-		OwnerAddress:   owner.String(),
-		OwnerPublicKey: helpers.BytesToBase64(pubKey.Bytes()),
-		Status:         status,
-		AuctionID:      auctionID,
+		Height:       ctx.BlockHeight(),
+		OwnerAddress: owner.String(),
+
+		// PubKey is only set on first tx from the account, so it might be empty.
+		// In that case, it's set later during a "set WRN -> CID" Tx.
+		OwnerPublicKey: getAuthorityPubKey(ownerAccount.GetPubKey()),
+
+		Status:    status,
+		AuctionID: auctionID,
 	}
 
 	k.SetNameAuthority(ctx, name, authority)
@@ -364,6 +426,14 @@ func (k Keeper) ProcessReserveSubAuthority(ctx sdk.Context, name string, msg typ
 	return name, nil
 }
 
+func getAuthorityPubKey(pubKey crypto.PubKey) string {
+	if pubKey != nil {
+		return helpers.BytesToBase64(pubKey.Bytes())
+	}
+
+	return ""
+}
+
 func (k Keeper) checkWRNAccess(ctx sdk.Context, signer sdk.AccAddress, inputWRN string) sdk.Error {
 	parsedWRN, err := url.Parse(inputWRN)
 	if err != nil {
@@ -388,6 +458,17 @@ func (k Keeper) checkWRNAccess(ctx sdk.Context, signer sdk.AccAddress, inputWRN 
 
 	if authority.Status != types.AuthorityActive {
 		return sdk.ErrUnauthorized("Authority is not active.")
+	}
+
+	if authority.OwnerPublicKey == "" {
+		// Try to set owner public key if account has it available now.
+		ownerAccount := k.accountKeeper.GetAccount(ctx, signer)
+		pubKey := ownerAccount.GetPubKey()
+		if pubKey != nil {
+			// Update public key in authority record.
+			authority.OwnerPublicKey = getAuthorityPubKey(pubKey)
+			k.SetNameAuthority(ctx, name, *authority)
+		}
 	}
 
 	return nil
