@@ -71,15 +71,16 @@ var (
 
 	// Account permissions (https://github.com/cosmos/cosmos-sdk/blob/master/x/supply/spec/01_concepts.md).
 	maccPerms = map[string][]string{
-		auth.FeeCollectorName:          nil,
-		distr.ModuleName:               nil,
-		mint.ModuleName:                {supply.Minter},
-		staking.BondedPoolName:         {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName:      {supply.Burner, supply.Staking},
-		gov.ModuleName:                 {supply.Burner},
-		bond.ModuleName:                nil,
-		ns.RecordRentModuleAccountName: nil,
-		auction.ModuleName:             nil,
+		auth.FeeCollectorName:                nil,
+		distr.ModuleName:                     nil,
+		mint.ModuleName:                      {supply.Minter},
+		staking.BondedPoolName:               {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName:            {supply.Burner, supply.Staking},
+		gov.ModuleName:                       {supply.Burner},
+		bond.ModuleName:                      nil,
+		ns.RecordRentModuleAccountName:       nil,
+		auction.ModuleName:                   nil,
+		auction.AuctionBurnModuleAccountName: nil,
 	}
 )
 
@@ -252,7 +253,6 @@ func NewNameServiceApp(
 		app.accountKeeper,
 		app.bankKeeper,
 		app.supplyKeeper,
-		[]auction.AuctionUsageKeeper{app.recordKeeper},
 		keys[auction.StoreKey],
 		app.cdc,
 		auctionSubspace,
@@ -263,6 +263,8 @@ func NewNameServiceApp(
 		keys[ns.StoreKey],
 		app.cdc,
 	)
+
+	app.auctionKeeper.SetUsageKeepers([]auction.AuctionUsageKeeper{app.recordKeeper})
 
 	app.bondKeeper = bond.NewKeeper(
 		app.accountKeeper,

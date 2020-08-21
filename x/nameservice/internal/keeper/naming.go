@@ -243,12 +243,14 @@ func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
 	name := k.GetAuctionToAuthorityMapping(ctx, auctionID)
 	if name == "" {
 		// We don't know about this auction, ignore.
+		ctx.Logger().Info(fmt.Sprintf("Ignoring auction notification, name mapping not found: %s", auctionID))
 		return
 	}
 
 	store := ctx.KVStore(k.storeKey)
 	if !HasNameAuthority(store, name) {
 		// We don't know about this authority, ignore.
+		ctx.Logger().Info(fmt.Sprintf("Ignoring auction notification, authority not found: %s", auctionID))
 		return
 	}
 
@@ -262,9 +264,13 @@ func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
 			// Mark authority owner and change status to active.
 			authority.OwnerAddress = auctionObj.WinnerAddress
 			authority.Status = types.AuthorityActive
+
+			ctx.Logger().Info(fmt.Sprintf("Winner selected, marking authority as active: %s", name))
 		} else {
 			// Mark as expired.
 			authority.Status = types.AuthorityExpired
+
+			ctx.Logger().Info(fmt.Sprintf("No winner, marking authority as expired: %s", name))
 		}
 
 		authority.AuctionID = ""
@@ -272,6 +278,8 @@ func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
 
 		// Forget about this auction now, we no longer need it.
 		removeAuctionToAuthorityMapping(store, auctionID)
+	} else {
+		ctx.Logger().Info(fmt.Sprintf("Ignoring auction notification, status: %s", auctionObj.Status))
 	}
 }
 
