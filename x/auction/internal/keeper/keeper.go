@@ -7,6 +7,7 @@ package keeper
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -58,16 +59,23 @@ type AuctionClientKeeper interface {
 
 // NewKeeper creates new instances of the auction Keeper
 func NewKeeper(accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, supplyKeeper supply.Keeper,
-	usageKeepers []types.AuctionUsageKeeper, storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
+	storeKey sdk.StoreKey, cdc *codec.Codec, paramstore params.Subspace) Keeper {
 	return Keeper{
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		supplyKeeper:  supplyKeeper,
-		usageKeepers:  usageKeepers,
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    paramstore.WithKeyTable(ParamKeyTable()),
 	}
+}
+
+func (k *Keeper) SetUsageKeepers(usageKeepers []types.AuctionUsageKeeper) {
+	k.usageKeepers = usageKeepers
+}
+
+func (k Keeper) GetUsageKeepers() []types.AuctionUsageKeeper {
+	return k.usageKeepers
 }
 
 // Generates Auction ID -> Auction index key.
@@ -226,8 +234,8 @@ func (k Keeper) CreateAuction(ctx sdk.Context, msg types.MsgCreateAuction) (*typ
 
 	// Compute timestamps.
 	now := ctx.BlockTime()
-	commitsEndTime := now.Add(time.Duration(msg.CommitsDuration) * time.Second)
-	revealsEndTime := now.Add(time.Duration(msg.CommitsDuration+msg.RevealsDuration) * time.Second)
+	commitsEndTime := now.Add(msg.CommitsDuration)
+	revealsEndTime := now.Add(msg.CommitsDuration + msg.RevealsDuration)
 
 	auction := types.Auction{
 		ID:             types.ID(auctionID),
@@ -408,11 +416,13 @@ func (k Keeper) processAuctionPhases(ctx sdk.Context) {
 		// Commit -> Reveal state.
 		if auction.Status == types.AuctionStatusCommitPhase && ctx.BlockTime().After(auction.CommitsEndTime) {
 			auction.Status = types.AuctionStatusRevealPhase
+			ctx.Logger().Info(fmt.Sprintf("Moved auction %s to reveal phase.", auction.ID))
 		}
 
 		// Reveal -> Expired state.
 		if auction.Status == types.AuctionStatusRevealPhase && ctx.BlockTime().After(auction.RevealsEndTime) {
 			auction.Status = types.AuctionStatusExpired
+			ctx.Logger().Info(fmt.Sprintf("Moved auction %s to expired state.", auction.ID))
 		}
 
 		k.SaveAuction(ctx, *auction)
@@ -458,8 +468,7 @@ func (k Keeper) GetBids(ctx sdk.Context, id types.ID) []*types.Bid {
 }
 
 func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
-	// Pick a winner from revealed bids.
-	// Note: Lock funds during reveal, else mark bid as failed.
+	ctx.Logger().Info(fmt.Sprintf("Picking auction %s winner.", auction.ID))
 
 	var highestBid *types.Bid
 	var secondHighestBid *types.Bid
@@ -494,6 +503,10 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		auction.WinnerAddress = highestBid.BidderAddress
 		auction.WinnerBid = highestBid.BidAmount
 		auction.WinnerPrice = secondHighestBid.BidAmount
+
+		ctx.Logger().Info(fmt.Sprintf("Auction %s winner %s.", auction.ID, auction.WinnerAddress))
+	} else {
+		ctx.Logger().Info(fmt.Sprintf("Auction %s has no valid revealed bids (no winner).", auction.ID))
 	}
 
 	k.SaveAuction(ctx, *auction)
@@ -534,7 +547,9 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 	}
 
 	// Notify other modules (hook).
+	ctx.Logger().Info(fmt.Sprintf("Auction %s notifying %d modules.", auction.ID, len(k.usageKeepers)))
 	for _, keeper := range k.usageKeepers {
+		ctx.Logger().Info(fmt.Sprintf("Auction %s notifying module %s.", auction.ID, keeper.ModuleName()))
 		keeper.NotifyAuction(ctx, auction.ID)
 	}
 }

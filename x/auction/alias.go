@@ -14,7 +14,8 @@ const (
 	RouterKey  = types.RouterKey
 	StoreKey   = types.StoreKey
 
-	AuctionStatusCompleted = types.AuctionStatusCompleted
+	AuctionBurnModuleAccountName = types.AuctionBurnModuleAccountName
+	AuctionStatusCompleted       = types.AuctionStatusCompleted
 )
 
 var (
