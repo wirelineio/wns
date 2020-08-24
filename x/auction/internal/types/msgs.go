@@ -76,18 +76,15 @@ func (msg MsgCreateAuction) GetSigners() []sdk.AccAddress {
 type MsgCommitBid struct {
 	AuctionID  ID             `json:"auctionId,omitempty"`
 	CommitHash string         `json:"commit,omitempty"`
-	AuctionFee sdk.Coin       `json:"auctionFee,omitempty"`
 	Signer     sdk.AccAddress `json:"signer"`
 }
 
 // NewMsgCommitBid is the constructor function for MsgCommitBid.
-func NewMsgCommitBid(auctionID string, commitHash string, auctionFee sdk.Coin,
-	signer sdk.AccAddress) MsgCommitBid {
+func NewMsgCommitBid(auctionID string, commitHash string, signer sdk.AccAddress) MsgCommitBid {
 
 	return MsgCommitBid{
 		AuctionID:  ID(auctionID),
 		CommitHash: commitHash,
-		AuctionFee: auctionFee,
 		Signer:     signer,
 	}
 }
@@ -110,10 +107,6 @@ func (msg MsgCommitBid) ValidateBasic() sdk.Error {
 
 	if msg.CommitHash == "" {
 		return sdk.ErrInternal("Invalid commit hash.")
-	}
-
-	if !msg.AuctionFee.IsPositive() {
-		return sdk.ErrInternal("Auction fee should be greater than zero.")
 	}
 
 	return nil
