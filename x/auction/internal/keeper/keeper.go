@@ -112,6 +112,11 @@ func (k Keeper) SaveBid(ctx sdk.Context, bid types.Bid) {
 	store.Set(getBidIndexKey(bid.AuctionID, bid.BidderAddress), k.cdc.MustMarshalBinaryBare(bid))
 }
 
+func (k Keeper) DeleteBid(ctx sdk.Context, bid types.Bid) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(getBidIndexKey(bid.AuctionID, bid.BidderAddress))
+}
+
 // HasAuction - checks if a auction by the given ID exists.
 func (k Keeper) HasAuction(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
@@ -125,6 +130,13 @@ func (k Keeper) HasBid(ctx sdk.Context, id types.ID, bidder string) bool {
 
 // DeleteAuction - deletes the auction.
 func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.Auction) {
+	// Delete all bids first.
+	bids := k.GetBids(ctx, auction.ID)
+	for _, bid := range bids {
+		k.DeleteBid(ctx, *bid)
+	}
+
+	// Delete the auction itself.
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(getAuctionIndexKey(auction.ID))
 	store.Delete(getOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID))
@@ -445,14 +457,13 @@ func (k Keeper) processAuctionPhases(ctx sdk.Context) {
 // Delete completed stale auctions.
 func (k Keeper) deleteCompletedAuctions(ctx sdk.Context) {
 	auctions := k.MatchAuctions(ctx, func(auction *types.Auction) bool {
-		return auction.Status == types.AuctionStatusCompleted
+		deleteTime := auction.RevealsEndTime.Add(CompletedAuctionDeleteTimeout)
+		return auction.Status == types.AuctionStatusCompleted && ctx.BlockTime().After(deleteTime)
 	})
 
 	for _, auction := range auctions {
-		auctionDeleteTime := auction.RevealsEndTime.Add(CompletedAuctionDeleteTimeout)
-		if auction.Status == types.AuctionStatusCompleted && ctx.BlockTime().After(auctionDeleteTime) {
-			// TODO(ashwin): Delete auction and bids.
-		}
+		ctx.Logger().Info(fmt.Sprintf("Deleting completed auction %s after timeout.", auction.ID))
+		k.DeleteAuction(ctx, *auction)
 	}
 }
 
