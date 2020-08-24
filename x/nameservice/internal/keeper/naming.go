@@ -131,6 +131,12 @@ func (k Keeper) ProcessSetName(ctx sdk.Context, msg types.MsgSetName) sdk.Error 
 		return err
 	}
 
+	nameRecord := k.GetNameRecord(ctx, msg.WRN)
+	if nameRecord != nil && nameRecord.ID == msg.ID {
+		// Already pointing to same ID, no-op.
+		return nil
+	}
+
 	k.SetNameRecord(ctx, msg.WRN, msg.ID)
 
 	return nil

@@ -201,12 +201,12 @@ func (rpc *RPCNodeHandler) syncNameRecords(ctx *Context, height int64, names []s
 		// Update Record ID -> []Names index.
 		nameRecord := ns.GetNameRecord(ctx.cache, ctx.codec, name)
 		if nameRecord.ID != "" {
-			// Set name.
-			ns.AddRecordToNameMapping(ctx.cache, ctx.codec, nameRecord.ID, name)
-
 			// Same name might have pointed to another record earlier, should be in history.
 			// Delete that mapping.
 			removeOldNameMapping(ctx, name, nameRecord)
+
+			// Set name.
+			ns.AddRecordToNameMapping(ctx.cache, ctx.codec, nameRecord.ID, name)
 		} else {
 			// Delete name. ID of old record should be in history.
 			removeOldNameMapping(ctx, name, nameRecord)
