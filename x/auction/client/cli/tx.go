@@ -67,10 +67,11 @@ func GetCmdCommitBid(cdc *codec.Codec) *cobra.Command {
 			auctionID := args[0]
 
 			reveal := map[string]interface{}{
-				"chainId":   chainID,
-				"auctionId": auctionID,
-				"bidAmount": bidAmount.String(),
-				"salt":      mnemonic,
+				"chainId":       chainID,
+				"auctionId":     auctionID,
+				"bidderAddress": cliCtx.GetFromAddress().String(),
+				"bidAmount":     bidAmount.String(),
+				"noise":         mnemonic,
 			}
 
 			auctionFee, err := sdk.ParseCoin(args[2])
@@ -84,7 +85,7 @@ func GetCmdCommitBid(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Save reveal file.
-			ioutil.WriteFile(fmt.Sprintf("%s.json", commitHash), content, 0600)
+			ioutil.WriteFile(fmt.Sprintf("%s-%s.json", cliCtx.GetFromName(), commitHash), content, 0600)
 
 			msg := types.NewMsgCommitBid(auctionID, commitHash, auctionFee, cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
