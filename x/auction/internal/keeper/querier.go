@@ -19,6 +19,7 @@ const (
 	ListAuctions    = "list"
 	GetAuction      = "get"
 	GetBid          = "get-bid"
+	GetBids         = "get-bids"
 	QueryByOwner    = "query-by-owner"
 	QueryParameters = "parameters"
 	Balance         = "balance"
@@ -34,6 +35,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return getAuction(ctx, path[1:], req, keeper)
 		case GetBid:
 			return getBid(ctx, path[1:], req, keeper)
+		case GetBids:
+			return getBids(ctx, path[1:], req, keeper)
 		case QueryByOwner:
 			return queryAuctionsByOwner(ctx, path[1:], req, keeper)
 		case QueryParameters:
@@ -88,6 +91,20 @@ func getBid(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper
 	bid := keeper.GetBid(ctx, types.ID(id), bidder)
 
 	bz, err2 := json.MarshalIndent(bid, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+// nolint: unparam
+func getBids(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	id := types.ID(path[0])
+
+	bids := keeper.GetBids(ctx, types.ID(id))
+
+	bz, err2 := json.MarshalIndent(bids, "", "  ")
 	if err2 != nil {
 		panic("Could not marshal result to JSON.")
 	}

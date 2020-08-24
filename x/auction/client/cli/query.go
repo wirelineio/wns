@@ -30,6 +30,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdList(storeKey, cdc),
 		GetCmdGetAuction(storeKey, cdc),
 		GetCmdGetBid(storeKey, cdc),
+		GetCmdGetBids(storeKey, cdc),
 		GetCmdListByBidder(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 		GetCmdBalance(storeKey, cdc),
@@ -74,6 +75,30 @@ func GetCmdGetBid(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			bidder := args[1]
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/get-bid/%s/%s", queryRoute, id, bidder), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdGetBids queries all auction bids.
+func GetCmdGetBids(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "get-bids [auction-id]",
+		Short: "Get all auction bids.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			id := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/get-bids/%s", queryRoute, id), nil)
 			if err != nil {
 				return err
 			}
