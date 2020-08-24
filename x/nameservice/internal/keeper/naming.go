@@ -297,11 +297,6 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 		return "", sdk.ErrInternal("Invalid name.")
 	}
 
-	// Check if name already reserved.
-	if k.HasNameAuthority(ctx, name) {
-		return "", sdk.ErrInternal("Name already exists.")
-	}
-
 	if strings.Contains(name, ".") {
 		return k.ProcessReserveSubAuthority(ctx, name, msg)
 	}
@@ -344,6 +339,14 @@ func (k RecordKeeper) GetAuctionToAuthorityMapping(ctx sdk.Context, auctionID au
 }
 
 func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddress, isRoot bool) sdk.Error {
+	// Root authorities can be re-registered if they have expired.
+	if isRoot && k.HasNameAuthority(ctx, name) {
+		authority := k.GetNameAuthority(ctx, name)
+		if authority.Status != types.AuthorityExpired {
+			return sdk.ErrInternal("Name already reserved.")
+		}
+	}
+
 	ownerAccount := k.accountKeeper.GetAccount(ctx, owner)
 	if ownerAccount == nil {
 		return sdk.ErrUnknownAddress("Account not found.")
@@ -411,6 +414,11 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 
 // ProcessReserveSubAuthority reserves a sub-authority.
 func (k Keeper) ProcessReserveSubAuthority(ctx sdk.Context, name string, msg types.MsgReserveAuthority) (string, sdk.Error) {
+	// Check if name already reserved.
+	if k.HasNameAuthority(ctx, name) {
+		return "", sdk.ErrInternal("Name already reserved.")
+	}
+
 	// Get parent authority name.
 	names := strings.Split(name, ".")
 	parent := strings.Join(names[1:], ".")
