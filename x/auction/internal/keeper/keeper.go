@@ -278,13 +278,8 @@ func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Aucti
 		return nil, sdk.ErrInternal("Auction is not in commit phase.")
 	}
 
-	// Check if enough fees provided, and take auction fees.
-	totalFee := auction.CommitFee.Add(auction.RevealFee)
-	if msg.AuctionFee.IsLT(totalFee) {
-		return nil, sdk.ErrInternal("Auction fee is too low.")
-	}
-
 	// Take auction fees from account.
+	totalFee := auction.CommitFee.Add(auction.RevealFee)
 	sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.Signer, types.ModuleName, sdk.NewCoins(totalFee))
 	if sdkErr != nil {
 		return nil, sdkErr
@@ -294,7 +289,8 @@ func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Aucti
 	bidder := msg.Signer.String()
 	if k.HasBid(ctx, msg.AuctionID, bidder) {
 		oldBid := k.GetBid(ctx, msg.AuctionID, bidder)
-		sdkErr := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, msg.Signer, sdk.NewCoins(oldBid.AuctionFee))
+		oldTotalFee := oldBid.CommitFee.Add(oldBid.RevealFee)
+		sdkErr := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, msg.Signer, sdk.NewCoins(oldTotalFee))
 		if sdkErr != nil {
 			return nil, sdkErr
 		}
@@ -303,11 +299,12 @@ func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Aucti
 	// Save new bid.
 	bid := types.Bid{
 		AuctionID:     msg.AuctionID,
-		AuctionFee:    totalFee,
 		BidderAddress: bidder,
-		CommitHash:    msg.CommitHash,
 		Status:        types.BidStatusCommitted,
+		CommitHash:    msg.CommitHash,
 		CommitTime:    ctx.BlockTime(),
+		CommitFee:     auction.CommitFee,
+		RevealFee:     auction.RevealFee,
 	}
 
 	k.SaveBid(ctx, bid)
@@ -538,11 +535,19 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 
 		if bid.Status == types.BidStatusRevealed {
 			// Send reveal fee back to bidders that've revealed the bid.
-			k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(auction.RevealFee))
+			sdkErr := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(bid.RevealFee))
+			if sdkErr != nil {
+				ctx.Logger().Error(fmt.Sprintf("Auction error returning reveal fee: %v", sdkErr))
+				panic(sdkErr)
+			}
 		}
 
 		// Send back locked bid amount to all bidders.
-		k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(bid.BidAmount))
+		sdkErr := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(bid.BidAmount))
+		if sdkErr != nil {
+			ctx.Logger().Error(fmt.Sprintf("Auction error returning bid amount: %v", sdkErr))
+			panic(sdkErr)
+		}
 	}
 
 	// Process winner account (if nobody bids, there won't be a winner).
@@ -553,7 +558,11 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		}
 
 		// Take 2nd price from winner.
-		k.supplyKeeper.SendCoinsFromAccountToModule(ctx, winnerAddress, types.ModuleName, sdk.NewCoins(auction.WinnerPrice))
+		sdkErr := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, winnerAddress, types.ModuleName, sdk.NewCoins(auction.WinnerPrice))
+		if sdkErr != nil {
+			ctx.Logger().Error(fmt.Sprintf("Auction error taking funds from winner: %v", sdkErr))
+			panic(sdkErr)
+		}
 
 		// Burn anything over the min. bid amount.
 		amountToBurn := auction.WinnerPrice.Sub(auction.MinimumBid)
@@ -562,7 +571,11 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		}
 
 		// Use auction burn module account instead of actually burning coins to better keep track of supply.
-		k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.AuctionBurnModuleAccountName, sdk.NewCoins(amountToBurn))
+		sdkErr = k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.AuctionBurnModuleAccountName, sdk.NewCoins(amountToBurn))
+		if sdkErr != nil {
+			ctx.Logger().Error(fmt.Sprintf("Auction error burning coins: %v", sdkErr))
+			panic(sdkErr)
+		}
 	}
 
 	// Notify other modules (hook).
