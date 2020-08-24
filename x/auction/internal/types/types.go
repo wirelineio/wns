@@ -81,7 +81,6 @@ type Bid struct {
 	AuctionFee    sdk.Coin  `json:"auctionFee,omitempty"`
 	CommitHash    string    `json:"commitHash,omitempty"`
 	CommitTime    time.Time `json:"commitTime,omitempty"`
-	Reveal        string    `json:"reveal,omitempty"`
 	RevealTime    time.Time `json:"revealTime,omitempty"`
 	BidAmount     sdk.Coin  `json:"bidAmount,omitempty"`
 }

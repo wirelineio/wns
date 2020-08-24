@@ -353,6 +353,15 @@ func (k Keeper) RevealBid(ctx sdk.Context, msg types.MsgRevealBid) (*types.Aucti
 		return nil, sdk.ErrInternal("Invalid reveal auction ID.")
 	}
 
+	bidderAddress, err := wnsUtils.GetAttributeAsString(reveal, "bidderAddress")
+	if err != nil {
+		return nil, sdk.ErrInternal("Invalid reveal bid address.")
+	}
+
+	if bidderAddress != msg.Signer.String() {
+		return nil, sdk.ErrInternal("Reveal bid address mismatch.")
+	}
+
 	bidAmountStr, err := wnsUtils.GetAttributeAsString(reveal, "bidAmount")
 	if err != nil {
 		return nil, sdk.ErrInternal("Invalid reveal bid amount.")
@@ -375,7 +384,6 @@ func (k Keeper) RevealBid(ctx sdk.Context, msg types.MsgRevealBid) (*types.Aucti
 
 	// Update bid.
 	bid.BidAmount = bidAmount
-	bid.Reveal = msg.Reveal
 	bid.RevealTime = ctx.BlockTime()
 	bid.Status = types.BidStatusRevealed
 	k.SaveBid(ctx, bid)
@@ -523,7 +531,7 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		}
 
 		// Send back locked bid amount to all bidders.
-		k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(auction.RevealFee))
+		k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, bidderAddress, sdk.NewCoins(bid.BidAmount))
 	}
 
 	// Process winner account (if nobody bids, there won't be a winner).

@@ -349,9 +349,6 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		return sdk.ErrUnknownAddress("Account not found.")
 	}
 
-	auctionID := auction.ID("")
-	status := types.AuthorityActive
-
 	authority := types.NameAuthority{
 		Height:       ctx.BlockHeight(),
 		OwnerAddress: owner.String(),
@@ -360,8 +357,8 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		// In that case, it's set later during a "set WRN -> CID" Tx.
 		OwnerPublicKey: getAuthorityPubKey(ownerAccount.GetPubKey()),
 
-		Status:    status,
-		AuctionID: auctionID,
+		Status:    types.AuthorityActive,
+		AuctionID: auction.ID(""),
 	}
 
 	// Create auction if root authority and name auctions are enabled.
@@ -403,8 +400,8 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		// Create auction ID -> authority name index.
 		k.AddAuctionToAuthorityMapping(ctx, auction.ID, name)
 
-		status = types.AuthorityUnderAuction
-		auctionID = auction.ID
+		authority.Status = types.AuthorityUnderAuction
+		authority.AuctionID = auction.ID
 	}
 
 	k.SetNameAuthority(ctx, name, authority)
