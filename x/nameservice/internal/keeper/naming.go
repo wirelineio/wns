@@ -352,8 +352,24 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 	auctionID := auction.ID("")
 	status := types.AuthorityActive
 
+	authority := types.NameAuthority{
+		Height:       ctx.BlockHeight(),
+		OwnerAddress: owner.String(),
+
+		// PubKey is only set on first tx from the account, so it might be empty.
+		// In that case, it's set later during a "set WRN -> CID" Tx.
+		OwnerPublicKey: getAuthorityPubKey(ownerAccount.GetPubKey()),
+
+		Status:    status,
+		AuctionID: auctionID,
+	}
+
 	// Create auction if root authority and name auctions are enabled.
 	if isRoot && k.NameAuctionsEnabled(ctx) {
+		// If auctions are enabled, clear out owner fields. They will be set after a winner is picked.
+		authority.OwnerAddress = ""
+		authority.OwnerPublicKey = ""
+
 		commitFee, err := sdk.ParseCoin(k.NameAuctionCommitFee(ctx))
 		if err != nil {
 			return sdk.ErrInvalidCoins("Invalid name auction commit fee.")
@@ -389,18 +405,6 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 
 		status = types.AuthorityUnderAuction
 		auctionID = auction.ID
-	}
-
-	authority := types.NameAuthority{
-		Height:       ctx.BlockHeight(),
-		OwnerAddress: owner.String(),
-
-		// PubKey is only set on first tx from the account, so it might be empty.
-		// In that case, it's set later during a "set WRN -> CID" Tx.
-		OwnerPublicKey: getAuthorityPubKey(ownerAccount.GetPubKey()),
-
-		Status:    status,
-		AuctionID: auctionID,
 	}
 
 	k.SetNameAuthority(ctx, name, authority)
