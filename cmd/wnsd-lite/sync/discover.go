@@ -15,10 +15,8 @@ import (
 
 const query = `
 {
-	records: queryRecords(attributes: [{ key: "type", value: { string: "wrn:xbox" } }]) {
+	records: queryRecords(attributes: [{ key: "type", value: { string: "wrn:kube" } }]) {
 		id
-		type
-		version
 		attributes {
 			key
 			value {
