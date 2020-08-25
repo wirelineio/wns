@@ -66,3 +66,17 @@ Then, get the public hostname/IP for the machine and update (`<node-id>@<host/IP
 ```bash
 $ ./scripts/server start --tail
 ```
+
+## Synchronized Chain Reset
+
+For Moon milestone:
+
+```bash
+$ cd wns
+$ git pull
+$ git checkout release-moon
+$ make install
+$ cp networks/devnet-2/genesis.json ~/.wire/wnsd/config/genesis.json
+$ wnsd unsafe-reset-all
+$ ./scripts/server start --tail
+```
