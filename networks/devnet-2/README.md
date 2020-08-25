@@ -78,5 +78,5 @@ $ git checkout release-moon
 $ make install
 $ cp networks/devnet-2/genesis.json ~/.wire/wnsd/config/genesis.json
 $ wnsd unsafe-reset-all
-$ ./scripts/server start --tail
+$ ./scripts/server.sh start --tail
 ```
