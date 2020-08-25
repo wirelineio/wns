@@ -76,7 +76,7 @@
     },
     "bond": {
       "params": {
-        "max_bond_amount": "10000wire"
+        "max_bond_amount": "10000000000uwire"
       },
       "bonds": [
         {
@@ -786,11 +786,12 @@
     },
     "nameservice": {
       "params": {
-        "record_rent": "1wire",
+        "record_rent": "1000000uwire",
         "record_expiry_time": "31536000000000000"
       },
-      "names": null,
-      "records": null
+      "records": null,
+      "authorities": null,
+      "names": null
     },
     "distribution": {
       "fee_pool": {
