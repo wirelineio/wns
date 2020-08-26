@@ -1,12 +1,20 @@
+---
+title: Devnet Lite Node Setup
+description: Instructions for setting up a lite node connected to the already running devnet.
+---
+
 # WNS Lite
 
 WNS Lite is a light weight read-only cache of the WNS graph database.
+
+* Choose a trusted full-node for initialization of the lite node
+* Follow the lite node setup instructions below
 
 ## Getting Started
 
 ### Installation
 
-Install [WNS](../../README.md), then test that the following command works:
+Install WNS, then test that the following command works:
 
 ```bash
 $ wnsd-lite help
@@ -37,7 +45,7 @@ $ ./scripts/lite/setup.sh --node "<WNS RPC ENDPOINT>"
 Example:
 
 ```bash
-$ ./scripts/lite/setup.sh --node "tcp://node1.dxos.network:26657"
+$ ./scripts/lite/setup.sh --node "tcp://wns1.kube.moon.dxos.network:26657"
 ```
 
 ## Working with the Lite Node
@@ -51,13 +59,13 @@ $ ./scripts/lite/server.sh start --node "<WNS RPC ENDPOINT>"
 Example:
 
 ```bash
-$ ./scripts/lite/server.sh start --node "tcp://node1.dxos.network:26657"
+$ ./scripts/lite/server.sh start --node "tcp://wns1.kube.moon.dxos.network:26657"
 ```
 
 To enable the lite node to periodically discover additional RPC endpoints from WNS, pass it a GQL API endpoint (in the example below, it's the lite node endpoint itself).
 
 ```bash
-$ ./scripts/lite/server.sh start --node "tcp://node1.dxos.network:26657" --endpoint "http://127.0.0.1:9475/api"
+$ ./scripts/lite/server.sh start --node "tcp://wns1.kube.moon.dxos.network:26657" --endpoint "http://127.0.0.1:9475/api"
 ```
 
 Optionally, pass `--reset` to also do a full reset before starting the node.
@@ -65,7 +73,7 @@ Optionally, pass `--reset` to also do a full reset before starting the node.
 Example:
 
 ```bash
-$ ./scripts/lite/server.sh start --node "tcp://node1.dxos.network:26657" --endpoint "http://127.0.0.1:9475/api" --reset
+$ ./scripts/lite/server.sh start --node "tcp://wns1.kube.moon.dxos.network:26657" --endpoint "http://127.0.0.1:9475/api" --reset
 ```
 
 Test if the node is up:
@@ -88,12 +96,12 @@ $ ./scripts/lite/server.sh stop
 
 ### RPC Endpoint Discovery
 
-Currently, RPC endpoints are discovered by querying for `xbox` type records with a `wns.rpc` field.
+Currently, RPC endpoints are discovered by querying for `kube` type records with a `wns.rpc` field.
 
-To register a `xbox` with a WNS RPC endpoint:
+To register a `kube` with a WNS RPC endpoint:
 
 ```bash
-$ wire xbox register --id 'wrn:xbox:ashwinp/wns1' --version 0.0.1 --data.wns.rpc='tcp://45.79.120.249:26657'
+$ wire kube register --id 'wrn:kube:ashwinp/wns1' --version 0.0.1 --data.wns.rpc='tcp://45.79.120.249:26657'
 ```
 
 ```
@@ -101,7 +109,7 @@ $ wire wns record get --id Qmae4rq7QzLwz4qrqoDHa29w3CXQGSA8G766zLmM5yWVrU
 [
   {
     "id": "Qmae4rq7QzLwz4qrqoDHa29w3CXQGSA8G766zLmM5yWVrU",
-    "type": "wrn:xbox",
+    "type": "wrn:kube",
     "name": "ashwinp/wns1",
     "version": "0.0.1",
     "owners": [
@@ -111,7 +119,7 @@ $ wire wns record get --id Qmae4rq7QzLwz4qrqoDHa29w3CXQGSA8G766zLmM5yWVrU
     "createTime": "2020-04-22T07:58:31.839889941",
     "expiryTime": "2021-04-22T07:58:31.839889941",
     "attributes": {
-      "type": "wrn:xbox",
+      "type": "wrn:kube",
       "version": "0.0.1",
       "wns": "{\"rpc\":\"tcp://45.79.120.249:26657\"}",
       "name": "ashwinp/wns1"

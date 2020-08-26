@@ -1,4 +1,7 @@
-# Peers
+---
+title: Peers
+description: Devnet peers.
+---
 
 Update `~/.wire/wnsd/config/config.toml` with:
 
@@ -20,4 +23,4 @@ Get the public hostname/IP for the machine to add as a new peer and update (`<no
 ## Troubleshooting
 
 * If the node hostname/IP is not routable, nodes might have trouble connecting to each other. Try setting `addr_book_strict = false` in `~/.wire/wnsd/config/config.toml`.
-* If the node does not have a static IP, [reverse port forwarding](./NETWORK.md) can be used to tunnel through a remote machine that has a public IP/hostname.
+* If the node does not have a static IP, [reverse port forwarding](./network/) can be used to tunnel through a remote machine that has a public IP/hostname.

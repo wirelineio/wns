@@ -1,4 +1,7 @@
-# DEVNET-2
+---
+title: Devnet 2 (Moon Release)
+description: Instructions for setting up a validator at genesis.
+---
 
 ## Setup
 
@@ -6,7 +9,7 @@ Build and install the binaries:
 
 ```bash
 $ cd wns
-$ git checkout feature-mechanisms
+$ git checkout release-moon
 $ make install
 ```
 
@@ -33,7 +36,7 @@ $ wnsd add-genesis-account $(wnscli keys show $VALIDATOR_NAME -a) 10000000000000
 $ wnsd gentx --name $VALIDATOR_NAME --amount 10000000000000uwire --output-document $VALIDATOR_NAME.json
 ```
 
-Commit the generated file to `wns/networks/devnet-2/gentx` folder and push the changes to `feature-mechanisms` branch.
+Commit the generated file to `wns/networks/devnet-2/gentx` folder and push the changes to `release-moon` branch.
 
 ## Starting the Chain
 
