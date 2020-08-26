@@ -9,19 +9,10 @@ Note: These are instructions to connect to an existing `devnet` trusted node as 
 
 WNS
 
-* GQL API: http://node1.dxos.network:9473/graphql , https://node1.dxos.network/wns/graphql
-* GQL Console: http://node1.dxos.network:9473/console, https://node1.dxos.network/wns/console
-* RPC Endpoint: tcp://node1.dxos.network:26657
+* GQL API: https://wns1.kube.moon.dxos.network/api
+* GQL Console: https://wns1.kube.moon.dxos.network/console
+* RPC Endpoint: tcp://wns1.kube.moon.dxos.network:26657
 
-WNS Lite
-
-* GQL API: http://node1.dxos.network:9475/graphql , https://node1.dxos.network/wnslite/graphql
-* GQL Console: http://node1.dxos.network:9475/console , https://node1.dxos.network/wnslite/console
-
-Faucet
-
-* GQL API: http://faucet.node1.dxos.network:4000/graphql , https://node1.dxos.network/faucet/graphql
-* GQL Console: http://faucet.node1.dxos.network:4000/console , https://node1.dxos.network/faucet/console
 
 ## Working with the Devnet
 
@@ -42,8 +33,8 @@ Activate the `devnet` CLI profile created during account setup.
 Ensure that the CLI profile is configured correctly.
 
 ```bash
-$ export WIRE_PROFILE=<PROFILE NAME>
-$ wire config
+$ wire profile
+$ wire profile config
 ```
 
 * `services.wns.server` - must be a valid `devnet` WNS endpoint

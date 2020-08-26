@@ -9,7 +9,6 @@ Note: See the [client doc](./client/) for instructions to connect to an existing
 
 ## Requirements
 
-* [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
 * [Ubuntu server](./server/)
 * [Network](./network/)
 

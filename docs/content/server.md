@@ -3,8 +3,6 @@ title: Ubuntu Setup
 description: Instructions to setup a Ubuntu node.
 ---
 
-# Ubuntu Setup
-
 ## Pre-Setup
 
 Install Ubuntu Server 18.04 LTS on the xbox by booting via a USB stick.

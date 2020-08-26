@@ -7,7 +7,6 @@ Note: These are instructions for setting up a full node connected to the already
 
 ## Requirements
 
-* [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
 * [Ubuntu server](./server/)
 * [Network](./network/)
 
