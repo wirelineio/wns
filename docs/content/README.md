@@ -1,6 +1,0 @@
-# Devnet
-
-* Connect as a [client](./CLIENT.md) to a trusted node
-* Run a [validator](./VALIDATOR.md) node from genesis
-* Run a [full](./FULL-NODE.md) node
-* Run a [lite](LITE.md) node

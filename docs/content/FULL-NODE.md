@@ -1,4 +1,7 @@
-# Devnet Full Node Setup
+---
+title: Devnet Full Node Setup
+description: Instructions for setting up a full node connected to the already running devnet.
+---
 
 Note: These are instructions for setting up a full node connected to the already running devnet. To run a validator from genesis, see the validator [setup](./VALIDATOR.md) doc.
 

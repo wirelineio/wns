@@ -1,4 +1,7 @@
-# Devnet Client
+---
+title: Devnet Client
+description: Instructions to connect to an existing `devnet` trusted node as a client.
+---
 
 Note: These are instructions to connect to an existing `devnet` trusted node as a client. To run a validator or full node, see the [setup](./README.md) doc instead.
 

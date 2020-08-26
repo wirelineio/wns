@@ -1,4 +1,7 @@
-# Seed Accounts
+---
+title: Seed Accounts
+description: Devnet seed accounts
+---
 
 ```bash
 $ wnsd add-genesis-account cosmos1j6363njndap3styyv7x48rhepl0tey3mt2ht6w 100000000000000uwire

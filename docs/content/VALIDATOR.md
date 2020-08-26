@@ -1,8 +1,11 @@
-# Devnet Validator Node Setup
+---
+title: Devnet Validator Node Setup
+description: Instructions for setting up a validator node from genesis.
+---
 
 Note: These are instructions for setting up a validator node from genesis. To run a full node connected to the already running devnet, see the full node [setup](./FULL-NODE.md) doc.
 
-Note: See the [client doc](./CLIENT.md) for instructions to connect to an existing trusted node.
+Note: See the [client doc](./CLIENT/) for instructions to connect to an existing trusted node.
 
 ## Requirements
 

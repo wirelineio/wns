@@ -1,4 +1,7 @@
-# Peers
+---
+title: Peers
+description: Devnet peers.
+---
 
 Update `~/.wire/wnsd/config/config.toml` with:
 

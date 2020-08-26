@@ -1,3 +1,8 @@
+---
+title: Ubuntu Setup
+description: Instructions to setup a Ubuntu node.
+---
+
 # Ubuntu Setup
 
 ## Pre-Setup

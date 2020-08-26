@@ -17,8 +17,7 @@ module.exports = {
         subtitle: 'DXOS WNS',
         sidebarCategories: {
           null: [
-            'index',
-            'templates'
+            'index'
           ]
         }
       }
