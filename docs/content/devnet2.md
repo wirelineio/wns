@@ -1,4 +1,7 @@
-# DEVNET-2
+---
+title: Devnet 2 (Moon Release)
+description: Instructions for setting up a validator at genesis.
+---
 
 ## Setup
 
