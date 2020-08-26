@@ -3,7 +3,7 @@ title: Devnet Client
 description: Instructions to connect to an existing `devnet` trusted node as a client.
 ---
 
-Note: These are instructions to connect to an existing `devnet` trusted node as a client. To run a validator or full node, see the [setup](./README.md) doc instead.
+Note: These are instructions to connect to an existing `devnet` trusted node as a client. To run a validator or full node, see the [setup](./validator/) doc instead.
 
 ## Endpoints
 
@@ -31,7 +31,7 @@ To query the `devnet`, update the `wire` profile config file to the above GQL AP
 
 ### Publishing
 
-To publish records, an [account](./ACCOUNT.md) needs to be setup.
+To publish records, an [account](./account/) needs to be setup.
 
 Once the account is setup, the `wire` CLI can be used to registers records (e.g. app/bot).
 

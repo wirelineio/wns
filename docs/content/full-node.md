@@ -3,13 +3,13 @@ title: Devnet Full Node Setup
 description: Instructions for setting up a full node connected to the already running devnet.
 ---
 
-Note: These are instructions for setting up a full node connected to the already running devnet. To run a validator from genesis, see the validator [setup](./VALIDATOR.md) doc.
+Note: These are instructions for setting up a full node connected to the already running devnet. To run a validator from genesis, see the validator [setup](./validator/) doc.
 
 ## Requirements
 
 * [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
-* [Ubuntu server](./SERVER.md)
-* [Network](./NETWORK.md)
+* [Ubuntu server](./server/)
+* [Network](./network/)
 
 ## Full Node Account Setup
 
@@ -38,7 +38,7 @@ $ cp devnet/genesis.json ~/.wire/wnsd/config/genesis.json
 
 ## Peer Setup
 
-See [PEERS.md](./PEERS.md) for the value of `persistent_peers`, and update it as described. Skip the other sections. Once peers have been setup, the node can be started.
+See [PEERS.md](./peers/) for the value of `persistent_peers`, and update it as described. Skip the other sections. Once peers have been setup, the node can be started.
 
 ```bash
 $ ./scripts/server.sh start

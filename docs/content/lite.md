@@ -14,7 +14,7 @@ WNS Lite is a light weight read-only cache of the WNS graph database.
 
 ### Installation
 
-Install [WNS](../../README.md), then test that the following command works:
+Install WNS, then test that the following command works:
 
 ```bash
 $ wnsd-lite help

@@ -3,15 +3,15 @@ title: Devnet Validator Node Setup
 description: Instructions for setting up a validator node from genesis.
 ---
 
-Note: These are instructions for setting up a validator node from genesis. To run a full node connected to the already running devnet, see the full node [setup](./FULL-NODE.md) doc.
+Note: These are instructions for setting up a validator node from genesis. To run a full node connected to the already running devnet, see the full node [setup](./full-node/) doc.
 
-Note: See the [client doc](./CLIENT/) for instructions to connect to an existing trusted node.
+Note: See the [client doc](./client/) for instructions to connect to an existing trusted node.
 
 ## Requirements
 
 * [Hardware](https://github.com/dxos/xbox/blob/master/docs/hardware.md)
-* [Ubuntu server](./SERVER.md)
-* [Network](./NETWORK.md)
+* [Ubuntu server](./server/)
+* [Network](./network/)
 
 ## Validator Account Setup
 
@@ -60,7 +60,7 @@ $ rm ~/.wire/wnsd/config/gentx/*
 $ cp devnet/gentx/* ~/.wire/wnsd/config/gentx
 ```
 
-Add the genesis accounts from [SEED_ACCOUNTS.md](./SEED_ACCOUNTS.md).
+Add the genesis accounts from [SEED_ACCOUNTS.md](./seed-accounts/).
 
 Re-generate the genesis.json file.
 
@@ -89,7 +89,7 @@ $ cp devnet/genesis.json ~/.wire/wnsd/config/genesis.json
 
 Note: Run this step on every validator node.
 
-See [PEERS.md](./PEERS.md) to configure your node with peers. Once peers have been setup, the node can be started.
+See [PEERS.md](./peers/) to configure your node with peers. Once peers have been setup, the node can be started.
 
 ```bash
 $ ./scripts/server.sh start
