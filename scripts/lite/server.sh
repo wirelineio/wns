@@ -8,6 +8,7 @@ WNS_GQL_ENDPOINT=""
 RESET=
 SCRIPT_DIR="$(dirname "$0")"
 SYNC_TIMEOUT=10
+CHAIN_ID="wireline"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -51,6 +52,11 @@ while [[ $# -gt 0 ]]; do
     shift
     shift
     ;;
+    --chain-id)
+    CHAIN_ID="$2"
+    shift
+    shift
+    ;;
     *)
     POSITIONAL+=("$1")
     shift
@@ -72,6 +78,7 @@ function start_server ()
 
   # Start the server.
   nohup wnsd-lite start \
+    --chain-id "${CHAIN_ID}" \
     --gql-port "${GQL_SERVER_PORT}" \
     --gql-playground-api-base "${GQL_PLAYGROUND_API_BASE}" \
     --node "${WNS_NODE_ADDRESS}" \
