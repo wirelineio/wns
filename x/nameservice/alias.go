@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	ModuleName = types.ModuleName
-	RouterKey  = types.RouterKey
-	StoreKey   = types.StoreKey
+	ModuleName                  = types.ModuleName
+	RecordRentModuleAccountName = types.RecordRentModuleAccountName
+	RouterKey                   = types.RouterKey
+	StoreKey                    = types.StoreKey
 )
 
 var (
@@ -25,18 +26,26 @@ var (
 
 	RegisterInvariants = keeper.RegisterInvariants
 
-	PrefixCIDToRecordIndex     = keeper.PrefixCIDToRecordIndex
-	PrefixWRNToNameRecordIndex = keeper.PrefixWRNToNameRecordIndex
+	PrefixCIDToRecordIndex         = keeper.PrefixCIDToRecordIndex
+	PrefixNameAuthorityRecordIndex = keeper.PrefixNameAuthorityRecordIndex
+	PrefixWRNToNameRecordIndex     = keeper.PrefixWRNToNameRecordIndex
 
 	GetBlockChangesetIndexKey = keeper.GetBlockChangesetIndexKey
 	GetRecordIndexKey         = keeper.GetRecordIndexKey
+	GetNameAuthorityIndexKey  = keeper.GetNameAuthorityIndexKey
 	GetNameRecordIndexKey     = keeper.GetNameRecordIndexKey
 
-	HasRecord     = keeper.HasRecord
-	GetRecord     = keeper.GetRecord
-	ResolveWRN    = keeper.ResolveWRN
-	MatchRecords  = keeper.MatchRecords
-	KeySyncStatus = keeper.KeySyncStatus
+	HasRecord        = keeper.HasRecord
+	GetRecord        = keeper.GetRecord
+	ResolveWRN       = keeper.ResolveWRN
+	GetNameAuthority = keeper.GetNameAuthority
+	GetNameRecord    = keeper.GetNameRecord
+	MatchRecords     = keeper.MatchRecords
+	KeySyncStatus    = keeper.KeySyncStatus
+
+	SetNameRecord             = keeper.SetNameRecord
+	AddRecordToNameMapping    = keeper.AddRecordToNameMapping
+	RemoveRecordToNameMapping = keeper.RemoveRecordToNameMapping
 )
 
 type (
@@ -45,10 +54,13 @@ type (
 
 	MsgSetRecord = types.MsgSetRecord
 
-	ID         = types.ID
-	Record     = types.Record
-	RecordObj  = types.RecordObj
-	NameRecord = types.NameRecord
+	ID        = types.ID
+	Record    = types.Record
+	RecordObj = types.RecordObj
+
+	NameAuthority   = types.NameAuthority
+	NameRecord      = types.NameRecord
+	NameRecordEntry = types.NameRecordEntry
 
 	BlockChangeset = types.BlockChangeset
 )

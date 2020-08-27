@@ -14,7 +14,7 @@ import (
 // Nameservice params default values.
 const (
 	// DefaultRecordRent is the default record rent for 1 time period (see expiry time).
-	DefaultRecordRent string = "1wire"
+	DefaultRecordRent string = "1000000uwire"
 
 	// DefaultRecordExpiryTime is the default record expiry time (1 year).
 	DefaultRecordExpiryTime time.Duration = time.Hour * 24 * 365

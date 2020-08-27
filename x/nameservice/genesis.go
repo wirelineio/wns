@@ -10,22 +10,29 @@ import (
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
+type AuthorityEntry struct {
+	Name  string              `json:"name" yaml:"name"`
+	Entry types.NameAuthority `json:"record" yaml:"record"`
+}
+
 type NameEntry struct {
 	Name  string           `json:"name" yaml:"name"`
 	Entry types.NameRecord `json:"record" yaml:"record"`
 }
 
 type GenesisState struct {
-	Params  types.Params      `json:"params" yaml:"params"`
-	Names   []NameEntry       `json:"names" yaml:"names"`
-	Records []types.RecordObj `json:"records" yaml:"records"`
+	Params      types.Params      `json:"params" yaml:"params"`
+	Records     []types.RecordObj `json:"records" yaml:"records"`
+	Authorities []AuthorityEntry  `json:"authorities" yaml:"authorities"`
+	Names       []NameEntry       `json:"names" yaml:"names"`
 }
 
-func NewGenesisState(params types.Params, names []NameEntry, records []types.RecordObj) GenesisState {
+func NewGenesisState(params types.Params, records []types.RecordObj, authorities []AuthorityEntry, names []NameEntry) GenesisState {
 	return GenesisState{
-		Params:  params,
-		Names:   names,
-		Records: records,
+		Params:      params,
+		Records:     records,
+		Authorities: authorities,
+		Names:       names,
 	}
 }
 
@@ -45,10 +52,6 @@ func DefaultGenesisState() GenesisState {
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
 	keeper.SetParams(ctx, data.Params)
 
-	for _, nameEntry := range data.Names {
-		keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry)
-	}
-
 	for _, record := range data.Records {
 		obj := record.ToRecord()
 		keeper.PutRecord(ctx, obj)
@@ -64,17 +67,19 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 		}
 	}
 
+	for _, authorityEntry := range data.Authorities {
+		keeper.SetNameAuthority(ctx, authorityEntry.Name, authorityEntry.Entry.OwnerAddress, authorityEntry.Entry.OwnerPublicKey)
+	}
+
+	for _, nameEntry := range data.Names {
+		keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry.ID)
+	}
+
 	return []abci.ValidatorUpdate{}
 }
 
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	params := keeper.GetParams(ctx)
-
-	names := keeper.ListNameRecords(ctx)
-	nameEntries := []NameEntry{}
-	for name, nameRecord := range names {
-		nameEntries = append(nameEntries, NameEntry{name, nameRecord})
-	}
 
 	records := keeper.ListRecords(ctx)
 	recordEntries := []types.RecordObj{}
@@ -82,9 +87,28 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 		recordEntries = append(recordEntries, record.ToRecordObj())
 	}
 
+	authorities := keeper.ListNameAuthorityRecords(ctx)
+	authorityEntries := []AuthorityEntry{}
+	for name, record := range authorities {
+		authorityEntries = append(authorityEntries, AuthorityEntry{
+			Name:  name,
+			Entry: record,
+		})
+	}
+
+	names := keeper.ListNameRecords(ctx)
+	nameEntries := []NameEntry{}
+	for name, record := range names {
+		nameEntries = append(nameEntries, NameEntry{
+			Name:  name,
+			Entry: record,
+		})
+	}
+
 	return GenesisState{
-		Params:  params,
-		Names:   nameEntries,
-		Records: recordEntries,
+		Params:      params,
+		Records:     recordEntries,
+		Authorities: authorityEntries,
+		Names:       nameEntries,
 	}
 }

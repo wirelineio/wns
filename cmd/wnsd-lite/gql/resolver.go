@@ -45,20 +45,20 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*b
 }
 
 // QueryRecords filters records by K=V conditions.
-func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.KeyValueInput) ([]*baseGql.Record, error) {
+func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*baseGql.KeyValueInput, all *bool) ([]*baseGql.Record, error) {
 	var records = r.Keeper.MatchRecords(func(record *nameservice.Record) bool {
-		return baseGql.MatchOnAttributes(record, attributes)
+		return baseGql.MatchOnAttributes(record, attributes, (all != nil && *all))
 	})
 
 	return baseGql.QueryRecords(ctx, r, records, attributes)
 }
 
 // ResolveRecords resolves records by ref/WRN, with semver range support.
-func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*baseGql.Record, error) {
+func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*baseGql.RecordResult, error) {
 	gqlResponse := []*baseGql.Record{}
 
-	for _, ref := range refs {
-		record := r.Keeper.ResolveWRN(ref)
+	for _, name := range names {
+		record := r.Keeper.ResolveWRN(name)
 		gqlRecord, err := baseGql.GetGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
@@ -67,7 +67,60 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*b
 		gqlResponse = append(gqlResponse, gqlRecord)
 	}
 
-	return gqlResponse, nil
+	result := baseGql.RecordResult{
+		Meta: baseGql.ResultMeta{
+			Height: strconv.FormatInt(r.Keeper.GetStatusRecord().LastSyncedHeight, 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
+}
+
+func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (*baseGql.AuthorityResult, error) {
+	gqlResponse := []*baseGql.AuthorityRecord{}
+
+	for _, name := range names {
+		record := r.Keeper.GetNameAuthority(name)
+		gqlRecord, err := baseGql.GetGQLNameAuthorityRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := baseGql.AuthorityResult{
+		Meta: baseGql.ResultMeta{
+			Height: strconv.FormatInt(r.Keeper.GetStatusRecord().LastSyncedHeight, 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
+}
+
+func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*baseGql.NameResult, error) {
+	gqlResponse := []*baseGql.NameRecord{}
+
+	for _, name := range names {
+		record := r.Keeper.GetNameRecord(name)
+		gqlRecord, err := baseGql.GetGQLNameRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := baseGql.NameResult{
+		Meta: baseGql.ResultMeta{
+			Height: strconv.FormatInt(r.Keeper.GetStatusRecord().LastSyncedHeight, 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
 }
 
 func (r *queryResolver) GetLogs(ctx context.Context, count *int) ([]string, error) {

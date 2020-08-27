@@ -26,6 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -33,7 +34,7 @@ import (
 
 	"github.com/wirelineio/wns/gql"
 	"github.com/wirelineio/wns/x/bond"
-	"github.com/wirelineio/wns/x/nameservice"
+	ns "github.com/wirelineio/wns/x/nameservice"
 
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 )
@@ -59,21 +60,23 @@ var (
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
+		mint.AppModuleBasic{},
 		supply.AppModuleBasic{},
 
-		nameservice.AppModule{},
+		ns.AppModule{},
 		bond.AppModule{},
 	)
 
 	// Account permissions (https://github.com/cosmos/cosmos-sdk/blob/master/x/supply/spec/01_concepts.md).
 	maccPerms = map[string][]string{
-		auth.FeeCollectorName:            nil,
-		distr.ModuleName:                 nil,
-		staking.BondedPoolName:           {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName:        {supply.Burner, supply.Staking},
-		gov.ModuleName:                   {supply.Burner},
-		bond.ModuleName:                  nil,
-		bond.RecordRentModuleAccountName: nil,
+		auth.FeeCollectorName:          nil,
+		distr.ModuleName:               nil,
+		mint.ModuleName:                {supply.Minter},
+		staking.BondedPoolName:         {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName:      {supply.Burner, supply.Staking},
+		gov.ModuleName:                 {supply.Burner},
+		bond.ModuleName:                nil,
+		ns.RecordRentModuleAccountName: nil,
 	}
 )
 
@@ -101,14 +104,15 @@ type nameServiceApp struct {
 	bankKeeper     bank.Keeper
 	stakingKeeper  staking.Keeper
 	slashingKeeper slashing.Keeper
+	mintKeeper     mint.Keeper
 	distrKeeper    distr.Keeper
 	govKeeper      gov.Keeper
 	crisisKeeper   crisis.Keeper
 	supplyKeeper   supply.Keeper
 	paramsKeeper   params.Keeper
-	recordKeeper   nameservice.RecordKeeper
+	recordKeeper   ns.RecordKeeper
 	bondKeeper     bond.Keeper
-	nsKeeper       nameservice.Keeper
+	nsKeeper       ns.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -128,8 +132,8 @@ func NewNameServiceApp(
 	bApp.SetAppVersion(version.Version)
 
 	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, distr.StoreKey, slashing.StoreKey, gov.StoreKey, params.StoreKey,
-		nameservice.StoreKey, bond.StoreKey)
+		supply.StoreKey, distr.StoreKey, slashing.StoreKey, mint.StoreKey, gov.StoreKey, params.StoreKey,
+		ns.StoreKey, bond.StoreKey)
 
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -150,9 +154,10 @@ func NewNameServiceApp(
 	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
 	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
+	mintSubspace := app.paramsKeeper.Subspace(mint.DefaultParamspace)
 	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace)
 	crisisSubspace := app.paramsKeeper.Subspace(crisis.DefaultParamspace)
-	nsSubspace := app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
+	nsSubspace := app.paramsKeeper.Subspace(ns.DefaultParamspace)
 	bondSubspace := app.paramsKeeper.Subspace(bond.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
@@ -209,6 +214,15 @@ func NewNameServiceApp(
 		slashing.DefaultCodespace,
 	)
 
+	app.mintKeeper = mint.NewKeeper(
+		app.cdc,
+		keys[mint.StoreKey],
+		mintSubspace,
+		&stakingKeeper,
+		app.supplyKeeper,
+		auth.FeeCollectorName,
+	)
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.stakingKeeper = *stakingKeeper.SetHooks(
@@ -229,8 +243,8 @@ func NewNameServiceApp(
 
 	app.crisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName)
 
-	app.recordKeeper = nameservice.NewRecordKeeper(
-		keys[nameservice.StoreKey],
+	app.recordKeeper = ns.NewRecordKeeper(
+		keys[ns.StoreKey],
 		app.cdc,
 	)
 
@@ -238,16 +252,18 @@ func NewNameServiceApp(
 		app.accountKeeper,
 		app.bankKeeper,
 		app.supplyKeeper,
-		app.recordKeeper,
+		[]bond.BondUsageKeeper{app.recordKeeper},
 		keys[bond.StoreKey],
 		app.cdc,
 		bondSubspace,
 	)
 
-	app.nsKeeper = nameservice.NewKeeper(
+	app.nsKeeper = ns.NewKeeper(
+		app.accountKeeper,
+		app.supplyKeeper,
 		app.recordKeeper,
-		app.bondKeeper,
-		keys[nameservice.StoreKey],
+		bond.BondClientKeeper(app.bondKeeper),
+		keys[ns.StoreKey],
 		app.cdc,
 		nsSubspace,
 	)
@@ -259,16 +275,17 @@ func NewNameServiceApp(
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
 		bond.NewAppModule(app.bondKeeper),
-		nameservice.NewAppModule(app.nsKeeper),
+		ns.NewAppModule(app.nsKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
 		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
 		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
 		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
+		mint.NewAppModule(app.mintKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.distrKeeper, app.accountKeeper, app.supplyKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName)
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, nameservice.ModuleName)
+	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName, mint.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, ns.ModuleName)
 
 	// Sets the order of Genesis - Order matters, genutil is to always come last
 	// NOTE: The genutils moodule must occur after staking so that pools are
@@ -280,9 +297,10 @@ func NewNameServiceApp(
 		auth.ModuleName,
 		bank.ModuleName,
 		slashing.ModuleName,
+		mint.ModuleName,
 		gov.ModuleName,
 		bond.ModuleName,
-		nameservice.ModuleName,
+		ns.ModuleName,
 		supply.ModuleName,
 		crisis.ModuleName,
 		genutil.ModuleName,
@@ -316,7 +334,7 @@ func NewNameServiceApp(
 		}
 	}
 
-	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.accountKeeper)
+	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.bondKeeper, app.accountKeeper)
 
 	return app
 }

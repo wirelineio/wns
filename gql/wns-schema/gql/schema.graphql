@@ -2,9 +2,6 @@
 # Copyright 2019 Wireline, Inc.
 #
 
-# BigUInt is a 64-bit unsigned int.
-scalar BigUInt
-
 # Reference to another record.
 type Reference {
   id:         String!         # ID of linked record.
@@ -56,17 +53,10 @@ input KeyValueInput {
   value:      ValueInput!
 }
 
-# Extensions define additional properties for an entity in the graph database.
-interface Extension {
-  name:       String!
-}
-
 # Record defines the basic properties of an entity in the graph database.
 type Record {
   id:         String!         # Computed attribute: Multibase encoded content hash (https://github.com/multiformats/multibase).
-  type:       String!         # wrn:<type>, e.g. wrn:bot, wrn:pad.
-  name:       String!         # e.g. wireline.io/chess
-  version:    String!         # Version (e.g. 0.1.0).
+  names:      [String!]       # Names pointing to this CID (reverse lookup).
 
   bondId:     String!         # Associated bond ID.
   createTime: String!         # Record create time.
@@ -75,14 +65,55 @@ type Record {
   owners:     [String]!       # Addresses of record owners.
   attributes: [KeyValue]      # Record attributes.
   references: [Record]        # Record references.
-  extension:  Extension       # Extension.
+}
+
+# Metadata for query results, e.g. chain height, proofs.
+type ResultMeta {
+  height:     String!         # Block height.
+}
+
+# Name authority record.
+type AuthorityRecord {
+  ownerAddress:     String!   # Owner address.
+  ownerPublicKey:   String!   # Owner public key.
+  height:           String!   # Height at which record was created.
+}
+
+# Name authority result, e.g. authority record + metadata.
+type AuthorityResult {
+  meta:       ResultMeta!
+  records:    [AuthorityRecord]!
+}
+
+# Result for record queries, i.e. records + metadata.
+type RecordResult {
+  meta:       ResultMeta!
+  records:    [Record]!
+}
+
+# Name record entry, created at a particular height.
+type NameRecordEntry {
+  id:         String!         # Target record ID.
+  height:     String!         # Height at which record was created.
+}
+
+# Name record stores the latest and historical name -> record ID mappings.
+type NameRecord {
+  latest:     NameRecordEntry!     # Latest mame record entry.
+  history:    [NameRecordEntry]    # Historical name record entries.
+}
+
+# Name lookup result.
+type NameResult {
+  meta:       ResultMeta!     # Metadata e.g. height at which resolution was done.
+  records:    [NameRecord]!   # Name records.
 }
 
 # Mutations require payment in coins (e.g. 100wire).
 # Used by the wallet to get the account balance for display and mutations.
 type Coin {
   type:       String!         # e.g. 'WIRE'
-  quantity:   BigUInt!        # e.g. 1000000
+  quantity:   String!         # e.g. 1000000
 }
 
 # Represents an account on the blockchain.
@@ -90,8 +121,8 @@ type Coin {
 type Account {
   address:  String!           # Blockchain address.
   pubKey:   String            # Public key.
-  number:   BigUInt!          # Account number.
-  sequence: BigUInt!          # Sequence number used to prevent replays.
+  number:   String!           # Account number.
+  sequence: String!           # Sequence number used to prevent replays.
   balance:  [Coin!]           # Current balance for each coin type.
 }
 
@@ -109,6 +140,7 @@ type NodeInfo {
   moniker:    String!         # Name of the node.
 }
 
+# Node sync status.
 type SyncInfo {
   latest_block_hash:    String!
   latest_block_height:  String!
@@ -189,12 +221,29 @@ type Query {
   queryRecords(
     # Multiple attribute conditions are in a logical AND.
     attributes: [KeyValueInput]
+
+    # Whether to query all records, not just named ones (false by default).
+    all: Boolean
   ): [Record]
 
-  # Resolve WRNs to records.
-  resolveRecords(
-    refs: [String!]
-  ): [Record]
+  #
+  # Naming API.
+  #
+
+  # Lookup authority information.
+  lookupAuthorities(
+    names: [String!]
+  ): AuthorityResult!
+
+  # Lookup name to record mapping information.
+  lookupNames(
+    names: [String!]
+  ): NameResult!
+
+  # Resolve names to records.
+  resolveNames(
+    names: [String!]
+  ): RecordResult!
 }
 
 type Mutation {

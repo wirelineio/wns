@@ -2,16 +2,23 @@
 
 package gql
 
-type Extension interface {
-	IsExtension()
-}
-
 type Account struct {
 	Address  string  `json:"address"`
 	PubKey   *string `json:"pubKey"`
-	Number   BigUInt `json:"number"`
-	Sequence BigUInt `json:"sequence"`
+	Number   string  `json:"number"`
+	Sequence string  `json:"sequence"`
 	Balance  []Coin  `json:"balance"`
+}
+
+type AuthorityRecord struct {
+	OwnerAddress   string `json:"ownerAddress"`
+	OwnerPublicKey string `json:"ownerPublicKey"`
+	Height         string `json:"height"`
+}
+
+type AuthorityResult struct {
+	Meta    ResultMeta         `json:"meta"`
+	Records []*AuthorityRecord `json:"records"`
 }
 
 type Bond struct {
@@ -20,16 +27,9 @@ type Bond struct {
 	Balance []Coin `json:"balance"`
 }
 
-type Bot struct {
-	Name      string `json:"name"`
-	AccessKey string `json:"accessKey"`
-}
-
-func (Bot) IsExtension() {}
-
 type Coin struct {
-	Type     string  `json:"type"`
-	Quantity BigUInt `json:"quantity"`
+	Type     string `json:"type"`
+	Quantity string `json:"quantity"`
 }
 
 type KeyValue struct {
@@ -42,17 +42,26 @@ type KeyValueInput struct {
 	Value ValueInput `json:"value"`
 }
 
+type NameRecord struct {
+	Latest  NameRecordEntry    `json:"latest"`
+	History []*NameRecordEntry `json:"history"`
+}
+
+type NameRecordEntry struct {
+	ID     string `json:"id"`
+	Height string `json:"height"`
+}
+
+type NameResult struct {
+	Meta    ResultMeta    `json:"meta"`
+	Records []*NameRecord `json:"records"`
+}
+
 type NodeInfo struct {
 	ID      string `json:"id"`
 	Network string `json:"network"`
 	Moniker string `json:"moniker"`
 }
-
-type Pad struct {
-	Name string `json:"name"`
-}
-
-func (Pad) IsExtension() {}
 
 type PeerInfo struct {
 	Node       NodeInfo `json:"node"`
@@ -60,24 +69,20 @@ type PeerInfo struct {
 	RemoteIP   string   `json:"remote_ip"`
 }
 
-type Protocol struct {
-	Name string `json:"name"`
-}
-
-func (Protocol) IsExtension() {}
-
 type Record struct {
 	ID         string      `json:"id"`
-	Type       string      `json:"type"`
-	Name       string      `json:"name"`
-	Version    string      `json:"version"`
+	Names      []string    `json:"names"`
 	BondID     string      `json:"bondId"`
 	CreateTime string      `json:"createTime"`
 	ExpiryTime string      `json:"expiryTime"`
 	Owners     []*string   `json:"owners"`
 	Attributes []*KeyValue `json:"attributes"`
 	References []*Record   `json:"references"`
-	Extension  Extension   `json:"extension"`
+}
+
+type RecordResult struct {
+	Meta    ResultMeta `json:"meta"`
+	Records []*Record  `json:"records"`
 }
 
 type Reference struct {
@@ -86,6 +91,10 @@ type Reference struct {
 
 type ReferenceInput struct {
 	ID string `json:"id"`
+}
+
+type ResultMeta struct {
+	Height string `json:"height"`
 }
 
 type Status struct {
@@ -105,12 +114,6 @@ type SyncInfo struct {
 	LatestBlockTime   string `json:"latest_block_time"`
 	CatchingUp        bool   `json:"catching_up"`
 }
-
-type UnknownExtension struct {
-	Name string `json:"name"`
-}
-
-func (UnknownExtension) IsExtension() {}
 
 type ValidatorInfo struct {
 	Address          string  `json:"address"`

@@ -6,8 +6,6 @@ package types
 
 import (
 	"crypto/sha256"
-	"fmt"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,27 +20,13 @@ type ID string
 // Record represents a WNS record.
 type Record struct {
 	ID         ID                     `json:"id,omitempty"`
+	Names      []string               `json:"names,omitempty"`
 	BondID     bond.ID                `json:"bondId,omitempty"`
 	CreateTime time.Time              `json:"createTime,omitempty"`
 	ExpiryTime time.Time              `json:"expiryTime,omitempty"`
 	Deleted    bool                   `json:"deleted,omitempty"`
 	Owners     []string               `json:"owners,omitempty"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
-}
-
-// Type of Record.
-func (r Record) Type() string {
-	return r.Attributes["type"].(string)
-}
-
-// Name of Record.
-func (r Record) Name() string {
-	return r.Attributes["name"].(string)
-}
-
-// Version of Record.
-func (r Record) Version() string {
-	return r.Attributes["version"].(string)
 }
 
 // GetBondID returns the BondID of the Record.
@@ -60,16 +44,6 @@ func (r Record) GetCreateTime() string {
 	return string(sdk.FormatTimeBytes(r.CreateTime))
 }
 
-// WRN returns the record `wrn`, e.g. `wrn:bot:wireline.io/chess#0.1.0`.
-func (r Record) WRN() string {
-	return strings.ToLower(fmt.Sprintf("%s#%s", r.BaseWRN(), r.Version()))
-}
-
-// BaseWRN returns the record `wrn` minus the version, e.g. `wrn:bot:wireline.io/chess`.
-func (r Record) BaseWRN() string {
-	return strings.ToLower(fmt.Sprintf("%s:%s", r.Type(), r.Name()))
-}
-
 // GetOwners returns the list of owners (for GQL).
 func (r Record) GetOwners() []*string {
 	owners := []*string{}
@@ -80,7 +54,7 @@ func (r Record) GetOwners() []*string {
 	return owners
 }
 
-// ToRecordObj convers Record to RecordObj.
+// ToRecordObj converts Record to RecordObj.
 // Why? Because go-amino can't handle maps: https://github.com/tendermint/go-amino/issues/4.
 func (r *Record) ToRecordObj() RecordObj {
 	var resourceObj RecordObj
@@ -96,13 +70,12 @@ func (r *Record) ToRecordObj() RecordObj {
 	return resourceObj
 }
 
-// ToNameRecord gets a naming record entry for the record.
-func (r *Record) ToNameRecord() NameRecord {
-	var nameRecord NameRecord
-	nameRecord.ID = r.ID
-	nameRecord.Version = r.Version()
+// ToNameRecordEntry gets a naming record entry for the record.
+func (r *Record) ToNameRecordEntry() NameRecordEntry {
+	var nameRecordEntry NameRecordEntry
+	nameRecordEntry.ID = r.ID
 
-	return nameRecord
+	return nameRecordEntry
 }
 
 // CanonicalJSON returns the canonical JSON respresentation of the record.
@@ -136,8 +109,13 @@ func (r *Record) GetSignBytes() ([]byte, []byte) {
 }
 
 // GetCID gets the record CID.
-func (r *Record) GetCID() ID {
-	return ID(helpers.GetCid(r.CanonicalJSON()))
+func (r *Record) GetCID() (ID, error) {
+	id, err := helpers.GetCid(r.CanonicalJSON())
+	if err != nil {
+		return "", err
+	}
+
+	return ID(id), nil
 }
 
 // HasExpired returns true if the record has expired.
@@ -179,7 +157,7 @@ type RecordObj struct {
 	Attributes []byte    `json:"attributes,omitempty"`
 }
 
-// ToRecord convers RecordObj to Record.
+// ToRecord converts RecordObj to Record.
 // Why? Because go-amino can't handle maps: https://github.com/tendermint/go-amino/issues/4.
 func (resourceObj *RecordObj) ToRecord() Record {
 	var record Record
@@ -212,15 +190,39 @@ func (payload *Payload) ToPayloadObj() PayloadObj {
 	return payloadObj
 }
 
-// NameRecord is a naming record entry for a WRN.
+// NameAuthority records the name/authority ownership info.
+type NameAuthority struct {
+	// Owner public key.
+	OwnerPublicKey string `json:"ownerPublicKey"`
+
+	// Owner address.
+	OwnerAddress string `json:"ownerAddress"`
+
+	// Block height at which name/authority was created.
+	Height int64 `json:"height"`
+}
+
+// NameRecordEntry is a naming record entry for a WRN.
+type NameRecordEntry struct {
+	// Record ID.
+	ID ID `json:"id"`
+
+	// Block height at which name record was created.
+	Height int64 `json:"height"`
+}
+
+// NameRecord stores name mapping info for a WRN.
 type NameRecord struct {
-	ID      ID     `json:"id"`
-	Version string `json:"version"`
+	NameRecordEntry `json:"latest"`
+
+	// TODO(ashwin): Move to external indexer when available.
+	History []NameRecordEntry `json:"history"`
 }
 
 // BlockChangeset is a changeset corresponding to a block.
 type BlockChangeset struct {
-	Height  int64    `json:"height"`
-	Records []ID     `json:"records"`
-	Names   []string `json:"names"`
+	Height          int64    `json:"height"`
+	Records         []ID     `json:"records"`
+	NameAuthorities []string `json:"authorities"`
+	Names           []string `json:"names"`
 }

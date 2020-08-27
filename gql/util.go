@@ -8,23 +8,13 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"strconv"
 
-	"github.com/Masterminds/semver"
-	"github.com/mitchellh/mapstructure"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// VersionAttributeName denotes the version attribute name in a record.
-const VersionAttributeName = "version"
-
-// VersionMatchAll represents a special value to match all versions.
-const VersionMatchAll = "*"
-
-// VersionMatchLatest represents a special value to match only the latest version of each record.
-const VersionMatchLatest = "latest"
 
 // OwnerAttributeName denotes the owner attribute name for a bond.
 const OwnerAttributeName = "owner"
@@ -46,11 +36,6 @@ func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservi
 		return nil, err
 	}
 
-	extension, err := getExtension(record)
-	if err != nil {
-		return nil, err
-	}
-
 	references, err := getReferences(ctx, resolver, record)
 	if err != nil {
 		return nil, err
@@ -58,16 +43,48 @@ func GetGQLRecord(ctx context.Context, resolver QueryResolver, record *nameservi
 
 	return &Record{
 		ID:         string(record.ID),
-		Type:       record.Type(),
-		Name:       record.Name(),
-		Version:    record.Version(),
+		Names:      record.Names,
 		BondID:     record.GetBondID(),
 		CreateTime: record.GetCreateTime(),
 		ExpiryTime: record.GetExpiryTime(),
 		Owners:     record.GetOwners(),
 		Attributes: attributes,
 		References: references,
-		Extension:  extension,
+	}, nil
+}
+
+func GetGQLNameRecord(ctx context.Context, resolver QueryResolver, record *nameservice.NameRecord) (*NameRecord, error) {
+	if record == nil {
+		return nil, nil
+	}
+
+	records := make([]*NameRecordEntry, len(record.History))
+	for index, entry := range record.History {
+		records[index] = getNameRecordEntry(entry)
+	}
+
+	return &NameRecord{
+		Latest:  *getNameRecordEntry(record.NameRecordEntry),
+		History: records,
+	}, nil
+}
+
+func getNameRecordEntry(record nameservice.NameRecordEntry) *NameRecordEntry {
+	return &NameRecordEntry{
+		ID:     string(record.ID),
+		Height: strconv.FormatInt(record.Height, 10),
+	}
+}
+
+func GetGQLNameAuthorityRecord(ctx context.Context, resolver QueryResolver, record *nameservice.NameAuthority) (*AuthorityRecord, error) {
+	if record == nil {
+		return nil, nil
+	}
+
+	return &AuthorityRecord{
+		OwnerAddress:   record.OwnerAddress,
+		OwnerPublicKey: record.OwnerPublicKey,
+		Height:         strconv.FormatInt(record.Height, 10),
 	}, nil
 }
 
@@ -78,8 +95,10 @@ func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.R
 		switch value.(type) {
 		case interface{}:
 			if obj, ok := value.(map[string]interface{}); ok {
-				if typeAttr, ok := obj["type"]; ok && typeAttr.(string) == WrnTypeReference {
-					ids = append(ids, obj["id"].(string))
+				if _, ok := obj["/"]; ok && len(obj) == 1 {
+					if _, ok := obj["/"].(string); ok {
+						ids = append(ids, obj["/"].(string))
+					}
 				}
 			}
 		}
@@ -90,27 +109,6 @@ func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.R
 
 func getAttributes(r *nameservice.Record) ([]*KeyValue, error) {
 	return mapToKeyValuePairs(r.Attributes)
-}
-
-func getExtension(r *nameservice.Record) (ext Extension, err error) {
-	switch r.Type() {
-	case WnsTypeProtocol:
-		var protocol Protocol
-		err := mapstructure.Decode(r.Attributes, &protocol)
-		return protocol, err
-	case WnsTypeBot:
-		var bot Bot
-		err := mapstructure.Decode(r.Attributes, &bot)
-		return bot, err
-	case WnsTypePad:
-		var pad Pad
-		err := mapstructure.Decode(r.Attributes, &pad)
-		return pad, err
-	default:
-		var unknown UnknownExtension
-		err := mapstructure.Decode(r.Attributes, &unknown)
-		return unknown, err
-	}
 }
 
 func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
@@ -138,9 +136,11 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 			kvPair.Value.Boolean = &val
 		case interface{}:
 			if obj, ok := value.(map[string]interface{}); ok {
-				if valueType, ok := obj["type"]; ok && valueType.(string) == WrnTypeReference {
-					kvPair.Value.Reference = &Reference{
-						ID: obj["id"].(string),
+				if _, ok := obj["/"]; ok && len(obj) == 1 {
+					if _, ok := obj["/"].(string); ok {
+						kvPair.Value.Reference = &Reference{
+							ID: obj["/"].(string),
+						}
 					}
 				} else {
 					bytes, err := json.Marshal(obj)
@@ -160,7 +160,13 @@ func mapToKeyValuePairs(attrs map[string]interface{}) ([]*KeyValue, error) {
 
 		valueType := reflect.ValueOf(value)
 		if valueType.Kind() == reflect.Slice {
-			// TODO(ashwin): Handle arrays.
+			bytes, err := json.Marshal(value)
+			if err != nil {
+				return nil, err
+			}
+
+			jsonStr := string(bytes)
+			kvPair.Value.JSON = &jsonStr
 		}
 
 		kvPairs = append(kvPairs, kvPair)
@@ -195,9 +201,14 @@ func matchOnRecordField(record *nameservice.Record, attr *KeyValueInput) (fieldF
 	return
 }
 
-func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) bool {
+func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput, all bool) bool {
 	// Filter deleted records.
 	if record.Deleted {
+		return false
+	}
+
+	// If ONLY named records are requested, check for that condition first.
+	if !all && len(record.Names) == 0 {
 		return false
 	}
 
@@ -239,15 +250,8 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 				return false
 			}
 
-			// Special handling for version attribute.
-			if attr.Key == VersionAttributeName {
-				if !matchOnVersionAttribute(*attr.Value.String, recAttrValString) {
-					return false
-				}
-			} else {
-				if *attr.Value.String != recAttrValString {
-					return false
-				}
+			if *attr.Value.String != recAttrValString {
+				return false
 			}
 		}
 
@@ -260,10 +264,17 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 
 		if attr.Value.Reference != nil {
 			obj, ok := recAttrVal.(map[string]interface{})
-			if !ok || obj["type"].(string) != WrnTypeReference {
+			if !ok {
+				// Attr value is not an object.
 				return false
 			}
-			recAttrValRefID := obj["id"].(string)
+
+			if _, ok := obj["/"].(string); !ok {
+				// Attr value is not a reference.
+				return false
+			}
+
+			recAttrValRefID := obj["/"].(string)
 			if recAttrValRefID != attr.Value.Reference.ID {
 				return false
 			}
@@ -275,77 +286,12 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput) 
 	return true
 }
 
-func matchOnVersionAttribute(querySemverStr string, recordVersionStr string) bool {
-	if querySemverStr == VersionMatchAll || querySemverStr == VersionMatchLatest {
-		return true
-	}
-
-	querySemverConstraint, err := semver.NewConstraint(querySemverStr)
-	if err != nil {
-		// Handle constraint not being parsable.
-		return false
-	}
-
-	recordVersion, err := semver.NewVersion(recordVersionStr)
-	if err != nil {
-		return false
-	}
-
-	return querySemverConstraint.Check(recordVersion)
-}
-
-func RequestedLatestVersionsOnly(attributes []*KeyValueInput) bool {
-	for _, attr := range attributes {
-		if attr.Key == VersionAttributeName && attr.Value.String != nil {
-			if *attr.Value.String == VersionMatchAll {
-				return false
-			}
-
-			if *attr.Value.String == VersionMatchLatest {
-				return true
-			}
-		}
-	}
-
-	return true
-}
-
-// Used to filter records and retain only the latest versions.
-type bestMatch struct {
-	version *semver.Version
-	record  *nameservice.Record
-}
-
-// Only return the latest version of each record.
-func GetLatestVersions(records []*nameservice.Record) []*nameservice.Record {
-	baseWrnBestMatch := make(map[string]bestMatch)
-	for _, record := range records {
-		baseWrn := record.BaseWRN()
-		recordVersion, _ := semver.NewVersion(record.Version())
-
-		currentBestMatch, exists := baseWrnBestMatch[baseWrn]
-		if !exists || recordVersion.GreaterThan(currentBestMatch.version) {
-			// Update current best match.
-			baseWrnBestMatch[baseWrn] = bestMatch{recordVersion, record}
-		}
-	}
-
-	var matches = make([]*nameservice.Record, len(baseWrnBestMatch))
-	var index int
-	for _, match := range baseWrnBestMatch {
-		matches[index] = match.record
-		index++
-	}
-
-	return matches
-}
-
 func getGQLCoins(coins sdk.Coins) []Coin {
 	gqlCoins := make([]Coin, len(coins))
 	for index, coin := range coins {
 		gqlCoins[index] = Coin{
 			Type:     coin.Denom,
-			Quantity: BigUInt(coin.Amount.Int64()),
+			Quantity: strconv.FormatInt(coin.Amount.Int64(), 10),
 		}
 	}
 

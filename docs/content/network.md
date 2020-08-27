@@ -1,3 +1,8 @@
+---
+title: Network
+description: Intructions for setting up connectivity to devnet nodes.
+---
+
 # Network
 
 Nodes need to be able to connect to each other for the devnet to work.

@@ -25,7 +25,7 @@ func main() {
 	rootCmd.PersistentFlags().String("chain-id", "wireline", "Chain identifier")
 	rootCmd.PersistentFlags().String("log-level", "debug", "Log level")
 	rootCmd.PersistentFlags().StringP("node", "n", "tcp://localhost:26657", "Upstream WNS node RPC address")
-	rootCmd.PersistentFlags().String("log-file", "", "File to tail for GQL 'getLogs' API.")
+	rootCmd.PersistentFlags().String("log-file", "", "File to tail for GQL 'getLogs' API")
 
 	rootCmd.AddCommand(versionCmd, initCmd, startCmd)
 

@@ -20,16 +20,24 @@ import (
 const (
 	ListRecordsPath        = "list"
 	GetRecordPath          = "get"
-	ListNamesPath          = "names"
-	ResolveNamePath        = "resolve"
 	QueryRecordsByBondPath = "query-by-bond"
 	QueryParametersPath    = "parameters"
+	Balance                = "balance"
+
+	WhoIsPath       = "whois"
+	LookUpWRNPath   = "lookup"
+	ListNamesPath   = "names"
+	ResolveNamePath = "resolve"
 )
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
+		case WhoIsPath:
+			return whoIs(ctx, path[1:], req, keeper)
+		case LookUpWRNPath:
+			return lookupWRN(ctx, path[1:], req, keeper)
 		case ListRecordsPath:
 			return listResources(ctx, path[1:], req, keeper)
 		case GetRecordPath:
@@ -42,10 +50,46 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryRecordsByBond(ctx, path[1:], req, keeper)
 		case QueryParametersPath:
 			return queryParameters(ctx, path[1:], req, keeper)
+		case Balance:
+			return queryBalance(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
 	}
+}
+
+func whoIs(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	name := path[0]
+
+	if !keeper.HasNameAuthority(ctx, name) {
+		return nil, sdk.ErrUnknownRequest("Name not found.")
+	}
+
+	nameAuthority := keeper.GetNameAuthority(ctx, name)
+
+	bz, err2 := json.MarshalIndent(nameAuthority, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
+}
+
+func lookupWRN(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	wrn := strings.Join(path, "/")
+
+	if !keeper.HasNameRecord(ctx, wrn) {
+		return nil, sdk.ErrUnknownRequest("WRN not found.")
+	}
+
+	nameRecord := keeper.GetNameRecord(ctx, wrn)
+
+	bz, err2 := json.MarshalIndent(nameRecord, "", "  ")
+	if err2 != nil {
+		panic("Could not marshal result to JSON.")
+	}
+
+	return bz, nil
 }
 
 // nolint: unparam
@@ -108,7 +152,7 @@ func resolveName(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 func queryRecordsByBond(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
 
 	id := bond.ID(strings.Join(path, "/"))
-	records := keeper.RecordKeeper.QueryRecordsByBond(ctx, id)
+	records := keeper.recordKeeper.QueryRecordsByBond(ctx, id)
 
 	bz, err2 := json.MarshalIndent(records, "", "  ")
 	if err2 != nil {
@@ -122,6 +166,16 @@ func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keep
 	params := keeper.GetParams(ctx)
 
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, params)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
+}
+
+func queryBalance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	balances := keeper.GetModuleBalances(ctx)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, balances)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

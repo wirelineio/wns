@@ -7,6 +7,7 @@ package gql
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -29,38 +30,14 @@ const DefaultLogNumLines = 50
 // MaxLogNumLines is the max number of log lines that can be tailed.
 const MaxLogNumLines = 1000
 
-// WnsTypeProtocol => Protocol.
-const WnsTypeProtocol = "wrn:protocol"
-
-// WnsTypeBot => Bot.
-const WnsTypeBot = "wrn:bot"
-
-// WnsTypePad => Pad.
-const WnsTypePad = "wrn:pad"
-
-// WrnTypeReference => Reference.
-const WrnTypeReference = "wrn:reference"
-
-// BigUInt represents a 64-bit unsigned integer.
-type BigUInt uint64
-
 // Resolver is the GQL query resolver.
 type Resolver struct {
 	baseApp       *bam.BaseApp
 	codec         *codec.Codec
 	keeper        nameservice.Keeper
+	bondKeeper    bond.Keeper
 	accountKeeper auth.AccountKeeper
 	logFile       string
-}
-
-// Account resolver.
-func (r *Resolver) Account() AccountResolver {
-	return &accountResolver{r}
-}
-
-// Coin resolver.
-func (r *Resolver) Coin() CoinResolver {
-	return &coinResolver{r}
 }
 
 // Mutation is the entry point to tx execution.
@@ -71,25 +48,6 @@ func (r *Resolver) Mutation() MutationResolver {
 // Query is the entry point to query execution.
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
-}
-
-type accountResolver struct{ *Resolver }
-
-func (r *accountResolver) Number(ctx context.Context, obj *Account) (string, error) {
-	val := uint64(obj.Number)
-	return strconv.FormatUint(val, 10), nil
-}
-
-func (r *accountResolver) Sequence(ctx context.Context, obj *Account) (string, error) {
-	val := uint64(obj.Sequence)
-	return strconv.FormatUint(val, 10), nil
-}
-
-type coinResolver struct{ *Resolver }
-
-func (r *coinResolver) Quantity(ctx context.Context, obj *Coin) (string, error) {
-	val := uint64(obj.Quantity)
-	return strconv.FormatUint(val, 10), nil
 }
 
 type mutationResolver struct{ *Resolver }
@@ -110,9 +68,10 @@ func (r *mutationResolver) Submit(ctx context.Context, tx string) (*string, erro
 		return nil, err
 	}
 
-	txHash := res.Hash.String()
+	jsonBytes, err := json.MarshalIndent(res, "", "  ")
+	jsonResponse := string(jsonBytes)
 
-	return &txHash, nil
+	return &jsonResponse, nil
 }
 
 type queryResolver struct{ *Resolver }
@@ -132,11 +91,11 @@ func (r *queryResolver) GetRecordsByIds(ctx context.Context, ids []string) ([]*R
 }
 
 // QueryRecords filters records by K=V conditions.
-func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput) ([]*Record, error) {
+func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValueInput, all *bool) ([]*Record, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 
 	var records = r.keeper.MatchRecords(sdkContext, func(record *nameservice.Record) bool {
-		return MatchOnAttributes(record, attributes)
+		return MatchOnAttributes(record, attributes, (all != nil && *all))
 	})
 
 	return QueryRecords(ctx, r, records, attributes)
@@ -145,10 +104,6 @@ func (r *queryResolver) QueryRecords(ctx context.Context, attributes []*KeyValue
 // QueryRecords filters records by K=V conditions.
 func QueryRecords(ctx context.Context, resolver QueryResolver, records []*nameservice.Record, attributes []*KeyValueInput) ([]*Record, error) {
 	gqlResponse := []*Record{}
-
-	if RequestedLatestVersionsOnly(attributes) {
-		records = GetLatestVersions(records)
-	}
 
 	for _, record := range records {
 		gqlRecord, err := GetGQLRecord(ctx, resolver, record)
@@ -162,13 +117,13 @@ func QueryRecords(ctx context.Context, resolver QueryResolver, records []*namese
 	return gqlResponse, nil
 }
 
-// ResolveRecords resolves records by ref/WRN, with semver range support.
-func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*Record, error) {
+// ResolveNames resolves records by name/WRN.
+func (r *queryResolver) ResolveNames(ctx context.Context, names []string) (*RecordResult, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Record{}
 
-	for _, ref := range refs {
-		record := r.keeper.ResolveWRN(sdkContext, ref)
+	for _, name := range names {
+		record := r.keeper.ResolveWRN(sdkContext, name)
 		gqlRecord, err := GetGQLRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
@@ -177,7 +132,62 @@ func (r *queryResolver) ResolveRecords(ctx context.Context, refs []string) ([]*R
 		gqlResponse = append(gqlResponse, gqlRecord)
 	}
 
-	return gqlResponse, nil
+	result := RecordResult{
+		Meta: ResultMeta{
+			Height: strconv.FormatInt(r.baseApp.LastBlockHeight(), 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
+}
+
+func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (*AuthorityResult, error) {
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*AuthorityRecord{}
+
+	for _, name := range names {
+		record := r.keeper.GetNameAuthority(sdkContext, name)
+		gqlRecord, err := GetGQLNameAuthorityRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := AuthorityResult{
+		Meta: ResultMeta{
+			Height: strconv.FormatInt(r.baseApp.LastBlockHeight(), 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
+}
+
+func (r *queryResolver) LookupNames(ctx context.Context, names []string) (*NameResult, error) {
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*NameRecord{}
+
+	for _, name := range names {
+		record := r.keeper.GetNameRecord(sdkContext, name)
+		gqlRecord, err := GetGQLNameRecord(ctx, r, record)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlRecord)
+	}
+
+	result := NameResult{
+		Meta: ResultMeta{
+			Height: strconv.FormatInt(r.baseApp.LastBlockHeight(), 10),
+		},
+		Records: gqlResponse,
+	}
+
+	return &result, nil
 }
 
 // GetLogs tails the log file.
@@ -279,8 +289,8 @@ func (r *queryResolver) GetAccount(ctx context.Context, address string) (*Accoun
 		pubKey = &pubKeyStr
 	}
 
-	accNum := BigUInt(account.GetAccountNumber())
-	seq := BigUInt(account.GetSequence())
+	accNum := strconv.FormatUint(account.GetAccountNumber(), 10)
+	seq := strconv.FormatUint(account.GetSequence(), 10)
 
 	return &Account{
 		Address:  address,
@@ -323,8 +333,8 @@ func (r *queryResolver) GetBond(ctx context.Context, id string) (*Bond, error) {
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 
 	dbID := bond.ID(id)
-	if r.keeper.BondKeeper.HasBond(sdkContext, dbID) {
-		bondObj := r.keeper.BondKeeper.GetBond(sdkContext, dbID)
+	if r.bondKeeper.HasBond(sdkContext, dbID) {
+		bondObj := r.bondKeeper.GetBond(sdkContext, dbID)
 		return getGQLBond(ctx, r, &bondObj)
 	}
 
@@ -335,7 +345,7 @@ func (r *queryResolver) QueryBonds(ctx context.Context, attributes []*KeyValueIn
 	sdkContext := r.baseApp.NewContext(true, abci.Header{})
 	gqlResponse := []*Bond{}
 
-	var bonds = r.keeper.BondKeeper.MatchBonds(sdkContext, func(bondObj *bond.Bond) bool {
+	var bonds = r.bondKeeper.MatchBonds(sdkContext, func(bondObj *bond.Bond) bool {
 		return matchBondOnAttributes(bondObj, attributes)
 	})
 

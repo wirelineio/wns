@@ -27,14 +27,63 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	nameserviceQueryCmd.AddCommand(client.GetCommands(
-		GetCmdList(storeKey, cdc),
-		GetCmdGetResource(storeKey, cdc),
+		GetCmdWhoIs(storeKey, cdc),
+		GetCmdLookupWRN(storeKey, cdc),
 		GetCmdNames(storeKey, cdc),
 		GetCmdResolve(storeKey, cdc),
+		GetCmdList(storeKey, cdc),
+		GetCmdGetResource(storeKey, cdc),
 		GetCmdQueryByBond(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
+		GetCmdBalance(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
+}
+
+// GetCmdWhoIs queries a whois info for a name.
+func GetCmdWhoIs(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "whois [name]",
+		Short: "Get name owner info.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			name := args[0]
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/whois/%s", queryRoute, name), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetCmdLookupWRN queries naming info for a WRN.
+func GetCmdLookupWRN(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "lookup [wrn]",
+		Short: "Get naming info for WRN.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			wrn := args[0]
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lookup/%s", queryRoute, wrn), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
 }
 
 // GetCmdList queries all records.
@@ -71,7 +120,6 @@ func GetCmdGetResource(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			id := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/get/%s", queryRoute, id), nil)
 			if err != nil {
 				return err
@@ -119,7 +167,6 @@ func GetCmdResolve(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			wrn := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", queryRoute, wrn), nil)
 			if err != nil {
 				return err
@@ -143,7 +190,6 @@ func GetCmdQueryByBond(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			bondID := args[0]
-
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/query-by-bond/%s", queryRoute, bondID), nil)
 			if err != nil {
 				return err
@@ -183,6 +229,29 @@ $ %s query nameservice params
 			var params types.Params
 			cdc.MustUnmarshalJSON(bz, &params)
 			return cliCtx.PrintOutput(params)
+		},
+	}
+}
+
+// GetCmdBalance queries the bond module account balance.
+func GetCmdBalance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "balance",
+		Short: "Get record rent module account balance.",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/balance", queryRoute), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
 		},
 	}
 }
