@@ -12,7 +12,7 @@ WNS
 * GQL API: https://wns1.kube.moon.dxos.network/api
 * GQL Console: https://wns1.kube.moon.dxos.network/console
 * RPC Endpoint: tcp://wns1.kube.moon.dxos.network:26657
-
+* Faucet GQL API: https://faucet.kube.moon.dxos.network/api
 
 ## Working with the Devnet
 
