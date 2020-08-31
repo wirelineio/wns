@@ -18,9 +18,9 @@ type MsgCreateBond struct {
 }
 
 // NewMsgCreateBond is the constructor function for MsgCreateBond.
-func NewMsgCreateBond(denom string, amount int64, signer sdk.AccAddress) MsgCreateBond {
+func NewMsgCreateBond(coins sdk.Coins, signer sdk.AccAddress) MsgCreateBond {
 	return MsgCreateBond{
-		Coins:  sdk.NewCoins(sdk.NewInt64Coin(denom, amount)),
+		Coins:  coins,
 		Signer: signer,
 	}
 }

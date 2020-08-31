@@ -52,7 +52,7 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgCreateBond(coin.Denom, coin.Amount.Int64(), cliCtx.GetFromAddress())
+			msg := types.NewMsgCreateBond(sdk.NewCoins(coin), cliCtx.GetFromAddress())
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
