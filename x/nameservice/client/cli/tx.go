@@ -43,6 +43,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdReassociateRecords(cdc),
 
 		GetCmdReserveName(cdc),
+		GetCmdSetAuthorityBond(cdc),
 		GetCmdSetName(cdc),
 		GetCmdDeleteName(cdc),
 	)...)
@@ -235,6 +236,30 @@ func GetCmdReserveName(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().String("owner", "", "Owner address, if creating a sub-authority.")
+
+	return cmd
+}
+
+// GetCmdSetAuthorityBond is the CLI command for associating a bond with an authority.
+func GetCmdSetAuthorityBond(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "authority-bond [name] [bond-id]",
+		Short: "Associate authority with bond.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			msg := types.NewMsgSetAuthorityBond(args[0], args[1], cliCtx.GetFromAddress())
+			err := msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 
 	return cmd
 }

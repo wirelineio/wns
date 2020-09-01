@@ -64,11 +64,30 @@ func (k Keeper) NameAuctionMinimumBid(ctx sdk.Context) (res string) {
 	return
 }
 
+func (k Keeper) AuthorityRent(ctx sdk.Context) (res string) {
+	k.paramstore.Get(ctx, types.KeyAuthorityRent, &res)
+	return
+}
+
+func (k Keeper) AuthorityExpiryTime(ctx sdk.Context) (res time.Duration) {
+	k.paramstore.Get(ctx, types.KeyAuthorityExpiryTime, &res)
+	return
+}
+
+func (k Keeper) AuthorityGracePeriod(ctx sdk.Context) (res time.Duration) {
+	k.paramstore.Get(ctx, types.KeyAuthorityGracePeriod, &res)
+	return
+}
+
 // GetParams - Get all parameteras as types.Params.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
 		k.RecordRent(ctx),
 		k.RecordExpiryTime(ctx),
+
+		k.AuthorityRent(ctx),
+		k.AuthorityExpiryTime(ctx),
+		k.AuthorityGracePeriod(ctx),
 
 		k.NameAuctionsEnabled(ctx),
 		k.NameAuctionCommitsDuration(ctx),
