@@ -213,6 +213,10 @@ type NameAuthority struct {
 	Status AutorityStatus `json:"status"`
 
 	AuctionID auction.ID `json:"auctionID"`
+
+	BondID bond.ID `json:"bondID"`
+
+	ExpiryTime time.Time `json:"expiryTime,omitempty"`
 }
 
 // NameRecordEntry is a naming record entry for a WRN.

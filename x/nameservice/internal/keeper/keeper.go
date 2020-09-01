@@ -39,8 +39,14 @@ var PrefixBlockChangesetIndex = []byte{0x04}
 // PrefixAuctionToAuthorityNameIndex is the prefix for the auction ID -> authority name index.
 var PrefixAuctionToAuthorityNameIndex = []byte{0x05}
 
+// PrefixBondIDToAuthoritiesIndex is the prefix for the Bond ID -> [Authority] index.
+var PrefixBondIDToAuthoritiesIndex = []byte{0x06}
+
 // PrefixExpiryTimeToRecordsIndex is the prefix for the Expiry Time -> [Record] index.
 var PrefixExpiryTimeToRecordsIndex = []byte{0x10}
+
+// PrefixExpiryTimeToAuthoritiesIndex is the prefix for the Expiry Time -> [Authority] index.
+var PrefixExpiryTimeToAuthoritiesIndex = []byte{0x11}
 
 // KeySyncStatus is the key for the sync status record.
 // Only used by WNS lite but defined here to prevent conflicts with existing prefixes.
@@ -227,6 +233,20 @@ func (k RecordKeeper) ModuleName() string {
 func (k RecordKeeper) UsesBond(ctx sdk.Context, bondID bond.ID) bool {
 	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
 	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
+	defer itr.Close()
+	return itr.Valid()
+}
+
+func bondUsedInRecord(store sdk.KVStore, bondID bond.ID) bool {
+	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
+	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
+	defer itr.Close()
+	return itr.Valid()
+}
+
+func bondUsedInAuthority(store sdk.KVStore, bondID bond.ID) bool {
+	bondIDPrefix := append(PrefixBondIDToRecordsIndex, []byte(bondID)...)
 	itr := sdk.KVStorePrefixIterator(store, bondIDPrefix)
 	defer itr.Close()
 	return itr.Valid()

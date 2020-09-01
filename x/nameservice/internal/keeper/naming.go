@@ -5,18 +5,25 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"strings"
+
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/auction"
+	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice/internal/helpers"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
+
+// NoExpiry => really long duration (used to indicate no-expiry).
+const NoExpiry = time.Hour * 24 * 365 * 100
 
 func GetCIDToNamesIndexKey(id types.ID) []byte {
 	return append(PrefixCIDToNamesIndex, []byte(id)...)
@@ -265,6 +272,12 @@ func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
 			authority.OwnerAddress = auctionObj.WinnerAddress
 			authority.Status = types.AuthorityActive
 
+			// Reset bond ID if required, as owner has changed.
+			if authority.BondID != "" {
+				RemoveBondToAuthorityIndexEntry(store, authority.BondID, name)
+				authority.BondID = ""
+			}
+
 			ctx.Logger().Info(fmt.Sprintf("Winner selected, marking authority as active: %s", name))
 		} else {
 			// Mark as expired.
@@ -310,6 +323,68 @@ func (k Keeper) ProcessReserveAuthority(ctx sdk.Context, msg types.MsgReserveAut
 	return name, nil
 }
 
+// ProcessSetAuthorityBond sets a bond on an authority.
+func (k Keeper) ProcessSetAuthorityBond(ctx sdk.Context, msg types.MsgSetAuthorityBond) (string, sdk.Error) {
+	name := msg.Name
+	signer := msg.Signer
+
+	authority := k.GetNameAuthority(ctx, name)
+	if authority == nil {
+		return "", sdk.ErrInternal("Name authority not found.")
+	}
+
+	if authority.OwnerAddress != signer.String() {
+		return "", sdk.ErrUnauthorized("Access denied.")
+	}
+
+	if !k.bondKeeper.HasBond(ctx, msg.BondID) {
+		return "", sdk.ErrInternal("Bond not found.")
+	}
+
+	bond := k.bondKeeper.GetBond(ctx, msg.BondID)
+	if bond.Owner != signer.String() {
+		return "", sdk.ErrUnauthorized("Bond owner mismatch.")
+	}
+
+	// No-op if bond hasn't changed.
+	if bond.ID == msg.BondID {
+		return name, nil
+	}
+
+	// Remove old bond ID mapping, if any.
+	if authority.BondID != "" {
+		k.RemoveBondToAuthorityIndexEntry(ctx, authority.BondID, name)
+	}
+
+	// Update bond ID for authority.
+	authority.BondID = bond.ID
+	k.SetNameAuthority(ctx, name, *authority)
+
+	// Add new bond ID mapping.
+	k.AddBondToAuthorityIndexEntry(ctx, authority.BondID, name)
+
+	return name, nil
+}
+
+func getBondIDToAuthoritiesIndexKey(bondID bond.ID, name string) []byte {
+	return append(append(PrefixBondIDToAuthoritiesIndex, []byte(bondID)...), []byte(name)...)
+}
+
+// AddBondToAuthorityIndexEntry adds the Bond ID -> [Authority] index entry.
+func (k Keeper) AddBondToAuthorityIndexEntry(ctx sdk.Context, bondID bond.ID, name string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(getBondIDToAuthoritiesIndexKey(bondID, name), []byte{})
+}
+
+// RemoveBondToAuthorityIndexEntry removes the Bond ID -> [Authority] index entry.
+func (k Keeper) RemoveBondToAuthorityIndexEntry(ctx sdk.Context, bondID bond.ID, name string) {
+	RemoveBondToAuthorityIndexEntry(ctx.KVStore(k.storeKey), bondID, name)
+}
+
+func RemoveBondToAuthorityIndexEntry(store sdk.KVStore, bondID bond.ID, name string) {
+	store.Delete(getBondIDToAuthoritiesIndexKey(bondID, name))
+}
+
 func (k Keeper) AddAuctionToAuthorityMapping(ctx sdk.Context, auctionID auction.ID, name string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetAuctionToAuthorityIndexKey(auctionID), k.cdc.MustMarshalBinaryBare(name))
@@ -353,8 +428,10 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 	}
 
 	authority := types.NameAuthority{
-		Height:       ctx.BlockHeight(),
+		Height: ctx.BlockHeight(),
+
 		OwnerAddress: owner.String(),
+		BondID:       bond.ID(""),
 
 		// PubKey is only set on first tx from the account, so it might be empty.
 		// In that case, it's set later during a "set WRN -> CID" Tx.
@@ -362,6 +439,9 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 
 		Status:    types.AuthorityActive,
 		AuctionID: auction.ID(""),
+
+		// Grace period to set bond (assume no auction for now).
+		ExpiryTime: time.Now().Add(k.AuthorityGracePeriod(ctx)),
 	}
 
 	// Create auction if root authority and name auctions are enabled.
@@ -369,6 +449,12 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		// If auctions are enabled, clear out owner fields. They will be set after a winner is picked.
 		authority.OwnerAddress = ""
 		authority.OwnerPublicKey = ""
+
+		// Reset bond ID if required.
+		if authority.BondID != "" {
+			k.RemoveBondToAuthorityIndexEntry(ctx, authority.BondID, name)
+			authority.BondID = ""
+		}
 
 		commitFee, err := sdk.ParseCoin(k.NameAuctionCommitFee(ctx))
 		if err != nil {
@@ -385,14 +471,16 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 			return sdk.ErrInvalidCoins("Invalid name auction minimum bid.")
 		}
 
-		// Create an auction.
-		msg := auction.NewMsgCreateAuction(auction.Params{
+		params := auction.Params{
 			CommitsDuration: k.NameAuctionCommitsDuration(ctx),
 			RevealsDuration: k.NameAuctionRevealsDuration(ctx),
 			CommitFee:       commitFee,
 			RevealFee:       revealFee,
 			MinimumBid:      minimumBid,
-		}, owner)
+		}
+
+		// Create an auction.
+		msg := auction.NewMsgCreateAuction(params, owner)
 
 		// TODO(ashwin): Perhaps consume extra gas for auction creation.
 		auction, sdkErr := k.auctionKeeper.CreateAuction(ctx, msg)
@@ -405,9 +493,11 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 
 		authority.Status = types.AuthorityUnderAuction
 		authority.AuctionID = auction.ID
+		authority.ExpiryTime = auction.RevealsEndTime.Add(k.AuthorityGracePeriod(ctx))
 	}
 
 	k.SetNameAuthority(ctx, name, authority)
+	k.InsertAuthorityExpiryQueue(ctx, name, authority.ExpiryTime)
 
 	return nil
 }
@@ -530,4 +620,127 @@ func (k Keeper) ProcessDeleteName(ctx sdk.Context, msg types.MsgDeleteName) sdk.
 	k.SetNameRecord(ctx, msg.WRN, "")
 
 	return nil
+}
+
+func getAuthorityExpiryQueueTimeKey(timestamp time.Time) []byte {
+	timeBytes := sdk.FormatTimeBytes(timestamp)
+	return append(PrefixExpiryTimeToAuthoritiesIndex, timeBytes...)
+}
+
+func (k Keeper) InsertAuthorityExpiryQueue(ctx sdk.Context, name string, expiryTime time.Time) {
+	timeSlice := k.GetAuthorityExpiryQueueTimeSlice(ctx, expiryTime)
+	timeSlice = append(timeSlice, name)
+	k.SetAuthorityExpiryQueueTimeSlice(ctx, expiryTime, timeSlice)
+}
+
+func (k Keeper) GetAuthorityExpiryQueueTimeSlice(ctx sdk.Context, timestamp time.Time) (names []string) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(getAuthorityExpiryQueueTimeKey(timestamp))
+	if bz == nil {
+		return []string{}
+	}
+
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &names)
+	return names
+}
+
+func (k Keeper) SetAuthorityExpiryQueueTimeSlice(ctx sdk.Context, timestamp time.Time, names []string) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinaryLengthPrefixed(names)
+	store.Set(getAuthorityExpiryQueueTimeKey(timestamp), bz)
+}
+
+// ProcessAuthorityExpiryQueue tries to renew expiring authorities (by collecting rent) else marks them as expired.
+func (k Keeper) ProcessAuthorityExpiryQueue(ctx sdk.Context) {
+	names := k.GetAllExpiredAuthorities(ctx, ctx.BlockHeader().Time)
+	for _, name := range names {
+		authority := k.GetNameAuthority(ctx, name)
+
+		// If authority doesn't have an associated bond or if bond no longer exists, mark it expired.
+		if authority.BondID == "" || !k.bondKeeper.HasBond(ctx, authority.BondID) {
+			authority.Status = types.AuthorityExpired
+			k.SetNameAuthority(ctx, name, *authority)
+			k.DeleteAuthorityExpiryQueue(ctx, name, *authority)
+
+			return
+		}
+
+		// Try to renew the authority by taking rent.
+		k.TryTakeAuthorityRent(ctx, name, *authority)
+	}
+}
+
+// DeleteAuthorityExpiryQueueTimeSlice deletes a specific authority expiry queue timeslice.
+func (k Keeper) DeleteAuthorityExpiryQueueTimeSlice(ctx sdk.Context, timestamp time.Time) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(getAuthorityExpiryQueueTimeKey(timestamp))
+}
+
+// DeleteAuthorityExpiryQueue deletes a record CID from the record expiry queue.
+func (k Keeper) DeleteAuthorityExpiryQueue(ctx sdk.Context, name string, authority types.NameAuthority) {
+	timeSlice := k.GetAuthorityExpiryQueueTimeSlice(ctx, authority.ExpiryTime)
+	newTimeSlice := []string{}
+
+	for _, existingName := range timeSlice {
+		if !bytes.Equal([]byte(existingName), []byte(name)) {
+			newTimeSlice = append(newTimeSlice, existingName)
+		}
+	}
+
+	if len(newTimeSlice) == 0 {
+		k.DeleteAuthorityExpiryQueueTimeSlice(ctx, authority.ExpiryTime)
+	} else {
+		k.SetAuthorityExpiryQueueTimeSlice(ctx, authority.ExpiryTime, newTimeSlice)
+	}
+}
+
+// GetAllExpiredAuthorities returns a concatenated list of all the timeslices before currTime.
+func (k Keeper) GetAllExpiredAuthorities(ctx sdk.Context, currTime time.Time) (expiredAuthorityNames []string) {
+	// Gets an iterator for all timeslices from time 0 until the current block header time.
+	itr := k.AuthorityExpiryQueueIterator(ctx, ctx.BlockHeader().Time)
+	defer itr.Close()
+
+	for ; itr.Valid(); itr.Next() {
+		timeslice := []string{}
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(itr.Value(), &timeslice)
+		expiredAuthorityNames = append(expiredAuthorityNames, timeslice...)
+	}
+
+	return expiredAuthorityNames
+}
+
+// AuthorityExpiryQueueIterator returns all the authority expiry queue timeslices from time 0 until endTime.
+func (k Keeper) AuthorityExpiryQueueIterator(ctx sdk.Context, endTime time.Time) sdk.Iterator {
+	store := ctx.KVStore(k.storeKey)
+	rangeEndBytes := sdk.InclusiveEndBytes(getAuthorityExpiryQueueTimeKey(endTime))
+	return store.Iterator(PrefixExpiryTimeToAuthoritiesIndex, rangeEndBytes)
+}
+
+// TryTakeAuthorityRent tries to take rent from the authority bond.
+func (k Keeper) TryTakeAuthorityRent(ctx sdk.Context, name string, authority types.NameAuthority) {
+	rent, err := sdk.ParseCoins(k.AuthorityRent(ctx))
+	if err != nil {
+		panic("Invalid authority rent.")
+	}
+
+	sdkErr := k.bondKeeper.TransferCoinsToModuleAccount(ctx, authority.BondID, types.AuthorityRentModuleAccountName, rent)
+	if sdkErr != nil {
+		// Insufficient funds, mark authority as expired.
+		authority.Status = types.AuthorityExpired
+		k.SetNameAuthority(ctx, name, authority)
+		k.DeleteAuthorityExpiryQueue(ctx, name, authority)
+
+		return
+	}
+
+	// Delete old expiry queue entry, create new one.
+	k.DeleteAuthorityExpiryQueue(ctx, name, authority)
+	authority.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordExpiryTime(ctx))
+	k.InsertAuthorityExpiryQueue(ctx, name, authority.ExpiryTime)
+
+	// Save authority.
+	authority.Status = types.AuthorityActive
+	k.SetNameAuthority(ctx, name, authority)
+	k.AddBondToAuthorityIndexEntry(ctx, authority.BondID, name)
 }

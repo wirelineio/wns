@@ -196,3 +196,53 @@ func (msg MsgReassociateRecords) GetSignBytes() []byte {
 func (msg MsgReassociateRecords) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Signer}
 }
+
+// MsgSetAuthorityBond defines a message to set/update the bond for an authority.
+type MsgSetAuthorityBond struct {
+	Name   string         `json:"name"`
+	BondID bond.ID        `json:"bondId"`
+	Signer sdk.AccAddress `json:"signer"`
+}
+
+// NewMsgSetAuthorityBond is the constructor function for MsgSetAuthorityBond.
+func NewMsgSetAuthorityBond(name string, bondID string, signer sdk.AccAddress) MsgSetAuthorityBond {
+	return MsgSetAuthorityBond{
+		Name:   name,
+		BondID: bond.ID(bondID),
+		Signer: signer,
+	}
+}
+
+// Route Implements Msg.
+func (msg MsgSetAuthorityBond) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgSetAuthorityBond) Type() string { return "authority-bond" }
+
+// ValidateBasic Implements Msg.
+func (msg MsgSetAuthorityBond) ValidateBasic() sdk.Error {
+
+	if msg.Name == "" {
+		return sdk.ErrInternal("Name is required.")
+	}
+
+	if msg.BondID == "" {
+		return sdk.ErrInternal("Bond ID is required.")
+	}
+
+	if msg.Signer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Signer.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgSetAuthorityBond) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners Implements Msg.
+func (msg MsgSetAuthorityBond) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Signer}
+}

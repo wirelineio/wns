@@ -24,6 +24,8 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgDeleteName(ctx, keeper, msg)
 		case types.MsgReserveAuthority:
 			return handleMsgReserveAuthority(ctx, keeper, msg)
+		case types.MsgSetAuthorityBond:
+			return handleMsgSetAuthorityBond(ctx, keeper, msg)
 		case types.MsgAssociateBond:
 			return handleMsgAssociateBond(ctx, keeper, msg)
 		case types.MsgDissociateBond:
@@ -122,6 +124,19 @@ func handleMsgReassociateRecords(ctx sdk.Context, keeper Keeper, msg types.MsgRe
 // Handle MsgReserveName.
 func handleMsgReserveAuthority(ctx sdk.Context, keeper Keeper, msg types.MsgReserveAuthority) sdk.Result {
 	name, err := keeper.ProcessReserveAuthority(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{
+		Data:   []byte(name),
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handle MsgSetAuthorityBond.
+func handleMsgSetAuthorityBond(ctx sdk.Context, keeper Keeper, msg types.MsgSetAuthorityBond) sdk.Result {
+	name, err := keeper.ProcessSetAuthorityBond(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
