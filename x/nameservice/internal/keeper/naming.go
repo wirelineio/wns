@@ -172,6 +172,12 @@ func GetNameRecord(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Nam
 
 // GetNameRecord - gets a name record from the store.
 func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) *types.NameRecord {
+	_, _, authority, err := k.getAuthority(ctx, wrn)
+	if err != nil || authority.Status != types.AuthorityActive {
+		// If authority is not active (or any other error), lookup fails.
+		return nil
+	}
+
 	return GetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn)
 }
 
@@ -215,6 +221,12 @@ func (k Keeper) ListNameRecords(ctx sdk.Context) map[string]types.NameRecord {
 
 // ResolveWRN resolves a WRN to a record.
 func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
+	_, _, authority, err := k.getAuthority(ctx, wrn)
+	if err != nil || authority.Status != types.AuthorityActive {
+		// If authority is not active (or any other error), resolution fails.
+		return nil
+	}
+
 	return ResolveWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
 }
 
@@ -277,6 +289,10 @@ func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
 				RemoveBondToAuthorityIndexEntry(store, authority.BondID, name)
 				authority.BondID = ""
 			}
+
+			// Update height for updated/changed authority (owner).
+			// Can be used to check if names are older than the authority itself (stale names).
+			authority.Height = ctx.BlockHeight()
 
 			ctx.Logger().Info(fmt.Sprintf("Winner selected, marking authority as active: %s", name))
 		} else {
@@ -547,22 +563,30 @@ func getAuthorityPubKey(pubKey crypto.PubKey) string {
 	return ""
 }
 
-func (k Keeper) checkWRNAccess(ctx sdk.Context, signer sdk.AccAddress, inputWRN string) sdk.Error {
-	parsedWRN, err := url.Parse(inputWRN)
+func (k Keeper) getAuthority(ctx sdk.Context, wrn string) (string, *url.URL, *types.NameAuthority, sdk.Error) {
+	parsedWRN, err := url.Parse(wrn)
 	if err != nil {
-		return sdk.ErrInternal("Invalid WRN.")
+		return "", nil, nil, sdk.ErrInternal("Invalid WRN.")
 	}
 
 	name := parsedWRN.Host
-	formattedWRN := fmt.Sprintf("wrn://%s%s", name, parsedWRN.RequestURI())
-	if formattedWRN != inputWRN {
-		return sdk.ErrInternal("Invalid WRN.")
-	}
-
-	// Check authority record.
 	authority := k.GetNameAuthority(ctx, name)
 	if authority == nil {
-		return sdk.ErrInternal("Name authority not found.")
+		return name, nil, nil, sdk.ErrInternal("Name authority not found.")
+	}
+
+	return name, parsedWRN, authority, nil
+}
+
+func (k Keeper) checkWRNAccess(ctx sdk.Context, signer sdk.AccAddress, wrn string) sdk.Error {
+	name, parsedWRN, authority, err := k.getAuthority(ctx, wrn)
+	if err != nil {
+		return err
+	}
+
+	formattedWRN := fmt.Sprintf("wrn://%s%s", name, parsedWRN.RequestURI())
+	if formattedWRN != wrn {
+		return sdk.ErrInternal("Invalid WRN.")
 	}
 
 	if authority.OwnerAddress != signer.String() {
@@ -571,6 +595,10 @@ func (k Keeper) checkWRNAccess(ctx sdk.Context, signer sdk.AccAddress, inputWRN 
 
 	if authority.Status != types.AuthorityActive {
 		return sdk.ErrUnauthorized("Authority is not active.")
+	}
+
+	if authority.BondID == "" {
+		return sdk.ErrUnauthorized("Authority bond not found.")
 	}
 
 	if authority.OwnerPublicKey == "" {
