@@ -85,7 +85,9 @@ func (k Keeper) SetNameRecord(wrn string, nameRecord ns.NameRecord) {
 
 // ResolveWRN resolves a WRN to a record.
 func (k Keeper) ResolveWRN(wrn string) *ns.Record {
-	return ns.ResolveWRN(k.store, k.codec, wrn)
+	record, _ := ns.ResolveWRN(k.store, k.codec, wrn)
+
+	return record
 }
 
 // GetNameAuthority get the name authority record for an authority name.

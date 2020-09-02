@@ -521,6 +521,9 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 		auction.WinnerPrice = secondHighestBid.BidAmount
 
 		ctx.Logger().Info(fmt.Sprintf("Auction %s winner %s.", auction.ID, auction.WinnerAddress))
+		ctx.Logger().Info(fmt.Sprintf("Auction %s winner bid %s.", auction.ID, auction.WinnerBid.String()))
+		ctx.Logger().Info(fmt.Sprintf("Auction %s winner price %s.", auction.ID, auction.WinnerPrice.String()))
+
 	} else {
 		ctx.Logger().Info(fmt.Sprintf("Auction %s has no valid revealed bids (no winner).", auction.ID))
 	}

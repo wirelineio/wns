@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	ModuleName                  = types.ModuleName
-	RecordRentModuleAccountName = types.RecordRentModuleAccountName
-	RouterKey                   = types.RouterKey
-	StoreKey                    = types.StoreKey
+	ModuleName                     = types.ModuleName
+	RecordRentModuleAccountName    = types.RecordRentModuleAccountName
+	AuthorityRentModuleAccountName = types.AuthorityRentModuleAccountName
+	RouterKey                      = types.RouterKey
+	StoreKey                       = types.StoreKey
 )
 
 var (
