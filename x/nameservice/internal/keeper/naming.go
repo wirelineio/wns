@@ -178,7 +178,14 @@ func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) *types.NameRecord {
 		return nil
 	}
 
-	return GetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn)
+	nameRecord := GetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn)
+	// Name lookup should fail if the name record is stale.
+	// i.e. authority was registered later than the name.
+	if authority.Height > nameRecord.Height {
+		return nil
+	}
+
+	return nameRecord
 }
 
 // ListNameAuthorityRecords - get all name authority records.
@@ -227,11 +234,18 @@ func (k Keeper) ResolveWRN(ctx sdk.Context, wrn string) *types.Record {
 		return nil
 	}
 
-	return ResolveWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
+	// Name should not resolve if it's stale.
+	// i.e. authority was registered later than the name.
+	record, nameRecord := ResolveWRN(ctx.KVStore(k.storeKey), k.cdc, wrn)
+	if authority.Height > nameRecord.Height {
+		return nil
+	}
+
+	return record
 }
 
 // ResolveWRN resolves a WRN to a record.
-func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record {
+func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) (*types.Record, *types.NameRecord) {
 	nameKey := GetNameRecordIndexKey(wrn)
 
 	if store.Has(nameKey) {
@@ -241,14 +255,14 @@ func ResolveWRN(store sdk.KVStore, codec *amino.Codec, wrn string) *types.Record
 
 		recordExists := HasRecord(store, obj.ID)
 		if !recordExists || obj.ID == "" {
-			return nil
+			return nil, &obj
 		}
 
 		record := GetRecord(store, codec, obj.ID)
-		return &record
+		return &record, &obj
 	}
 
-	return nil
+	return nil, nil
 }
 
 // UsesAuction returns true if the auction is used for an name authority.
@@ -363,7 +377,7 @@ func (k Keeper) ProcessSetAuthorityBond(ctx sdk.Context, msg types.MsgSetAuthori
 	}
 
 	// No-op if bond hasn't changed.
-	if bond.ID == msg.BondID {
+	if authority.BondID == msg.BondID {
 		return name, nil
 	}
 
@@ -691,6 +705,8 @@ func (k Keeper) ProcessAuthorityExpiryQueue(ctx sdk.Context) {
 			k.SetNameAuthority(ctx, name, *authority)
 			k.DeleteAuthorityExpiryQueue(ctx, name, *authority)
 
+			ctx.Logger().Info(fmt.Sprintf("Marking authority expired as no bond present: %s", name))
+
 			return
 		}
 
@@ -747,6 +763,8 @@ func (k Keeper) AuthorityExpiryQueueIterator(ctx sdk.Context, endTime time.Time)
 
 // TryTakeAuthorityRent tries to take rent from the authority bond.
 func (k Keeper) TryTakeAuthorityRent(ctx sdk.Context, name string, authority types.NameAuthority) {
+	ctx.Logger().Info(fmt.Sprintf("Trying to take rent for authority: %s", name))
+
 	rent, err := sdk.ParseCoins(k.AuthorityRent(ctx))
 	if err != nil {
 		panic("Invalid authority rent.")
@@ -759,16 +777,20 @@ func (k Keeper) TryTakeAuthorityRent(ctx sdk.Context, name string, authority typ
 		k.SetNameAuthority(ctx, name, authority)
 		k.DeleteAuthorityExpiryQueue(ctx, name, authority)
 
+		ctx.Logger().Info(fmt.Sprintf("Insufficient funds in owner account to pay authority rent, marking as expired: %s", name))
+
 		return
 	}
 
 	// Delete old expiry queue entry, create new one.
 	k.DeleteAuthorityExpiryQueue(ctx, name, authority)
-	authority.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordExpiryTime(ctx))
+	authority.ExpiryTime = ctx.BlockHeader().Time.Add(k.AuthorityExpiryTime(ctx))
 	k.InsertAuthorityExpiryQueue(ctx, name, authority.ExpiryTime)
 
 	// Save authority.
 	authority.Status = types.AuthorityActive
 	k.SetNameAuthority(ctx, name, authority)
 	k.AddBondToAuthorityIndexEntry(ctx, authority.BondID, name)
+
+	ctx.Logger().Info(fmt.Sprintf("Authority rent paid successfully: %s", name))
 }

@@ -396,7 +396,7 @@ func recordObjToRecord(store sdk.KVStore, codec *amino.Codec, obj types.RecordOb
 // GetModuleBalances gets the nameservice module account(s) balances.
 func (k Keeper) GetModuleBalances(ctx sdk.Context) map[string]sdk.Coins {
 	balances := map[string]sdk.Coins{}
-	accountNames := []string{types.RecordRentModuleAccountName}
+	accountNames := []string{types.RecordRentModuleAccountName, types.AuthorityRentModuleAccountName}
 
 	for _, accountName := range accountNames {
 		moduleAddress := k.supplyKeeper.GetModuleAddress(accountName)

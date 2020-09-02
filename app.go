@@ -79,6 +79,7 @@ var (
 		gov.ModuleName:                       {supply.Burner},
 		bond.ModuleName:                      nil,
 		ns.RecordRentModuleAccountName:       nil,
+		ns.AuthorityRentModuleAccountName:    nil,
 		auction.ModuleName:                   nil,
 		auction.AuctionBurnModuleAccountName: nil,
 	}
