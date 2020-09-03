@@ -179,6 +179,12 @@ func (k Keeper) GetNameRecord(ctx sdk.Context, wrn string) *types.NameRecord {
 	}
 
 	nameRecord := GetNameRecord(ctx.KVStore(k.storeKey), k.cdc, wrn)
+
+	// Name record may not exist.
+	if nameRecord == nil {
+		return nil
+	}
+
 	// Name lookup should fail if the name record is stale.
 	// i.e. authority was registered later than the name.
 	if authority.Height > nameRecord.Height {
@@ -475,7 +481,7 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 	}
 
 	// Create auction if root authority and name auctions are enabled.
-	if isRoot && k.NameAuctionsEnabled(ctx) {
+	if isRoot && k.AuthorityAuctionsEnabled(ctx) {
 		// If auctions are enabled, clear out owner fields. They will be set after a winner is picked.
 		authority.OwnerAddress = ""
 		authority.OwnerPublicKey = ""
@@ -486,24 +492,24 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 			authority.BondID = ""
 		}
 
-		commitFee, err := sdk.ParseCoin(k.NameAuctionCommitFee(ctx))
+		commitFee, err := sdk.ParseCoin(k.AuthorityAuctionCommitFee(ctx))
 		if err != nil {
 			return sdk.ErrInvalidCoins("Invalid name auction commit fee.")
 		}
 
-		revealFee, err := sdk.ParseCoin(k.NameAuctionRevealFee(ctx))
+		revealFee, err := sdk.ParseCoin(k.AuthorityAuctionRevealFee(ctx))
 		if err != nil {
 			return sdk.ErrInvalidCoins("Invalid name auction reveal fee.")
 		}
 
-		minimumBid, err := sdk.ParseCoin(k.NameAuctionMinimumBid(ctx))
+		minimumBid, err := sdk.ParseCoin(k.AuthorityAuctionMinimumBid(ctx))
 		if err != nil {
 			return sdk.ErrInvalidCoins("Invalid name auction minimum bid.")
 		}
 
 		params := auction.Params{
-			CommitsDuration: k.NameAuctionCommitsDuration(ctx),
-			RevealsDuration: k.NameAuctionRevealsDuration(ctx),
+			CommitsDuration: k.AuthorityAuctionCommitsDuration(ctx),
+			RevealsDuration: k.AuthorityAuctionRevealsDuration(ctx),
 			CommitFee:       commitFee,
 			RevealFee:       revealFee,
 			MinimumBid:      minimumBid,

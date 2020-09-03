@@ -30,36 +30,36 @@ func (k Keeper) RecordRent(ctx sdk.Context) (res string) {
 
 // RecordExpiryTime - get the record expiry duration.
 func (k Keeper) RecordExpiryTime(ctx sdk.Context) (res time.Duration) {
-	k.paramstore.Get(ctx, types.KeyRecordExpiryTime, &res)
+	k.paramstore.Get(ctx, types.KeyRecordRentDuration, &res)
 	return
 }
 
-func (k Keeper) NameAuctionsEnabled(ctx sdk.Context) (res bool) {
-	k.paramstore.Get(ctx, types.KeyNameAuctions, &res)
+func (k Keeper) AuthorityAuctionsEnabled(ctx sdk.Context) (res bool) {
+	k.paramstore.Get(ctx, types.KeyAuthorityAuctions, &res)
 	return
 }
 
-func (k Keeper) NameAuctionCommitsDuration(ctx sdk.Context) (res time.Duration) {
+func (k Keeper) AuthorityAuctionCommitsDuration(ctx sdk.Context) (res time.Duration) {
 	k.paramstore.Get(ctx, types.KeyCommitsDuration, &res)
 	return
 }
 
-func (k Keeper) NameAuctionRevealsDuration(ctx sdk.Context) (res time.Duration) {
+func (k Keeper) AuthorityAuctionRevealsDuration(ctx sdk.Context) (res time.Duration) {
 	k.paramstore.Get(ctx, types.KeyRevealsDuration, &res)
 	return
 }
 
-func (k Keeper) NameAuctionCommitFee(ctx sdk.Context) (res string) {
+func (k Keeper) AuthorityAuctionCommitFee(ctx sdk.Context) (res string) {
 	k.paramstore.Get(ctx, types.KeyCommitFee, &res)
 	return
 }
 
-func (k Keeper) NameAuctionRevealFee(ctx sdk.Context) (res string) {
+func (k Keeper) AuthorityAuctionRevealFee(ctx sdk.Context) (res string) {
 	k.paramstore.Get(ctx, types.KeyRevealFee, &res)
 	return
 }
 
-func (k Keeper) NameAuctionMinimumBid(ctx sdk.Context) (res string) {
+func (k Keeper) AuthorityAuctionMinimumBid(ctx sdk.Context) (res string) {
 	k.paramstore.Get(ctx, types.KeyMinimumBid, &res)
 	return
 }
@@ -70,7 +70,7 @@ func (k Keeper) AuthorityRent(ctx sdk.Context) (res string) {
 }
 
 func (k Keeper) AuthorityExpiryTime(ctx sdk.Context) (res time.Duration) {
-	k.paramstore.Get(ctx, types.KeyAuthorityExpiryTime, &res)
+	k.paramstore.Get(ctx, types.KeyAuthorityRentDuration, &res)
 	return
 }
 
@@ -89,12 +89,12 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.AuthorityExpiryTime(ctx),
 		k.AuthorityGracePeriod(ctx),
 
-		k.NameAuctionsEnabled(ctx),
-		k.NameAuctionCommitsDuration(ctx),
-		k.NameAuctionRevealsDuration(ctx),
-		k.NameAuctionCommitFee(ctx),
-		k.NameAuctionRevealFee(ctx),
-		k.NameAuctionMinimumBid(ctx),
+		k.AuthorityAuctionsEnabled(ctx),
+		k.AuthorityAuctionCommitsDuration(ctx),
+		k.AuthorityAuctionRevealsDuration(ctx),
+		k.AuthorityAuctionCommitFee(ctx),
+		k.AuthorityAuctionRevealFee(ctx),
+		k.AuthorityAuctionMinimumBid(ctx),
 	)
 }
 
