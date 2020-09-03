@@ -10,10 +10,41 @@ type Account struct {
 	Balance  []Coin  `json:"balance"`
 }
 
+type Auction struct {
+	ID             string        `json:"id"`
+	Status         string        `json:"status"`
+	OwnerAddress   string        `json:"ownerAddress"`
+	CreateTime     string        `json:"createTime"`
+	CommitsEndTime string        `json:"commitsEndTime"`
+	RevealsEndTime string        `json:"revealsEndTime"`
+	CommitFee      Coin          `json:"commitFee"`
+	RevealFee      Coin          `json:"revealFee"`
+	MinimumBid     Coin          `json:"minimumBid"`
+	WinnerAddress  string        `json:"winnerAddress"`
+	WinnerBid      Coin          `json:"winnerBid"`
+	WinnerPrice    Coin          `json:"winnerPrice"`
+	Bids           []*AuctionBid `json:"bids"`
+}
+
+type AuctionBid struct {
+	BidderAddress string `json:"bidderAddress"`
+	Status        string `json:"status"`
+	CommitHash    string `json:"commitHash"`
+	CommitTime    string `json:"commitTime"`
+	RevealTime    string `json:"revealTime"`
+	CommitFee     Coin   `json:"commitFee"`
+	RevealFee     Coin   `json:"revealFee"`
+	BidAmount     Coin   `json:"bidAmount"`
+}
+
 type AuthorityRecord struct {
-	OwnerAddress   string `json:"ownerAddress"`
-	OwnerPublicKey string `json:"ownerPublicKey"`
-	Height         string `json:"height"`
+	OwnerAddress   string   `json:"ownerAddress"`
+	OwnerPublicKey string   `json:"ownerPublicKey"`
+	Height         string   `json:"height"`
+	Status         string   `json:"status"`
+	BondID         string   `json:"bondId"`
+	ExpiryTime     string   `json:"expiryTime"`
+	Auction        *Auction `json:"auction"`
 }
 
 type AuthorityResult struct {
