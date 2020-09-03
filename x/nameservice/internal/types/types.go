@@ -219,6 +219,14 @@ type NameAuthority struct {
 	ExpiryTime time.Time `json:"expiryTime,omitempty"`
 }
 
+func (authority NameAuthority) GetBondID() string {
+	return string(authority.BondID)
+}
+
+func (authority NameAuthority) GetExpiryTime() string {
+	return string(sdk.FormatTimeBytes(authority.ExpiryTime))
+}
+
 // NameRecordEntry is a naming record entry for a WRN.
 type NameRecordEntry struct {
 	// Record ID.

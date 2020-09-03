@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 
@@ -85,7 +86,49 @@ func GetGQLNameAuthorityRecord(ctx context.Context, resolver QueryResolver, reco
 		OwnerAddress:   record.OwnerAddress,
 		OwnerPublicKey: record.OwnerPublicKey,
 		Height:         strconv.FormatInt(record.Height, 10),
+		Status:         string(record.Status),
+		BondID:         record.GetBondID(),
+		ExpiryTime:     record.GetExpiryTime(),
 	}, nil
+}
+
+func getAuctionBid(bid *auction.Bid) *AuctionBid {
+	return &AuctionBid{
+		BidderAddress: bid.BidderAddress,
+		Status:        bid.Status,
+		CommitHash:    bid.CommitHash,
+		CommitTime:    bid.GetCommitTime(),
+		RevealTime:    bid.GetRevealTime(),
+		CommitFee:     getGQLCoin(bid.CommitFee),
+		RevealFee:     getGQLCoin(bid.RevealFee),
+		BidAmount:     getGQLCoin(bid.BidAmount),
+	}
+}
+
+func GetGQLAuction(ctx context.Context, resolver QueryResolver, auction auction.Auction, bids []*auction.Bid) (*Auction, error) {
+	gqlAuction := Auction{
+		ID:             string(auction.ID),
+		Status:         auction.Status,
+		OwnerAddress:   auction.OwnerAddress,
+		CreateTime:     auction.GetCreateTime(),
+		CommitsEndTime: auction.GetCommitsEndTime(),
+		RevealsEndTime: auction.GetRevealsEndTime(),
+		CommitFee:      getGQLCoin(auction.CommitFee),
+		RevealFee:      getGQLCoin(auction.RevealFee),
+		MinimumBid:     getGQLCoin(auction.MinimumBid),
+		WinnerAddress:  auction.WinnerAddress,
+		WinnerBid:      getGQLCoin(auction.WinnerBid),
+		WinnerPrice:    getGQLCoin(auction.WinnerPrice),
+	}
+
+	auctionBids := make([]*AuctionBid, len(bids))
+	for index, entry := range bids {
+		auctionBids[index] = getAuctionBid(entry)
+	}
+
+	gqlAuction.Bids = auctionBids
+
+	return &gqlAuction, nil
 }
 
 func getReferences(ctx context.Context, resolver QueryResolver, r *nameservice.Record) ([]*Record, error) {
@@ -286,13 +329,19 @@ func MatchOnAttributes(record *nameservice.Record, attributes []*KeyValueInput, 
 	return true
 }
 
+func getGQLCoin(coin sdk.Coin) Coin {
+	gqlCoin := Coin{
+		Type:     coin.Denom,
+		Quantity: strconv.FormatInt(coin.Amount.Int64(), 10),
+	}
+
+	return gqlCoin
+}
+
 func getGQLCoins(coins sdk.Coins) []Coin {
 	gqlCoins := make([]Coin, len(coins))
 	for index, coin := range coins {
-		gqlCoins[index] = Coin{
-			Type:     coin.Denom,
-			Quantity: strconv.FormatInt(coin.Amount.Int64(), 10),
-		}
+		gqlCoins[index] = getGQLCoin(coin)
 	}
 
 	return gqlCoins

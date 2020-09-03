@@ -33,6 +33,7 @@ var (
 type (
 	ID                  = types.ID
 	Auction             = types.Auction
+	Bid                 = types.Bid
 	Keeper              = keeper.Keeper
 	AuctionUsageKeeper  = types.AuctionUsageKeeper
 	AuctionClientKeeper = keeper.AuctionClientKeeper

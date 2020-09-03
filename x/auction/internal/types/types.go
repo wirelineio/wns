@@ -100,3 +100,23 @@ func (auctionID AuctionID) Generate() string {
 	hasher.Write([]byte(str))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
+
+func (auction Auction) GetCreateTime() string {
+	return string(sdk.FormatTimeBytes(auction.CreateTime))
+}
+
+func (auction Auction) GetCommitsEndTime() string {
+	return string(sdk.FormatTimeBytes(auction.CommitsEndTime))
+}
+
+func (auction Auction) GetRevealsEndTime() string {
+	return string(sdk.FormatTimeBytes(auction.RevealsEndTime))
+}
+
+func (bid Bid) GetCommitTime() string {
+	return string(sdk.FormatTimeBytes(bid.CommitTime))
+}
+
+func (bid Bid) GetRevealTime() string {
+	return string(sdk.FormatTimeBytes(bid.RevealTime))
+}
