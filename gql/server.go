@@ -13,6 +13,7 @@ import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 
@@ -21,7 +22,13 @@ import (
 )
 
 // Server configures and starts the GQL server.
-func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, bondKeeper bond.Keeper, accountKeeper auth.AccountKeeper) {
+func Server(baseApp *bam.BaseApp,
+	cdc *codec.Codec,
+	keeper nameservice.Keeper,
+	bondKeeper bond.Keeper,
+	accountKeeper auth.AccountKeeper,
+	auctionKeeper auction.Keeper) {
+
 	if !viper.GetBool("gql-server") {
 		return
 	}
@@ -52,6 +59,7 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, b
 		keeper:        keeper,
 		bondKeeper:    bondKeeper,
 		accountKeeper: accountKeeper,
+		auctionKeeper: auctionKeeper,
 		logFile:       logFile,
 	}})))
 
@@ -62,6 +70,7 @@ func Server(baseApp *bam.BaseApp, cdc *codec.Codec, keeper nameservice.Keeper, b
 		keeper:        keeper,
 		bondKeeper:    bondKeeper,
 		accountKeeper: accountKeeper,
+		auctionKeeper: auctionKeeper,
 		logFile:       logFile,
 	}})))
 

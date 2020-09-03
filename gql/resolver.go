@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
 	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/bond"
 	"github.com/wirelineio/wns/x/nameservice"
 )
@@ -37,6 +38,7 @@ type Resolver struct {
 	keeper        nameservice.Keeper
 	bondKeeper    bond.Keeper
 	accountKeeper auth.AccountKeeper
+	auctionKeeper auction.Keeper
 	logFile       string
 }
 
@@ -148,9 +150,22 @@ func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (
 
 	for _, name := range names {
 		record := r.keeper.GetNameAuthority(sdkContext, name)
+
 		gqlRecord, err := GetGQLNameAuthorityRecord(ctx, r, record)
 		if err != nil {
 			return nil, err
+		}
+
+		if record.AuctionID != "" {
+			auction := r.auctionKeeper.GetAuction(sdkContext, record.AuctionID)
+			bids := r.auctionKeeper.GetBids(sdkContext, auction.ID)
+
+			gqlAuction, err := GetGQLAuction(ctx, r, auction, bids)
+			if err != nil {
+				return nil, err
+			}
+
+			gqlRecord.Auction = gqlAuction
 		}
 
 		gqlResponse = append(gqlResponse, gqlRecord)

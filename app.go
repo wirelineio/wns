@@ -356,7 +356,8 @@ func NewNameServiceApp(
 		}
 	}
 
-	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.bondKeeper, app.accountKeeper)
+	// Start the GQL server in a goroutine.
+	go gql.Server(app.BaseApp, app.cdc, app.nsKeeper, app.bondKeeper, app.accountKeeper, app.auctionKeeper)
 
 	return app
 }
