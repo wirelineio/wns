@@ -11,6 +11,7 @@ import (
 
 	"github.com/wirelineio/wns/cmd/wnsd-lite/sync"
 	baseGql "github.com/wirelineio/wns/gql"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -87,6 +88,18 @@ func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (
 			return nil, err
 		}
 
+		if record != nil && record.AuctionID != "" {
+			auction := r.Keeper.GetAuction(record.AuctionID)
+			bids := r.Keeper.GetBids(auction.ID)
+
+			gqlAuction, err := baseGql.GetGQLAuction(ctx, r, auction, bids)
+			if err != nil {
+				return nil, err
+			}
+
+			gqlRecord.Auction = gqlAuction
+		}
+
 		gqlResponse = append(gqlResponse, gqlRecord)
 	}
 
@@ -156,4 +169,21 @@ func (r *queryResolver) GetRecord(ctx context.Context, id string) (*baseGql.Reco
 	}
 
 	return nil, nil
+}
+
+func (r *queryResolver) GetAuctionsByIds(ctx context.Context, ids []string) ([]*baseGql.Auction, error) {
+	gqlResponse := []*baseGql.Auction{}
+
+	for _, id := range ids {
+		auctionObj := r.Keeper.GetAuction(auction.ID(id))
+		bids := r.Keeper.GetBids(auction.ID(id))
+		gqlAuction, err := baseGql.GetGQLAuction(ctx, r, auctionObj, bids)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlAuction)
+	}
+
+	return gqlResponse, nil
 }

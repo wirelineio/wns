@@ -150,6 +150,7 @@ type ComplexityRoot struct {
 		LookupAuthorities func(childComplexity int, names []string) int
 		LookupNames       func(childComplexity int, names []string) int
 		ResolveNames      func(childComplexity int, names []string) int
+		GetAuctionsByIds  func(childComplexity int, ids []string) int
 	}
 
 	Record struct {
@@ -227,6 +228,7 @@ type QueryResolver interface {
 	LookupAuthorities(ctx context.Context, names []string) (*AuthorityResult, error)
 	LookupNames(ctx context.Context, names []string) (*NameResult, error)
 	ResolveNames(ctx context.Context, names []string) (*RecordResult, error)
+	GetAuctionsByIds(ctx context.Context, ids []string) ([]*Auction, error)
 }
 
 type executableSchema struct {
@@ -760,6 +762,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.ResolveNames(childComplexity, args["names"].([]string)), true
+
+	case "Query.GetAuctionsByIds":
+		if e.complexity.Query.GetAuctionsByIds == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getAuctionsByIds_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAuctionsByIds(childComplexity, args["ids"].([]string)), true
 
 	case "Record.ID":
 		if e.complexity.Record.ID == nil {
@@ -1362,6 +1376,15 @@ type Query {
   resolveNames(
     names: [String!]
   ): RecordResult!
+
+  #
+  # Auctions API.
+  #
+
+  # Get auctions by IDs.
+  getAuctionsByIds(
+    ids: [String!]
+  ): [Auction]
 }
 
 type Mutation {
@@ -1435,6 +1458,20 @@ func (ec *executionContext) field_Query_getAccounts_args(ctx context.Context, ra
 		}
 	}
 	args["addresses"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getAuctionsByIds_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []string
+	if tmp, ok := rawArgs["ids"]; ok {
+		arg0, err = ec.unmarshalOString2ᚕstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ids"] = arg0
 	return args, nil
 }
 
@@ -3339,6 +3376,36 @@ func (ec *executionContext) _Query_resolveNames(ctx context.Context, field graph
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNRecordResult2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐRecordResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getAuctionsByIds(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getAuctionsByIds_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAuctionsByIds(rctx, args["ids"].([]string))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*Auction)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOAuction2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -5870,6 +5937,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "getAuctionsByIds":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAuctionsByIds(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -7000,6 +7078,43 @@ func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋwirelineioᚋwns�
 
 func (ec *executionContext) marshalOAuction2githubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuction(ctx context.Context, sel ast.SelectionSet, v Auction) graphql.Marshaler {
 	return ec._Auction(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOAuction2ᚕᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuction(ctx context.Context, sel ast.SelectionSet, v []*Auction) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAuction2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuction(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOAuction2ᚖgithubᚗcomᚋwirelineioᚋwnsᚋgqlᚐAuction(ctx context.Context, sel ast.SelectionSet, v *Auction) graphql.Marshaler {

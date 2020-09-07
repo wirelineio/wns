@@ -28,12 +28,26 @@ var (
 	RegisterInvariants = keeper.RegisterInvariants
 
 	NewMsgCreateAuction = types.NewMsgCreateAuction
+
+	PrefixIDToAuctionIndex     = keeper.PrefixIDToAuctionIndex
+	PrefixAuctionBidsIndex     = keeper.PrefixAuctionBidsIndex
+	GetAuctionIndexKey         = keeper.GetAuctionIndexKey
+	GetAuctionBidsIndexPrefix  = keeper.GetAuctionBidsIndexPrefix
+	GetBidIndexKey             = keeper.GetBidIndexKey
+	GetOwnerToAuctionsIndexKey = keeper.GetOwnerToAuctionsIndexKey
+
+	GetAuction = keeper.GetAuction
+	GetBids    = keeper.GetBids
 )
 
 type (
-	ID                  = types.ID
-	Auction             = types.Auction
-	Bid                 = types.Bid
+	ID      = types.ID
+	Auction = types.Auction
+	Bid     = types.Bid
+
+	// Used for block changeset.
+	AuctionBidInfo = types.AuctionBidInfo
+
 	Keeper              = keeper.Keeper
 	AuctionUsageKeeper  = types.AuctionUsageKeeper
 	AuctionClientKeeper = keeper.AuctionClientKeeper

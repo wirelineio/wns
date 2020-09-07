@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/go-amino"
 	wnsUtils "github.com/wirelineio/wns/utils"
+	"github.com/wirelineio/wns/x/auction"
 	"github.com/wirelineio/wns/x/nameservice/internal/types"
 )
 
@@ -27,9 +28,11 @@ func getOrCreateBlockChangeset(ctx sdk.Context, store sdk.KVStore, codec *amino.
 	}
 
 	return &types.BlockChangeset{
-		Height:  height,
-		Records: []types.ID{},
-		Names:   []string{},
+		Height:      height,
+		Records:     []types.ID{},
+		Names:       []string{},
+		Auctions:    []auction.ID{},
+		AuctionBids: []auction.AuctionBidInfo{},
 	}
 }
 
@@ -67,5 +70,28 @@ func (k Keeper) updateBlockChangesetForNameAuthority(ctx sdk.Context, name strin
 func updateBlockChangesetForNameAuthority(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, name string) {
 	changeset := getOrCreateBlockChangeset(ctx, store, codec, ctx.BlockHeight())
 	changeset.NameAuthorities = append(changeset.NameAuthorities, name)
+	saveBlockChangeset(ctx, store, codec, changeset)
+}
+
+func updateBlockChangesetForAuction(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, id auction.ID) {
+	changeset := getOrCreateBlockChangeset(ctx, store, codec, ctx.BlockHeight())
+
+	found := false
+	for _, elem := range changeset.Auctions {
+		if id == elem {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		changeset.Auctions = append(changeset.Auctions, id)
+		saveBlockChangeset(ctx, store, codec, changeset)
+	}
+}
+
+func updateBlockChangesetForAuctionBid(ctx sdk.Context, store sdk.KVStore, codec *amino.Codec, id auction.ID, bidderAddress string) {
+	changeset := getOrCreateBlockChangeset(ctx, store, codec, ctx.BlockHeight())
+	changeset.AuctionBids = append(changeset.AuctionBids, auction.AuctionBidInfo{AuctionID: id, BidderAddress: bidderAddress})
 	saveBlockChangeset(ctx, store, codec, changeset)
 }

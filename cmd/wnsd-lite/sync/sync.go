@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/wirelineio/wns/x/auction"
 	ns "github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -142,6 +143,18 @@ func syncAtHeight(ctx *Context, height int64) error {
 		return err
 	}
 
+	// Sync auctions.
+	err = rpc.syncAuctions(ctx, height, changeset.Auctions)
+	if err != nil {
+		return err
+	}
+
+	// Sync auction bids.
+	err = rpc.syncAuctionBids(ctx, height, changeset.AuctionBids)
+	if err != nil {
+		return err
+	}
+
 	// Sync name authority records.
 	err = rpc.syncNameAuthorityRecords(ctx, height, changeset.NameAuthorities)
 	if err != nil {
@@ -163,7 +176,7 @@ func syncAtHeight(ctx *Context, height int64) error {
 func (rpc *RPCNodeHandler) syncRecords(ctx *Context, height int64, records []ns.ID) error {
 	for _, id := range records {
 		recordKey := ns.GetRecordIndexKey(id)
-		value, err := rpc.getStoreValue(ctx, recordKey, height)
+		value, err := rpc.getStoreValue(ctx, NameStorePath, recordKey, height)
 		if err != nil {
 			return err
 		}
@@ -174,10 +187,38 @@ func (rpc *RPCNodeHandler) syncRecords(ctx *Context, height int64, records []ns.
 	return nil
 }
 
+func (rpc *RPCNodeHandler) syncAuctions(ctx *Context, height int64, auctions []auction.ID) error {
+	for _, id := range auctions {
+		auctionKey := auction.GetAuctionIndexKey(id)
+		value, err := rpc.getStoreValue(ctx, AuctionStorePath, auctionKey, height)
+		if err != nil {
+			return err
+		}
+
+		ctx.cache.Set(auctionKey, value)
+	}
+
+	return nil
+}
+
+func (rpc *RPCNodeHandler) syncAuctionBids(ctx *Context, height int64, bids []auction.AuctionBidInfo) error {
+	for _, bid := range bids {
+		bidKey := auction.GetBidIndexKey(bid.AuctionID, bid.BidderAddress)
+		value, err := rpc.getStoreValue(ctx, AuctionStorePath, bidKey, height)
+		if err != nil {
+			return err
+		}
+
+		ctx.cache.Set(bidKey, value)
+	}
+
+	return nil
+}
+
 func (rpc *RPCNodeHandler) syncNameAuthorityRecords(ctx *Context, height int64, nameAuthorities []string) error {
 	for _, name := range nameAuthorities {
 		nameAuhorityRecordKey := ns.GetNameAuthorityIndexKey(name)
-		value, err := rpc.getStoreValue(ctx, nameAuhorityRecordKey, height)
+		value, err := rpc.getStoreValue(ctx, NameStorePath, nameAuhorityRecordKey, height)
 		if err != nil {
 			return err
 		}
@@ -191,7 +232,7 @@ func (rpc *RPCNodeHandler) syncNameAuthorityRecords(ctx *Context, height int64, 
 func (rpc *RPCNodeHandler) syncNameRecords(ctx *Context, height int64, names []string) error {
 	for _, name := range names {
 		nameRecordKey := ns.GetNameRecordIndexKey(name)
-		value, err := rpc.getStoreValue(ctx, nameRecordKey, height)
+		value, err := rpc.getStoreValue(ctx, NameStorePath, nameRecordKey, height)
 		if err != nil {
 			return err
 		}
@@ -261,6 +302,31 @@ func initFromNode(ctx *Context) {
 		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &record)
 		ctx.log.Debugln("Importing record", record.ID)
 		ctx.keeper.PutRecord(record)
+	}
+
+	auctionBidKVs, err := ctx.getStoreSubspace("auction", auction.PrefixAuctionBidsIndex, height)
+	if err != nil {
+		ctx.log.Fatalln("Error fetching auction bid records", err)
+	}
+
+	for _, kv := range auctionBidKVs {
+		var bid auction.Bid
+		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &bid)
+		ctx.log.Debugln("Importing auction bid", bid.BidderAddress)
+		ctx.keeper.SaveBid(bid)
+	}
+
+	auctionKVs, err := ctx.getStoreSubspace("auction", auction.PrefixIDToAuctionIndex, height)
+	if err != nil {
+		ctx.log.Fatalln("Error fetching auction records", err)
+	}
+
+	for _, kv := range auctionKVs {
+		var auctionRecord auction.Auction
+		ctx.codec.MustUnmarshalBinaryBare(kv.Value, &auctionRecord)
+		id := kv.Key[len(auction.PrefixIDToAuctionIndex):]
+		ctx.log.Debugln("Importing auction", auction.ID(id))
+		ctx.keeper.SaveAuction(auctionRecord)
 	}
 
 	authorityKVs, err := ctx.getStoreSubspace("nameservice", ns.PrefixNameAuthorityRecordIndex, height)

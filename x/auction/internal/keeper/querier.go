@@ -16,32 +16,32 @@ import (
 
 // query endpoints supported by the auction Querier
 const (
-	ListAuctions    = "list"
-	GetAuction      = "get"
-	GetBid          = "get-bid"
-	GetBids         = "get-bids"
-	QueryByOwner    = "query-by-owner"
-	QueryParameters = "parameters"
-	Balance         = "balance"
+	QueryListAuctions = "list"
+	QueryGetAuction   = "get"
+	QueryGetBid       = "get-bid"
+	QueryGetBids      = "get-bids"
+	QueryByOwner      = "query-by-owner"
+	QueryParameters   = "parameters"
+	QueryBalance      = "balance"
 )
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
-		case ListAuctions:
+		case QueryListAuctions:
 			return listAuctions(ctx, path[1:], req, keeper)
-		case GetAuction:
+		case QueryGetAuction:
 			return getAuction(ctx, path[1:], req, keeper)
-		case GetBid:
+		case QueryGetBid:
 			return getBid(ctx, path[1:], req, keeper)
-		case GetBids:
+		case QueryGetBids:
 			return getBids(ctx, path[1:], req, keeper)
 		case QueryByOwner:
 			return queryAuctionsByOwner(ctx, path[1:], req, keeper)
 		case QueryParameters:
 			return queryParameters(ctx, path[1:], req, keeper)
-		case Balance:
+		case QueryBalance:
 			return queryBalance(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auction query endpoint")

@@ -277,6 +277,15 @@ type Query {
   resolveNames(
     names: [String!]
   ): RecordResult!
+
+  #
+  # Auctions API.
+  #
+
+  # Get auctions by IDs.
+  getAuctionsByIds(
+    ids: [String!]
+  ): [Auction]
 }
 
 type Mutation {
