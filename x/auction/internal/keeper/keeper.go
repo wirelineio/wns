@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/tendermint/go-amino"
 	wnsUtils "github.com/wirelineio/wns/utils"
 	"github.com/wirelineio/wns/x/auction/internal/types"
 )
@@ -23,16 +24,16 @@ import (
 // CompletedAuctionDeleteTimeout => Completed auctions are deleted after this timeout (after reveals end time).
 const CompletedAuctionDeleteTimeout time.Duration = time.Hour * 24
 
-// prefixIDToAuctionIndex is the prefix for ID -> Auction index in the KVStore.
+// PrefixIDToAuctionIndex is the prefix for ID -> Auction index in the KVStore.
 // Note: This is the primary index in the system.
 // Note: Golang doesn't support const arrays.
-var prefixIDToAuctionIndex = []byte{0x00}
+var PrefixIDToAuctionIndex = []byte{0x00}
 
 // prefixOwnerToAuctionsIndex is the prefix for the Owner -> [Auction] index in the KVStore.
 var prefixOwnerToAuctionsIndex = []byte{0x01}
 
-// prefixAuctionBidsIndex is the prefix for the (auction, bidder) -> Bid index in the KVStore.
-var prefixAuctionBidsIndex = []byte{0x02}
+// PrefixAuctionBidsIndex is the prefix for the (auction, bidder) -> Bid index in the KVStore.
+var PrefixAuctionBidsIndex = []byte{0x02}
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
@@ -79,21 +80,21 @@ func (k Keeper) GetUsageKeepers() []types.AuctionUsageKeeper {
 }
 
 // Generates Auction ID -> Auction index key.
-func getAuctionIndexKey(id types.ID) []byte {
-	return append(prefixIDToAuctionIndex, []byte(id)...)
+func GetAuctionIndexKey(id types.ID) []byte {
+	return append(PrefixIDToAuctionIndex, []byte(id)...)
 }
 
 // Generates Owner -> Auctions index key.
-func getOwnerToAuctionsIndexKey(owner string, auctionID types.ID) []byte {
+func GetOwnerToAuctionsIndexKey(owner string, auctionID types.ID) []byte {
 	return append(append(prefixOwnerToAuctionsIndex, []byte(owner)...), []byte(auctionID)...)
 }
 
-func getBidIndexKey(auctionID types.ID, bidder string) []byte {
-	return append(getAuctionBidsIndexPrefix(auctionID), []byte(bidder)...)
+func GetBidIndexKey(auctionID types.ID, bidder string) []byte {
+	return append(GetAuctionBidsIndexPrefix(auctionID), []byte(bidder)...)
 }
 
-func getAuctionBidsIndexPrefix(auctionID types.ID) []byte {
-	return append(append(prefixAuctionBidsIndex, []byte(auctionID)...))
+func GetAuctionBidsIndexPrefix(auctionID types.ID) []byte {
+	return append(append(PrefixAuctionBidsIndex, []byte(auctionID)...))
 }
 
 // SaveAuction - saves a auction to the store.
@@ -101,31 +102,41 @@ func (k Keeper) SaveAuction(ctx sdk.Context, auction types.Auction) {
 	store := ctx.KVStore(k.storeKey)
 
 	// Auction ID -> Auction index.
-	store.Set(getAuctionIndexKey(auction.ID), k.cdc.MustMarshalBinaryBare(auction))
+	store.Set(GetAuctionIndexKey(auction.ID), k.cdc.MustMarshalBinaryBare(auction))
 
 	// Owner -> [Auction] index.
-	store.Set(getOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID), []byte{})
+	store.Set(GetOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID), []byte{})
+
+	// Notify interested parties.
+	for _, keeper := range k.usageKeepers {
+		keeper.OnAuction(ctx, auction.ID)
+	}
 }
 
 func (k Keeper) SaveBid(ctx sdk.Context, bid types.Bid) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(getBidIndexKey(bid.AuctionID, bid.BidderAddress), k.cdc.MustMarshalBinaryBare(bid))
+	store.Set(GetBidIndexKey(bid.AuctionID, bid.BidderAddress), k.cdc.MustMarshalBinaryBare(bid))
+
+	// Notify interested parties.
+	for _, keeper := range k.usageKeepers {
+		keeper.OnAuctionBid(ctx, bid.AuctionID, bid.BidderAddress)
+	}
 }
 
 func (k Keeper) DeleteBid(ctx sdk.Context, bid types.Bid) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(getBidIndexKey(bid.AuctionID, bid.BidderAddress))
+	store.Delete(GetBidIndexKey(bid.AuctionID, bid.BidderAddress))
 }
 
 // HasAuction - checks if a auction by the given ID exists.
 func (k Keeper) HasAuction(ctx sdk.Context, id types.ID) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(getAuctionIndexKey(id))
+	return store.Has(GetAuctionIndexKey(id))
 }
 
 func (k Keeper) HasBid(ctx sdk.Context, id types.ID, bidder string) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(getBidIndexKey(id, bidder))
+	return store.Has(GetBidIndexKey(id, bidder))
 }
 
 // DeleteAuction - deletes the auction.
@@ -138,25 +149,54 @@ func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.Auction) {
 
 	// Delete the auction itself.
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(getAuctionIndexKey(auction.ID))
-	store.Delete(getOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID))
+	store.Delete(GetAuctionIndexKey(auction.ID))
+	store.Delete(GetOwnerToAuctionsIndexKey(auction.OwnerAddress, auction.ID))
 }
 
 // GetAuction - gets a record from the store.
-func (k Keeper) GetAuction(ctx sdk.Context, id types.ID) types.Auction {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetAuction(ctx sdk.Context, id types.ID) *types.Auction {
+	return GetAuction(ctx.KVStore(k.storeKey), k.cdc, id)
+}
 
-	bz := store.Get(getAuctionIndexKey(id))
+func GetAuction(store sdk.KVStore, codec *amino.Codec, id types.ID) *types.Auction {
+	auctionKey := GetAuctionIndexKey(id)
+	if !store.Has(auctionKey) {
+		return nil
+	}
+
+	bz := store.Get(auctionKey)
 	var obj types.Auction
-	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
+	codec.MustUnmarshalBinaryBare(bz, &obj)
 
-	return obj
+	return &obj
+}
+
+// GetBids gets the auction bids.
+func (k Keeper) GetBids(ctx sdk.Context, id types.ID) []*types.Bid {
+	return GetBids(ctx.KVStore(k.storeKey), k.cdc, id)
+}
+
+func GetBids(store sdk.KVStore, codec *amino.Codec, id types.ID) []*types.Bid {
+	var bids []*types.Bid
+
+	itr := sdk.KVStorePrefixIterator(store, GetAuctionBidsIndexPrefix(id))
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		bz := store.Get(itr.Key())
+		if bz != nil {
+			var obj types.Bid
+			codec.MustUnmarshalBinaryBare(bz, &obj)
+			bids = append(bids, &obj)
+		}
+	}
+
+	return bids
 }
 
 func (k Keeper) GetBid(ctx sdk.Context, id types.ID, bidder string) types.Bid {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(getBidIndexKey(id, bidder))
+	bz := store.Get(GetBidIndexKey(id, bidder))
 	var obj types.Bid
 	k.cdc.MustUnmarshalBinaryBare(bz, &obj)
 
@@ -168,7 +208,7 @@ func (k Keeper) ListAuctions(ctx sdk.Context) []types.Auction {
 	var auctions []types.Auction
 
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixIDToAuctionIndex)
+	itr := sdk.KVStorePrefixIterator(store, PrefixIDToAuctionIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -192,7 +232,7 @@ func (k Keeper) QueryAuctionsByOwner(ctx sdk.Context, ownerAddress string) []typ
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		auctionID := itr.Key()[len(ownerPrefix):]
-		bz := store.Get(append(prefixIDToAuctionIndex, auctionID...))
+		bz := store.Get(append(PrefixIDToAuctionIndex, auctionID...))
 		if bz != nil {
 			var obj types.Auction
 			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
@@ -208,7 +248,7 @@ func (k Keeper) MatchAuctions(ctx sdk.Context, matchFn func(*types.Auction) bool
 	var auctions []*types.Auction
 
 	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, prefixIDToAuctionIndex)
+	itr := sdk.KVStorePrefixIterator(store, PrefixIDToAuctionIndex)
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
 		bz := store.Get(itr.Key())
@@ -309,7 +349,7 @@ func (k Keeper) CommitBid(ctx sdk.Context, msg types.MsgCommitBid) (*types.Aucti
 
 	k.SaveBid(ctx, bid)
 
-	return &auction, nil
+	return auction, nil
 }
 
 // RevealBid reeals a bid comitted earlier.
@@ -397,7 +437,7 @@ func (k Keeper) RevealBid(ctx sdk.Context, msg types.MsgRevealBid) (*types.Aucti
 	bid.Status = types.BidStatusRevealed
 	k.SaveBid(ctx, bid)
 
-	return &auction, nil
+	return auction, nil
 }
 
 // GetAuctionModuleBalances gets the auction module account(s) balances.
@@ -433,16 +473,16 @@ func (k Keeper) processAuctionPhases(ctx sdk.Context) {
 		// Commit -> Reveal state.
 		if auction.Status == types.AuctionStatusCommitPhase && ctx.BlockTime().After(auction.CommitsEndTime) {
 			auction.Status = types.AuctionStatusRevealPhase
+			k.SaveAuction(ctx, *auction)
 			ctx.Logger().Info(fmt.Sprintf("Moved auction %s to reveal phase.", auction.ID))
 		}
 
 		// Reveal -> Expired state.
 		if auction.Status == types.AuctionStatusRevealPhase && ctx.BlockTime().After(auction.RevealsEndTime) {
 			auction.Status = types.AuctionStatusExpired
+			k.SaveAuction(ctx, *auction)
 			ctx.Logger().Info(fmt.Sprintf("Moved auction %s to expired state.", auction.ID))
 		}
-
-		k.SaveAuction(ctx, *auction)
 
 		// If auction has expired, pick a winner from revealed bids.
 		if auction.Status == types.AuctionStatusExpired {
@@ -462,25 +502,6 @@ func (k Keeper) deleteCompletedAuctions(ctx sdk.Context) {
 		ctx.Logger().Info(fmt.Sprintf("Deleting completed auction %s after timeout.", auction.ID))
 		k.DeleteAuction(ctx, *auction)
 	}
-}
-
-// GetBids gets the auction bids.
-func (k Keeper) GetBids(ctx sdk.Context, id types.ID) []*types.Bid {
-	var bids []*types.Bid
-
-	store := ctx.KVStore(k.storeKey)
-	itr := sdk.KVStorePrefixIterator(store, getAuctionBidsIndexPrefix(id))
-	defer itr.Close()
-	for ; itr.Valid(); itr.Next() {
-		bz := store.Get(itr.Key())
-		if bz != nil {
-			var obj types.Bid
-			k.cdc.MustUnmarshalBinaryBare(bz, &obj)
-			bids = append(bids, &obj)
-		}
-	}
-
-	return bids
 }
 
 func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
@@ -585,6 +606,6 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 	ctx.Logger().Info(fmt.Sprintf("Auction %s notifying %d modules.", auction.ID, len(k.usageKeepers)))
 	for _, keeper := range k.usageKeepers {
 		ctx.Logger().Info(fmt.Sprintf("Auction %s notifying module %s.", auction.ID, keeper.ModuleName()))
-		keeper.NotifyAuction(ctx, auction.ID)
+		keeper.OnAuctionWinnerSelected(ctx, auction.ID)
 	}
 }

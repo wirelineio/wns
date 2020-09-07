@@ -276,8 +276,16 @@ func (k RecordKeeper) UsesAuction(ctx sdk.Context, auctionID auction.ID) bool {
 	return k.GetAuctionToAuthorityMapping(ctx, auctionID) != ""
 }
 
-// NotifyAuction is called on auction state change.
-func (k RecordKeeper) NotifyAuction(ctx sdk.Context, auctionID auction.ID) {
+func (k RecordKeeper) OnAuction(ctx sdk.Context, auctionID auction.ID) {
+	updateBlockChangesetForAuction(ctx, ctx.KVStore(k.storeKey), k.cdc, auctionID)
+}
+
+func (k RecordKeeper) OnAuctionBid(ctx sdk.Context, auctionID auction.ID, bidderAddress string) {
+	updateBlockChangesetForAuctionBid(ctx, ctx.KVStore(k.storeKey), k.cdc, auctionID, bidderAddress)
+}
+
+// OnAuctionWinnerSelected is called when an auction winner is selected.
+func (k RecordKeeper) OnAuctionWinnerSelected(ctx sdk.Context, auctionID auction.ID) {
 	// Update authority status based on auction status/winner.
 	name := k.GetAuctionToAuthorityMapping(ctx, auctionID)
 	if name == "" {

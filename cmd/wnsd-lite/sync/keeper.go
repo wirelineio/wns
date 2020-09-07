@@ -7,6 +7,7 @@ package sync
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/tendermint/go-amino"
+	"github.com/wirelineio/wns/x/auction"
 	ns "github.com/wirelineio/wns/x/nameservice"
 )
 
@@ -103,4 +104,28 @@ func (k Keeper) GetNameRecord(name string) *ns.NameRecord {
 // MatchRecords - get all matching records.
 func (k Keeper) MatchRecords(matchFn func(*ns.Record) bool) []*ns.Record {
 	return ns.MatchRecords(k.store, k.codec, matchFn)
+}
+
+// GetAuction get the auction record.
+func (k Keeper) GetAuction(id auction.ID) *auction.Auction {
+	return auction.GetAuction(k.store, k.codec, id)
+}
+
+// GetBids get the auction bids.
+func (k Keeper) GetBids(id auction.ID) []*auction.Bid {
+	return auction.GetBids(k.store, k.codec, id)
+}
+
+// SaveAuction - saves an auction record.
+func (k Keeper) SaveAuction(auctionObj auction.Auction) {
+	// Auction ID -> Auction index.
+	k.store.Set(auction.GetAuctionIndexKey(auctionObj.ID), k.codec.MustMarshalBinaryBare(auctionObj))
+
+	// Owner -> [Auction] index.
+	k.store.Set(auction.GetOwnerToAuctionsIndexKey(auctionObj.OwnerAddress, auctionObj.ID), []byte{})
+}
+
+// SaveBid - saves an auction bid.
+func (k Keeper) SaveBid(bid auction.Bid) {
+	k.store.Set(auction.GetBidIndexKey(bid.AuctionID, bid.BidderAddress), k.codec.MustMarshalBinaryBare(bid))
 }

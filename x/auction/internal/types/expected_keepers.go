@@ -13,5 +13,8 @@ import (
 type AuctionUsageKeeper interface {
 	ModuleName() string
 	UsesAuction(ctx sdk.Context, auctionID ID) bool
-	NotifyAuction(ctx sdk.Context, auctionID ID)
+
+	OnAuction(ctx sdk.Context, auctionID ID)
+	OnAuctionBid(ctx sdk.Context, auctionID ID, bidderAddress string)
+	OnAuctionWinnerSelected(ctx sdk.Context, auctionID ID)
 }

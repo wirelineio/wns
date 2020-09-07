@@ -14,6 +14,11 @@ import (
 	"github.com/wirelineio/wns/x/nameservice"
 )
 
+const (
+	NameStorePath    = "/store/nameservice/key"
+	AuctionStorePath = "/store/auction/key"
+)
+
 // getCurrentHeight gets the current WNS block height.
 func (rpcNodeHandler *RPCNodeHandler) getCurrentHeight() (int64, error) {
 	rpcNodeHandler.Calls++
@@ -30,7 +35,7 @@ func (rpcNodeHandler *RPCNodeHandler) getCurrentHeight() (int64, error) {
 }
 
 func (rpcNodeHandler *RPCNodeHandler) getBlockChangeset(ctx *Context, height int64) (*nameservice.BlockChangeset, error) {
-	value, err := rpcNodeHandler.getStoreValue(ctx, nameservice.GetBlockChangesetIndexKey(height), height)
+	value, err := rpcNodeHandler.getStoreValue(ctx, NameStorePath, nameservice.GetBlockChangesetIndexKey(height), height)
 	if err != nil {
 		return nil, err
 	}
@@ -41,13 +46,11 @@ func (rpcNodeHandler *RPCNodeHandler) getBlockChangeset(ctx *Context, height int
 	return &changeset, nil
 }
 
-func (rpcNodeHandler *RPCNodeHandler) getStoreValue(ctx *Context, key []byte, height int64) ([]byte, error) {
+func (rpcNodeHandler *RPCNodeHandler) getStoreValue(ctx *Context, path string, key []byte, height int64) ([]byte, error) {
 	opts := rpcclient.ABCIQueryOptions{
 		Height: height,
 		Prove:  true,
 	}
-
-	path := "/store/nameservice/key"
 
 	rpcNodeHandler.Calls++
 	rpcNodeHandler.LastCalledAt = time.Now().UTC()

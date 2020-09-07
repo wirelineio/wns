@@ -156,7 +156,7 @@ func (r *queryResolver) LookupAuthorities(ctx context.Context, names []string) (
 			return nil, err
 		}
 
-		if record.AuctionID != "" {
+		if record != nil && record.AuctionID != "" {
 			auction := r.auctionKeeper.GetAuction(sdkContext, record.AuctionID)
 			bids := r.auctionKeeper.GetBids(sdkContext, auction.ID)
 
@@ -371,6 +371,24 @@ func (r *queryResolver) QueryBonds(ctx context.Context, attributes []*KeyValueIn
 		}
 
 		gqlResponse = append(gqlResponse, gqlBond)
+	}
+
+	return gqlResponse, nil
+}
+
+func (r *queryResolver) GetAuctionsByIds(ctx context.Context, ids []string) ([]*Auction, error) {
+	sdkContext := r.baseApp.NewContext(true, abci.Header{})
+	gqlResponse := []*Auction{}
+
+	for _, id := range ids {
+		auctionObj := r.auctionKeeper.GetAuction(sdkContext, auction.ID(id))
+		bids := r.auctionKeeper.GetBids(sdkContext, auction.ID(id))
+		gqlAuction, err := GetGQLAuction(ctx, r, auctionObj, bids)
+		if err != nil {
+			return nil, err
+		}
+
+		gqlResponse = append(gqlResponse, gqlAuction)
 	}
 
 	return gqlResponse, nil

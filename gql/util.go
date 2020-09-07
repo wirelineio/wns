@@ -105,7 +105,11 @@ func getAuctionBid(bid *auction.Bid) *AuctionBid {
 	}
 }
 
-func GetGQLAuction(ctx context.Context, resolver QueryResolver, auction auction.Auction, bids []*auction.Bid) (*Auction, error) {
+func GetGQLAuction(ctx context.Context, resolver QueryResolver, auction *auction.Auction, bids []*auction.Bid) (*Auction, error) {
+	if auction == nil {
+		return nil, nil
+	}
+
 	gqlAuction := Auction{
 		ID:             string(auction.ID),
 		Status:         auction.Status,

@@ -40,3 +40,10 @@ func SliceToSet(names []string) set.Set {
 
 	return set
 }
+
+func AppendUnique(list []string, element string) []string {
+	set := SliceToSet(list)
+	set.Add(element)
+
+	return SetToSlice(set)
+}
