@@ -735,7 +735,7 @@ func (k Keeper) DeleteAuthorityExpiryQueueTimeSlice(ctx sdk.Context, timestamp t
 	store.Delete(getAuthorityExpiryQueueTimeKey(timestamp))
 }
 
-// DeleteAuthorityExpiryQueue deletes a record CID from the record expiry queue.
+// DeleteAuthorityExpiryQueue deletes an authority name from the authority expiry queue.
 func (k Keeper) DeleteAuthorityExpiryQueue(ctx sdk.Context, name string, authority types.NameAuthority) {
 	timeSlice := k.GetAuthorityExpiryQueueTimeSlice(ctx, authority.ExpiryTime)
 	newTimeSlice := []string{}
