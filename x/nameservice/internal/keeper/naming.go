@@ -458,8 +458,8 @@ func (k RecordKeeper) GetAuctionToAuthorityMapping(ctx sdk.Context, auctionID au
 }
 
 func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddress, isRoot bool) sdk.Error {
-	// Root authorities can be re-registered if they have expired.
-	if isRoot && k.HasNameAuthority(ctx, name) {
+	// Authorities can be re-registered if they have expired.
+	if k.HasNameAuthority(ctx, name) {
 		authority := k.GetNameAuthority(ctx, name)
 		if authority.Status != types.AuthorityExpired {
 			return sdk.ErrInternal("Name already reserved.")
@@ -548,11 +548,6 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 
 // ProcessReserveSubAuthority reserves a sub-authority.
 func (k Keeper) ProcessReserveSubAuthority(ctx sdk.Context, name string, msg types.MsgReserveAuthority) (string, sdk.Error) {
-	// Check if name already reserved.
-	if k.HasNameAuthority(ctx, name) {
-		return "", sdk.ErrInternal("Name already reserved.")
-	}
-
 	// Get parent authority name.
 	names := strings.Split(name, ".")
 	parent := strings.Join(names[1:], ".")
