@@ -352,6 +352,21 @@ func (k Keeper) ProcessRecordExpiryQueue(ctx sdk.Context) {
 	}
 }
 
+func (k Keeper) GetRecordExpiryQueue(ctx sdk.Context) (expired map[string][]types.ID) {
+	records := make(map[string][]types.ID)
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, PrefixExpiryTimeToRecordsIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		var record []types.ID
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(itr.Value(), &record)
+		records[string(itr.Key()[len(PrefixExpiryTimeToRecordsIndex):])] = record
+	}
+
+	return records
+}
+
 // TryTakeRecordRent tries to take rent from the record bond.
 func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 	rent, err := sdk.ParseCoins(k.RecordRent(ctx))
@@ -371,7 +386,7 @@ func (k Keeper) TryTakeRecordRent(ctx sdk.Context, record types.Record) {
 
 	// Delete old expiry queue entry, create new one.
 	k.DeleteRecordExpiryQueue(ctx, record)
-	record.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordExpiryTime(ctx))
+	record.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordRentDuration(ctx))
 	k.InsertRecordExpiryQueue(ctx, record)
 
 	// Save record.

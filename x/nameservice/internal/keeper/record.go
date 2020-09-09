@@ -94,7 +94,7 @@ func (k Keeper) processRecord(ctx sdk.Context, record *types.Record, isRenewal b
 	}
 
 	record.CreateTime = ctx.BlockHeader().Time
-	record.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordExpiryTime(ctx))
+	record.ExpiryTime = ctx.BlockHeader().Time.Add(k.RecordRentDuration(ctx))
 	record.Deleted = false
 
 	k.PutRecord(ctx, *record)

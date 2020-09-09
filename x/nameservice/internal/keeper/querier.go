@@ -28,6 +28,9 @@ const (
 	LookUpWRNPath   = "lookup"
 	ListNamesPath   = "names"
 	ResolveNamePath = "resolve"
+
+	RecordExpiryQueue    = "record-expiry"
+	AuthorityExpiryQueue = "authority-expiry"
 )
 
 // NewQuerier is the module level router for state queries
@@ -52,6 +55,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryParameters(ctx, path[1:], req, keeper)
 		case Balance:
 			return queryBalance(ctx, path[1:], req, keeper)
+		case RecordExpiryQueue:
+			return queryRecordExpiryQueue(ctx, path[1:], req, keeper)
+		case AuthorityExpiryQueue:
+			return queryAuthorityExpiryQueue(ctx, path[1:], req, keeper)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
 		}
@@ -176,6 +183,26 @@ func queryParameters(ctx sdk.Context, path []string, req abci.RequestQuery, keep
 func queryBalance(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	balances := keeper.GetModuleBalances(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, balances)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
+}
+
+func queryRecordExpiryQueue(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	expiryQueue := keeper.GetRecordExpiryQueue(ctx)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, expiryQueue)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return res, nil
+}
+
+func queryAuthorityExpiryQueue(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	expiryQueue := keeper.GetAuthorityExpiryQueue(ctx)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, expiryQueue)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
