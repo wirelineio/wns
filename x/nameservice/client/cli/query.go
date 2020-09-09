@@ -36,6 +36,8 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryByBond(storeKey, cdc),
 		GetCmdQueryParams(storeKey, cdc),
 		GetCmdBalance(storeKey, cdc),
+		GetRecordExpiryQueue(storeKey, cdc),
+		GetAuthorityExpiryQueue(storeKey, cdc),
 	)...)
 	return nameserviceQueryCmd
 }
@@ -245,6 +247,50 @@ func GetCmdBalance(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/balance", queryRoute), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetRecordExpiryQueue gets the record expiry queue.
+func GetRecordExpiryQueue(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "record-expiry",
+		Short: "Get record expiry queue.",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/record-expiry", queryRoute), nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+
+			return nil
+		},
+	}
+}
+
+// GetAuthorityExpiryQueue gets the authority expiry queue.
+func GetAuthorityExpiryQueue(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "authority-expiry",
+		Short: "Get authority expiry queue.",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.Set("trust-node", true)
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/authority-expiry", queryRoute), nil)
 			if err != nil {
 				return err
 			}

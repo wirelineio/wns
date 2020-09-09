@@ -485,7 +485,7 @@ func (k Keeper) createAuthority(ctx sdk.Context, name string, owner sdk.AccAddre
 		AuctionID: auction.ID(""),
 
 		// Grace period to set bond (assume no auction for now).
-		ExpiryTime: time.Now().Add(k.AuthorityGracePeriod(ctx)),
+		ExpiryTime: ctx.BlockTime().Add(k.AuthorityGracePeriod(ctx)),
 	}
 
 	// Create auction if root authority and name auctions are enabled.
@@ -775,6 +775,21 @@ func (k Keeper) AuthorityExpiryQueueIterator(ctx sdk.Context, endTime time.Time)
 	return store.Iterator(PrefixExpiryTimeToAuthoritiesIndex, rangeEndBytes)
 }
 
+func (k Keeper) GetAuthorityExpiryQueue(ctx sdk.Context) (expired map[string][]string) {
+	records := make(map[string][]string)
+
+	store := ctx.KVStore(k.storeKey)
+	itr := sdk.KVStorePrefixIterator(store, PrefixExpiryTimeToAuthoritiesIndex)
+	defer itr.Close()
+	for ; itr.Valid(); itr.Next() {
+		var record []string
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(itr.Value(), &record)
+		records[string(itr.Key()[len(PrefixExpiryTimeToAuthoritiesIndex):])] = record
+	}
+
+	return records
+}
+
 // TryTakeAuthorityRent tries to take rent from the authority bond.
 func (k Keeper) TryTakeAuthorityRent(ctx sdk.Context, name string, authority types.NameAuthority) {
 	ctx.Logger().Info(fmt.Sprintf("Trying to take rent for authority: %s", name))
@@ -798,7 +813,7 @@ func (k Keeper) TryTakeAuthorityRent(ctx sdk.Context, name string, authority typ
 
 	// Delete old expiry queue entry, create new one.
 	k.DeleteAuthorityExpiryQueue(ctx, name, authority)
-	authority.ExpiryTime = ctx.BlockHeader().Time.Add(k.AuthorityExpiryTime(ctx))
+	authority.ExpiryTime = ctx.BlockTime().Add(k.AuthorityRentDuration(ctx))
 	k.InsertAuthorityExpiryQueue(ctx, name, authority.ExpiryTime)
 
 	// Save authority.
