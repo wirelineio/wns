@@ -12,7 +12,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
+  "devDependencies": {
     "jest": "^26.0.1"
   }
 }
