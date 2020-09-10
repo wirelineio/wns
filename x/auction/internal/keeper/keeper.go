@@ -512,24 +512,40 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 
 	bids := k.GetBids(ctx, auction.ID)
 	for _, bid := range bids {
+		ctx.Logger().Info(fmt.Sprintf("Processing bid %s %s", bid.BidderAddress, bid.BidAmount.String()))
+
 		// Only consider revealed bids.
 		if bid.Status != types.BidStatusRevealed {
+			ctx.Logger().Info(fmt.Sprintf("Ignoring unrevealed bid %s %s", bid.BidderAddress, bid.BidAmount.String()))
+
 			continue
 		}
 
-		// Init first and second highest bids.
+		// Init highest bid.
 		if highestBid == nil {
 			highestBid = bid
-			secondHighestBid = bid
+
+			ctx.Logger().Info(fmt.Sprintf("Initializing 1st bid %s %s", bid.BidderAddress, bid.BidAmount.String()))
 
 			continue
 		}
 
 		if highestBid.BidAmount.IsLT(bid.BidAmount) {
+			ctx.Logger().Info(fmt.Sprintf("New highest bid %s %s", bid.BidderAddress, bid.BidAmount.String()))
+
 			secondHighestBid = highestBid
 			highestBid = bid
-		} else if secondHighestBid.BidAmount.IsLT(bid.BidAmount) {
+
+			ctx.Logger().Info(fmt.Sprintf("Updated 1st bid %s %s", highestBid.BidderAddress, highestBid.BidAmount.String()))
+			ctx.Logger().Info(fmt.Sprintf("Updated 2nd bid %s %s", secondHighestBid.BidderAddress, secondHighestBid.BidAmount.String()))
+
+		} else if secondHighestBid == nil || secondHighestBid.BidAmount.IsLT(bid.BidAmount) {
+			ctx.Logger().Info(fmt.Sprintf("New 2nd highest bid %s %s", bid.BidderAddress, bid.BidAmount.String()))
+
 			secondHighestBid = bid
+			ctx.Logger().Info(fmt.Sprintf("Updated 2nd bid %s %s", secondHighestBid.BidderAddress, secondHighestBid.BidAmount.String()))
+		} else {
+			ctx.Logger().Info(fmt.Sprintf("Ignoring bid as it doesn't affect 1st/2nd price %s %s", bid.BidderAddress, bid.BidAmount.String()))
 		}
 	}
 
@@ -539,7 +555,12 @@ func (k Keeper) pickAuctionWinner(ctx sdk.Context, auction *types.Auction) {
 	if highestBid != nil {
 		auction.WinnerAddress = highestBid.BidderAddress
 		auction.WinnerBid = highestBid.BidAmount
-		auction.WinnerPrice = secondHighestBid.BidAmount
+
+		// Winner pays 2nd price, if a 2nd price exists.
+		auction.WinnerPrice = highestBid.BidAmount
+		if secondHighestBid != nil {
+			auction.WinnerPrice = secondHighestBid.BidAmount
+		}
 
 		ctx.Logger().Info(fmt.Sprintf("Auction %s winner %s.", auction.ID, auction.WinnerAddress))
 		ctx.Logger().Info(fmt.Sprintf("Auction %s winner bid %s.", auction.ID, auction.WinnerBid.String()))
