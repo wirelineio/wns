@@ -67,10 +67,19 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 		}
 	}
 
-	for _, authorityEntry := range data.Authorities {
-		keeper.SetNameAuthority(ctx,
-			authorityEntry.Name,
-			authorityEntry.Entry)
+	for _, authority := range data.Authorities {
+		// Only import authorities that are marked active.
+		if authority.Entry.Status == types.AuthorityActive {
+			keeper.SetNameAuthority(ctx, authority.Name, authority.Entry)
+
+			// Add authority name to expiry queue.
+			keeper.InsertAuthorityExpiryQueue(ctx, authority.Name, authority.Entry.ExpiryTime)
+
+			// Note: Bond genesis runs first, so bonds will already be present.
+			if authority.Entry.BondID != "" {
+				keeper.AddBondToAuthorityIndexEntry(ctx, authority.Entry.BondID, authority.Name)
+			}
+		}
 	}
 
 	for _, nameEntry := range data.Names {
