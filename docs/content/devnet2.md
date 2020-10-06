@@ -9,7 +9,7 @@ Build and install the binaries:
 
 ```bash
 $ cd wns
-$ git checkout release-moon
+$ git checkout master
 $ make install
 ```
 
