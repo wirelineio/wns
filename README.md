@@ -1,5 +1,8 @@
 # Wireline Naming Service
 
+
+** Note: Replaced by https://github.com/wirelineio/dxns **
+
 The Wireline Naming Service (WNS) is a custom blockchain built using Cosmos SDK.
 
 | Module   | Status | Public URL |
