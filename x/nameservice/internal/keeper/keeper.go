@@ -7,6 +7,7 @@ package keeper
 import (
 	"bytes"
 	"encoding/binary"
+	"sort"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -655,6 +656,8 @@ func setToSlice(set set.Set) []string {
 			names = append(names, name)
 		}
 	}
+
+	sort.SliceStable(names, func(i, j int) bool { return names[i] < names[j] })
 
 	return names
 }

@@ -72,7 +72,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.Valid
 	}
 
 	for _, nameEntry := range data.Names {
-		keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry.ID)
+		if nameEntry.Entry.ID != "" {
+			keeper.SetNameRecord(ctx, nameEntry.Name, nameEntry.Entry.ID)
+		}
 	}
 
 	return []abci.ValidatorUpdate{}
