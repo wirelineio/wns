@@ -28,7 +28,7 @@ Request funds into the above validator account.
 Update `~/.wire/wnsd/config/config.toml` with:
 
 ```text
-persistent_peers = "f615c77be9de710864e48d74717bb6d343a3e50a@172.105.37.214:26656,213ce5cfaed99146c738cfca971a4f3a1dfe6d22@139.178.68.131:26656"
+persistent_peers = "f615c77be9de710864e48d74717bb6d343a3e50a@172.105.37.214:26656,213ce5cfaed99146c738cfca971a4f3a1dfe6d22@139.178.68.131:26656,20161eff6d0b1a1f0f26d86b95b7d948739e1f00@139.178.68.130:26656"
 ```
 
 Optionally, update the above to include the new validator peer (Get node ID using `wnsd tendermint show-node-id`).
