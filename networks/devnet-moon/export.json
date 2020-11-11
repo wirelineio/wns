@@ -675,7 +675,7 @@
         "address": "cosmos1wh8vvd0ymc5nt37h29z8kk2g2ays45ct2qu094",
         "coins": [
           {
-            "amount": "99999964800000",
+            "amount": "1000000000000000",
             "denom": "uwire"
           }
         ],
@@ -685,7 +685,7 @@
         "module_name": "",
         "module_permissions": null,
         "original_vesting": [],
-        "sequence_number": "178",
+        "sequence_number": "0",
         "start_time": "0"
       },
       {
