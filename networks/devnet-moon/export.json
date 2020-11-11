@@ -2576,73 +2576,16 @@
       "base_proposer_reward": "0.010000000000000000",
       "bonus_proposer_reward": "0.040000000000000000",
       "community_tax": "0.020000000000000000",
-      "delegator_starting_infos": [
-        {
-          "delegator_address": "cosmos1mj5k2m453n7lhllfnctwrqr3taadn3v0hadnf8",
-          "starting_info": {
-            "creation_height": "0",
-            "previous_period": "1",
-            "stake": "10000000000000.000000000000000000"
-          },
-          "validator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95"
-        }
-      ],
+      "delegator_starting_infos": [],
       "delegator_withdraw_infos": [],
       "fee_pool": {
-        "community_pool": [
-          {
-            "amount": "876000.000000000000000000",
-            "denom": "uwire"
-          }
-        ]
+        "community_pool": []
       },
-      "outstanding_rewards": [
-        {
-          "outstanding_rewards": [
-            {
-              "amount": "42924000.000000000000000000",
-              "denom": "uwire"
-            }
-          ],
-          "validator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95"
-        }
-      ],
-      "previous_proposer": "cosmosvalcons1yrkk0yagpwt8c4h27m9rl5847wt2m34j05xy0v",
-      "validator_accumulated_commissions": [
-        {
-          "accumulated": [
-            {
-              "amount": "4292400.000000000000000000",
-              "denom": "uwire"
-            }
-          ],
-          "validator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95"
-        }
-      ],
-      "validator_current_rewards": [
-        {
-          "rewards": {
-            "period": "2",
-            "rewards": [
-              {
-                "amount": "38631600.000000000000000000",
-                "denom": "uwire"
-              }
-            ]
-          },
-          "validator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95"
-        }
-      ],
-      "validator_historical_rewards": [
-        {
-          "period": "1",
-          "rewards": {
-            "cumulative_reward_ratio": null,
-            "reference_count": 2
-          },
-          "validator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95"
-        }
-      ],
+      "outstanding_rewards": [],
+      "previous_proposer": "",
+      "validator_accumulated_commissions": [],
+      "validator_current_rewards": [],
+      "validator_historical_rewards": [],
       "validator_slash_events": [],
       "withdraw_addr_enabled": true
     },
@@ -5806,9 +5749,7 @@
       ]
     },
     "slashing": {
-      "missed_blocks": {
-        "cosmosvalcons1yrkk0yagpwt8c4h27m9rl5847wt2m34j05xy0v": []
-      },
+      "missed_blocks": {},
       "params": {
         "downtime_jail_duration": "600000000000",
         "max_evidence_age": "120000000000",
@@ -5817,33 +5758,13 @@
         "slash_fraction_double_sign": "0.050000000000000000",
         "slash_fraction_downtime": "0.010000000000000000"
       },
-      "signing_infos": {
-        "cosmosvalcons1yrkk0yagpwt8c4h27m9rl5847wt2m34j05xy0v": {
-          "address": "cosmosvalcons1yrkk0yagpwt8c4h27m9rl5847wt2m34j05xy0v",
-          "index_offset": "325939",
-          "jailed_until": "1970-01-01T00:00:00Z",
-          "missed_blocks_counter": "0",
-          "start_height": "0",
-          "tombstoned": false
-        }
-      }
+      "signing_infos": {}
     },
     "staking": {
-      "delegations": [
-        {
-          "delegator_address": "cosmos1mj5k2m453n7lhllfnctwrqr3taadn3v0hadnf8",
-          "shares": "10000000000000.000000000000000000",
-          "validator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95"
-        }
-      ],
-      "exported": true,
-      "last_total_power": "10000000",
-      "last_validator_powers": [
-        {
-          "Address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95",
-          "Power": "10000000"
-        }
-      ],
+      "delegations": null,
+      "exported": false,
+      "last_total_power": "0",
+      "last_validator_powers": null,
       "params": {
         "bond_denom": "uwire",
         "max_entries": 7,
@@ -5852,41 +5773,10 @@
       },
       "redelegations": null,
       "unbonding_delegations": null,
-      "validators": [
-        {
-          "commission": {
-            "commission_rates": {
-              "max_change_rate": "0.010000000000000000",
-              "max_rate": "0.200000000000000000",
-              "rate": "0.100000000000000000"
-            },
-            "update_time": "2020-10-23T05:27:06.085738817Z"
-          },
-          "consensus_pubkey": "cosmosvalconspub1zcjduepq8zhyfksrejvkyv2nstyxy44ltrzu5wn0jupysfjkt9q9m2asruhsn7x2xc",
-          "delegator_shares": "10000000000000.000000000000000000",
-          "description": {
-            "details": "",
-            "identity": "",
-            "moniker": "ashwinp",
-            "website": ""
-          },
-          "jailed": false,
-          "min_self_delegation": "1",
-          "operator_address": "cosmosvaloper1mj5k2m453n7lhllfnctwrqr3taadn3v0jfex95",
-          "status": 2,
-          "tokens": "10000000000000",
-          "unbonding_height": "0",
-          "unbonding_time": "1970-01-01T00:00:00Z"
-        }
-      ]
+      "validators": null
     },
     "supply": {
-      "supply": [
-        {
-          "amount": "719821859898900",
-          "denom": "uwire"
-        }
-      ]
+      "supply": []
     }
   },
   "chain_id": "devnet-2",
@@ -5905,16 +5795,5 @@
       ]
     }
   },
-  "genesis_time": "2020-10-23T05:27:06.085738817Z",
-  "validators": [
-    {
-      "address": "",
-      "name": "ashwinp",
-      "power": "10000000",
-      "pub_key": {
-        "type": "tendermint/PubKeyEd25519",
-        "value": "OK5E2gPMmWIxU4LIYla/WMXKOm+XAkgmVllAXauwHy8="
-      }
-    }
-  ]
+  "genesis_time": "2020-10-23T05:27:06.085738817Z"
 }
